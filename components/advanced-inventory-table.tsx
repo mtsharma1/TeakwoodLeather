@@ -12,7 +12,6 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-  FilterFn,
 } from "@tanstack/react-table"
 import {
   Table,
@@ -32,95 +31,68 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ChevronDown, Search, X, GripVertical, ChevronRight, Scroll, DownloadIcon } from 'lucide-react'
-import { Label } from "@/components/ui/label"
+import { ChevronDown, Search, X, DownloadIcon } from 'lucide-react'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core"
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
 import CsvDownloader from 'react-csv-downloader';
 
 
-interface InventoryData {
-  skuCode: string
-  categoryName: string
-  subCategory: string
-  salesQty: number
-  salesAmount: number
-  inventoryAvailable: number
-  inventoryTotal: number
-  purchaseOpen: number
-  purchaseTotal: number
-  orderQty: number
-}
-
-const multiSelectFilter: FilterFn<any> = (row, columnId, filterValue: string[]) => {
+const multiSelectFilter = (
+  row:  { getValue: (colName: string) => string  },
+  columnId: string,
+  filterValue: string[]
+) => {
   if (!filterValue.length) return true
   const cellValue = row.getValue(columnId)
   return filterValue.includes(String(cellValue))
 }
 
-const DraggableTableHeader = ({ header, table }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
-    id: header.id,
-  })
+// const DraggableTableHeader = ({ header, table }) => {
+//   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+//     id: header.id,
+//   })
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  }
+//   const style = {
+//     transform: CSS.Transform.toString(transform),
+//     transition,
+//   }
 
-  return (
-    <TableHead
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      className={`
-        cursor-move
-        ${header.column.id === "select" || header.column.id === "skuCode" || header.column.id === "expander" ? "sticky left-0 z-10" : ""}
-        `}
-    >
-      <div className="flex items-center">
-        <GripVertical className="mr-2 h-4 w-4" {...listeners} />
-        {flexRender(header.column.columnDef.header, header.getContext())}
-      </div>
-    </TableHead>
-  )
-}
+//   return (
+//     <TableHead
+//       ref={setNodeRef}
+//       style={style}
+//       {...attributes}
+//       className={`
+//         cursor-move
+//         ${header.column.id === "select" || header.column.id === "skuCode" || header.column.id === "expander" ? "sticky left-0 z-10" : ""}
+//         `}
+//     >
+//       <div className="flex items-center">
+//         <GripVertical className="mr-2 h-4 w-4" {...listeners} />
+//         {flexRender(header.column.columnDef.header, header.getContext())}
+//       </div>
+//     </TableHead>
+//   )
+// }
 
 export default function AdvancedInventoryTable({
   data = [],
   columnNames = [],
 }: {
-  data: any[],
-  columnNames: any[]
+  data: { [key: string]: string }[],
+  columnNames: string[]
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
-  const [selectedColumn, setSelectedColumn] = React.useState<string | null>(null)
+  // const [selectedColumn, setSelectedColumn] = React.useState<string | null>(null)
   const [globalFilter, setGlobalFilter] = React.useState("")
   const [activeFilters, setActiveFilters] = React.useState<Record<string, string[]>>({})
   const [columnOrder, setColumnOrder] = React.useState<string[]>([])
 
 
-  const columns: ColumnDef<any>[] = generateColumns(columnNames);
+  const columns = generateColumns(columnNames);
 
   const table = useReactTable({
     data,
@@ -153,23 +125,23 @@ export default function AdvancedInventoryTable({
     setColumnOrder(table.getAllLeafColumns().map(d => d.id))
   }, [table])
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
+  // const sensors = useSensors(
+  //   useSensor(PointerSensor),
+  //   useSensor(KeyboardSensor, {
+  //     coordinateGetter: sortableKeyboardCoordinates,
+  //   })
+  // )
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-    if (active.id !== over?.id) {
-      setColumnOrder((prev) => {
-        const oldIndex = prev.indexOf(active.id as string)
-        const newIndex = prev.indexOf(over?.id as string)
-        return arrayMove(prev, oldIndex, newIndex)
-      })
-    }
-  }
+  // const handleDragEnd = (event: DragEndEvent) => {
+  //   const { active, over } = event
+  //   if (active.id !== over?.id) {
+  //     setColumnOrder((prev) => {
+  //       const oldIndex = prev.indexOf(active.id as string)
+  //       const newIndex = prev.indexOf(over?.id as string)
+  //       return arrayMove(prev, oldIndex, newIndex)
+  //     })
+  //   }
+  // }
 
   const handleFilterChange = (columnId: string, filterValue: string) => {
     setActiveFilters((prev) => ({
@@ -207,11 +179,11 @@ export default function AdvancedInventoryTable({
             onChange={(event) => setGlobalFilter(String(event.target.value))}
             className="max-w-sm"
           />
-           <CsvDownloader filename="AwbTransacs" datas={data} columns={columnNames.map(x=>({id: x, displayName: x}))}>
-                <Button size={'icon'}>
-                    <DownloadIcon size={18} />
-                </Button>
-            </CsvDownloader>
+          <CsvDownloader filename="AwbTransacs" datas={data} columns={columnNames.map(x => ({ id: x, displayName: x }))}>
+            <Button size={'icon'}>
+              <DownloadIcon size={18} />
+            </Button>
+          </CsvDownloader>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="ml-auto">
@@ -246,7 +218,7 @@ export default function AdvancedInventoryTable({
                                 onChange={(event) => column.setFilterValue(event.target.value)}
                                 className="max-w-sm mb-2"
                               />
-                              {Array.from(new Set(data.map((item) => String(item[column.id as keyof InventoryData])))).map((value) => (
+                              {Array.from(new Set(data.map((item) => String(item[column.id as keyof typeof item])))).map((value) => (
                                 <div key={value} className="flex items-center space-x-2">
                                   <Checkbox
                                     checked={activeFilters[column.id]?.includes(value)}
@@ -366,12 +338,12 @@ export default function AdvancedInventoryTable({
                           ${row.getIsSelected() ? "bg-blue-100" : ""}
                         `}
                     >
+                      {/* ${selectedColumn === cell.column.id ? "bg-opacity-80 ring-1 ring-inset ring-primary" : ""} */}
                       {row.getVisibleCells().map((cell) => (
                         <TableCell
                           key={cell.id}
                           className={` 
                               ${cell.column.id === "select" || cell.column.id === "skuCode" || cell.column.id === "expander" ? "sticky left-0 z-10" : ""}
-                              ${selectedColumn === cell.column.id ? "bg-opacity-80 ring-1 ring-inset ring-primary" : ""}
                             `}
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -428,11 +400,13 @@ export default function AdvancedInventoryTable({
 }
 
 
-export const generateColumns = (columnNames: string[]): ColumnDef<any>[] => {
+export const generateColumns = (columnNames: string[]): ColumnDef<{
+  [key: string]: string;
+}>[] => {
   const dynamicColumns = columnNames?.map((colName) => ({
     accessorKey: colName,
-    header: <span className="w-64">{colName}</span>,
-    cell: ({ row }: any) => {
+    header: () => <span className="w-64">{colName}</span>,
+    cell: ({ row }: { row: { getValue: (colName: string) => string } }) => {
       const value = row.getValue(colName)
       return (
         <div className="capitalize">

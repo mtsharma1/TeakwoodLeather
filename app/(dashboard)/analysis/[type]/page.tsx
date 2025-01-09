@@ -2,7 +2,8 @@ import { analysisData } from "@/action/csv"
 import AdvancedInventoryTable from "@/components/advanced-inventory-table"
 
 export default async function OverStock({ params }: { params: { type: string } }) {
-  const data = await analysisData(params.type)
+  const data : any = await analysisData(params.type)
+
   return (
     <main className="container mx-auto">
       <h1 className="text-2xl font-bold mb-4 capitalize">{params.type}</h1>

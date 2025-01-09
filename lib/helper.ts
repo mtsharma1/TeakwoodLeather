@@ -1,3 +1,5 @@
+import { SupportItem } from "@/types/order"
+
 export const UTILS = {
   "monthGrade": {
     "A": 4,
@@ -8,7 +10,7 @@ export const UTILS = {
   }
 }
 
-export const SUPPORT = [
+export const SUPPORT: SupportItem[] = [
   {
       "Sub Category": "LEATHER MEN SHOES",
       "Sub Category New": "LEATHER MEN SHOES_40",

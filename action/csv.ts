@@ -1,137 +1,173 @@
 'use server'
 
-// @aloksharma10
-// TODO: Need to fix all the type of the data 
-
 import { revalidatePath } from 'next/cache'
 import { parse } from 'csv-parse/sync'
 import { analysis, processSalesData, transformData } from '@/lib/action-utils'
 import { SUPPORT, UTILS } from '@/lib/helper'
+import { MonthDataItem, SalesDataItem } from '@/types/order'
 
-export type OrderItem = {
-    id: string
-    'Sale Order Item Code': string
-    'Display Order Code': string
-    Category: string
-    'Item Type Name': string
-    'Total Price': string
-    'Sale Order Status': string
-    'Shipping Package Status Code': string
-}
+// Constants
+const CHUNK_SIZE = 1000
+const CACHE_REVALIDATION_PATH = '/'
 
-const CHUNK_SIZE = 1000;
-
+// URLs should be in environment variables
 const SALES_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3N2E1ODJhN2JkNjUxNmMwMTM2ZDBlNC9FeHBvcnQtU2FsZSUyME9yZGVycy10ZWFrd29vZGluZGlhXzA1MDEyMDI1MTUzMDMzLmNzdiMjIzY3N2E1ODJhN2JkNjUxNmMwMTM2ZDBlNCMjIzA1XzAxXzIwMjU="
 
 const MONTHLY_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3N2E3NzRmMmI5MDdjMjFjY2Y2ZjNkZS9FeHBvcnQtTW9udGhseSUyME9yZGVyJTIwUmVwb3J0LXRlYWt3b29kaW5kaWFfMDUwMTIwMjUxNzQ0MDcuY3N2IyMjNjc3YTc3NGYyYjkwN2MyMWNjZjZmM2RlIyMjMDVfMDFfMjAyNQ=="
 
-let SALES_API_DATA: any[] = []
-let SALES_COLUMNS: string[] = []
+interface PaginatedResponse<T> {
+    columns: string[]
+    rows: T[]
+    hasMore: boolean
+    totalItems: number
+}
 
-let MONTHLY_API_DATA: any[] = []
-let MONTHLY_ANALYSIS_DATA: any[] = []
+// Cache management
+class DataCache<T> {
+    private data: T[] = []
+    private columns: string[] = []
 
-async function fetchCSV(url: string): Promise<void> {
+    isEmpty(): boolean {
+        return this.data.length === 0
+    }
+
+    setData(data: T[], columns?: string[]) {
+        this.data = data
+        if (columns) this.columns = columns
+    }
+
+    getData(): T[] {
+        return this.data
+    }
+
+    getColumns(): string[] {
+        return this.columns
+    }
+
+    slice(start: number, end: number): T[] {
+        return this.data.slice(start, end)
+    }
+
+    length(): number {
+        return this.data.length
+    }
+}
+
+// Initialize caches
+const salesCache = new DataCache<SalesDataItem>()
+const monthlyCache = new DataCache<MonthDataItem>()
+const monthlyAnalysisCache = new DataCache<any>()
+
+// Utility functions
+async function fetchCSV<T>(url: string): Promise<T[]> {
+    const response = await fetch(url, {
+        cache: 'no-store',
+        headers: {
+            'Content-Type': 'text/csv',
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const csvText = await response.text();
+    // Process the CSV data in memory instead of caching
+    return processCSVData(csvText);
+}
+
+function processCSVData<T>(csvText: string): T[] {
+    return parse(csvText, {
+        columns: true,
+        skip_empty_lines: true
+    }) as T[]
+}
+
+// Server actions
+export async function fetchSalesData(
+    startIndex: number,
+    stopIndex: number
+): Promise<PaginatedResponse<SalesDataItem>> {
     try {
-        const response = await fetch(url, {
-            cache: "no-store",
-        })
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
+        if (salesCache.isEmpty()) {
+            const result = await fetchCSV<SalesDataItem>(SALES_ORDER_URL)
+            salesCache.setData(result, Object.keys(result[0]))
         }
-        const csvText = await response.text()
-        const records = parse(csvText, {
-            columns: true,
-            skip_empty_lines: true
-        })
 
-        return records;
+        const rows = salesCache.slice(startIndex, stopIndex)
+        revalidatePath(CACHE_REVALIDATION_PATH)
+
+        return {
+            columns: salesCache.getColumns(),
+            rows,
+            hasMore: stopIndex < salesCache.length(),
+            totalItems: salesCache.length()
+        }
     } catch (error) {
-        console.error('Error fetching or parsing the CSV:', error)
-        throw error
+        console.error('Error in fetchSalesData:', error)
+        throw new Error('Failed to fetch sales data')
     }
 }
 
-export async function fetchSalesData(startIndex: number, stopIndex: number): Promise<{
-    columns: string[]
-    rows: OrderItem[]
-    hasMore: boolean
-    totalItems: number
-}> {
-    if (SALES_API_DATA.length === 0) {
-        const result = await fetchCSV(SALES_ORDER_URL)
-        SALES_API_DATA = result
-        SALES_COLUMNS = Object.keys(result[0])
-    }
+export async function fetchMonthlyData(
+    startIndex: number,
+    stopIndex: number
+): Promise<PaginatedResponse<MonthDataItem>> {
+    try {
+        // Load data if needed
+        if (monthlyCache.isEmpty()) {
+            const result = await fetchCSV<MonthDataItem>(MONTHLY_ORDER_URL)
+            monthlyCache.setData(result)
+        }
 
-    const rows = SALES_API_DATA.slice(startIndex, stopIndex)
+        if (salesCache.isEmpty()) {
+            await fetchSalesData(0, 1) // This will populate salesCache
+        }
 
-    revalidatePath('/')
+        // Process data if not already processed
+        if (monthlyAnalysisCache.isEmpty()) {
+            const salesDataMap = processSalesData(salesCache.getData())
 
-    return {
-        columns: SALES_COLUMNS,
-        rows: rows,
-        hasMore: stopIndex < SALES_API_DATA.length,
-        totalItems: SALES_API_DATA.length
-    }
-}
+            // Process in chunks for better memory management
+            const processedData: MonthDataItem[] = []
+            for (let i = 0; i < monthlyCache.length(); i += CHUNK_SIZE) {
+                const chunk = monthlyCache.slice(i, i + CHUNK_SIZE)
+                const processedChunk = chunk.map(item => ({
+                    ...item,
+                    'Sale Qty': salesDataMap.get(item['Sku Code'])?.countOfItemSKUCode || 0,
+                    'Sale Amount': salesDataMap.get(item['Sku Code'])?.sumOfSellingPrice || 0
+                }))
+                processedData.push(...processedChunk)
+            }
 
-export async function fetchMonthlyData(startIndex: number, stopIndex: number): Promise<{
-    columns: string[]
-    rows: any[]
-    hasMore: boolean
-    totalItems: number
-}> {
-    const processChunk = (chunk: any[]) => {
-        return chunk.map(item => {
-            const sales_sku_data = salesDataMap.get(item["Sku Code"]);
+            const transformedData = transformData(processedData, SUPPORT, UTILS)
+            monthlyAnalysisCache.setData(transformedData)
+        }
 
-            item["Sale Qty"] = sales_sku_data?.countOfItemSKUCode || 0;
-            item["Sale Amount"] = sales_sku_data?.sumOfSellingPrice || 0;
-            return item;
-        });
-    };
+        revalidatePath(CACHE_REVALIDATION_PATH)
 
-    if (MONTHLY_API_DATA.length === 0) {
-        const result = await fetchCSV(MONTHLY_ORDER_URL)
-        MONTHLY_API_DATA = result
-        // MONTHLY_COLUMNS = Object.keys(result[0])
-    }
-
-
-    if (SALES_API_DATA.length === 0) {
-        const result = await fetchCSV(SALES_ORDER_URL)
-        SALES_API_DATA = result
-        SALES_COLUMNS = Object.keys(result[0])
-    }
-
-
-    const salesDataMap = processSalesData(SALES_API_DATA)
-
-    const INPUT = [];
-    for (let i = 0; i < MONTHLY_API_DATA.length; i += CHUNK_SIZE) {
-        const chunk = MONTHLY_API_DATA.slice(i, i + CHUNK_SIZE);
-        INPUT.push(...processChunk(chunk));
-    }
-
-    MONTHLY_ANALYSIS_DATA = transformData(INPUT, SUPPORT, UTILS);
-
-    revalidatePath('/')
-
-    return {
-        columns: Object.keys(MONTHLY_ANALYSIS_DATA[0]),
-        rows: MONTHLY_ANALYSIS_DATA,
-        hasMore: stopIndex < MONTHLY_API_DATA.length,
-        totalItems: MONTHLY_API_DATA.length
+        return {
+            columns: Object.keys(monthlyAnalysisCache.getData()[0]),
+            rows: monthlyAnalysisCache.slice(startIndex, stopIndex),
+            hasMore: stopIndex < monthlyAnalysisCache.length(),
+            totalItems: monthlyAnalysisCache.length()
+        }
+    } catch (error) {
+        console.error('Error in fetchMonthlyData:', error)
+        throw new Error('Failed to fetch monthly data')
     }
 }
 
-export async function analysisData(key) {
-    if (MONTHLY_ANALYSIS_DATA.length < 1) {
-        await fetchMonthlyData(0, 50)
-    }
+export async function analysisData(key: string) {
+    try {
+        if (monthlyAnalysisCache.isEmpty()) {
+            await fetchMonthlyData(0, 50)
+        }
 
-   const data = await analysis(MONTHLY_ANALYSIS_DATA, key)
-   return data
+        return analysis(monthlyAnalysisCache.getData(), key)
+    } catch (error) {
+        console.error('Error in analysisData:', error)
+        throw new Error('Failed to analyze data')
+    }
 }
+
