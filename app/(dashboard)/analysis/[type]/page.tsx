@@ -2,6 +2,7 @@ import { analysisData } from "@/action/csv"
 import AdvancedInventoryTable from "@/components/advanced-inventory-table"
 
 export default async function OverStock({ params }: { params: { type: string } }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data : any = await analysisData(params.type)
 
   return (

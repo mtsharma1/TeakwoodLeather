@@ -3,6 +3,7 @@ import { fetchMonthlyData } from '@/action/csv'
 import AdvancedInventoryTable from './advanced-inventory-table'
 
 const DataTable: React.FC = async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result: any = await fetchMonthlyData(0, 30000);
 
   return (
