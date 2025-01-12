@@ -1,11 +1,6 @@
-import { GradeResult, InputItem, OrderSummaryItem, MonthDataItem, SalesDataItem, SalesGridSummary, SupportItem, Utils } from "@/types/order"
-import { MULTIPLE_SELLING_PRICE } from "./helper"
-
-// Constants
-const GRADE_THRESHOLDS = {
-    A: 30,
-    B: 10
-} as const
+import { InputItem, OrderSummaryItem, MonthDataItem, SalesDataItem, SalesGridSummary } from "@/types/order"
+import { calcMonthGrade, calcStaticGrade, compareGrades, getSupportData, MonthGradeTypes, MULTIPLE_SELLING_PRICE } from "./helper"
+import { categorySizeMap } from "@/components/categories/data-table-filters"
 
 const CATEGORY_MAPPING: Record<string, string> = {
     "LEATHER WOMEN CASUAL BELT": "LEATHER WOMEN CASUAL BELT",
@@ -19,17 +14,15 @@ const DOH_THRESHOLDS = {
 } as const
 
 // Utility functions
-const safeNumber = (value: string | number): number => 
+const safeNumber = (value: string | number): number =>
     typeof value === 'string' ? Number(value) || 0 : value || 0
 
-const roundToDecimals = (value: number, decimals: number = 2): number => 
+const roundToDecimals = (value: number, decimals: number = 2): number =>
     Number(value.toFixed(decimals))
 
 // Main transformation functions
 export function transformData(
     INPUT: InputItem[],
-    SUPPORT: SupportItem[],
-    UTILS: Utils
 ): MonthDataItem[] {
     // Memoization for performance optimization
     const salesQtyCache = new Map<string, number>()
@@ -37,7 +30,7 @@ export function transformData(
 
     const getSumOfSales = (parentSkuCode: string, type: 'qty' | 'amount'): number => {
         const cache = type === 'qty' ? salesQtyCache : salesAmountCache
-        
+
         if (!cache.has(parentSkuCode)) {
             const sum = INPUT.reduce((acc, item) => {
                 if (item["Parent SKU"] === parentSkuCode) {
@@ -47,39 +40,16 @@ export function transformData(
             }, 0)
             cache.set(parentSkuCode, sum)
         }
-        
+
         return cache.get(parentSkuCode)!
     }
-
-    const getSupportData = (subCategory: string, size: string): SupportItem | undefined => {
-        const lookupKey = `${subCategory}_${size}`
-        return SUPPORT.find(item => {
-            const supportKey = item["Sub Category New"] || item["Sub Category"]
-            return supportKey === lookupKey || supportKey === subCategory
-        })
-    }
-
-    const calcGrade = (saleQty: number): string => {
-        if (saleQty > GRADE_THRESHOLDS.A) return "A"
-        if (saleQty >= GRADE_THRESHOLDS.B) return "B"
-        return "C"
-    }
-
-    const calcMonthGrade = (saleQty: number): GradeResult => {
-        const grade = calcGrade(saleQty)
-        return { grade, rank: UTILS.monthGrade[grade] }
-    }
-
-    const calcStaticGrade = (grade: string): GradeResult => ({
-        rank: UTILS.monthGrade[grade]
-    })
 
     return INPUT.map(item => {
         const supportData = getSupportData(item["Sub Category"], item.Size)
         const sumSalesQty = getSumOfSales(item["Parent SKU"], 'qty')
         const sumSalesAmount = getSumOfSales(item["Parent SKU"], 'amount')
         const monthlyGrade = calcMonthGrade(safeNumber(item["Sale Qty"]))
-        const staticGrade = calcStaticGrade(item["Static Grade"])
+        const staticGrade = calcStaticGrade(item["Static Grade"] as MonthGradeTypes)
 
         const availableInventory = safeNumber(item["Available Inventory"])
         const openPurchase = safeNumber(item["Open Purchase"])
@@ -88,13 +58,13 @@ export function transformData(
         const vendorPrice = safeNumber(item["Vendor Price"])
 
         const requiredQty = (saleQty * 2) - (availableInventory + openPurchase)
-        
-        const orderQty = supportData 
+
+        const orderQty = supportData
             ? Math.max(0, Math.ceil(
                 ((sumSalesQty * 2) / (Number(supportData["Ratio Sum"]) || 1)) *
                 safeNumber(supportData["Ratio"]) -
                 (availableInventory + openPurchase)
-            )) 
+            ))
             : 0
 
         const saleThrough = roundToDecimals((saleQty / (availableInventory + saleQty)) * 100)
@@ -116,8 +86,8 @@ export function transformData(
             "Static Grade_N": staticGrade.rank,
             "Month Grade": monthlyGrade.grade ?? "",
             "Month Grade_N": monthlyGrade.rank,
-            "Comment": item["Month Grade"] 
-                ? compareGrades(item["Month Grade"], item["Static Grade"]) 
+            "Comment": item["Month Grade"]
+                ? compareGrades(item["Month Grade"], item["Static Grade"])
                 : "",
             "Avg Selling Price": roundToDecimals(avgSellingPrice),
             "Multiple Price": vendorPrice ? roundToDecimals(avgSellingPrice / vendorPrice) : 0
@@ -125,24 +95,15 @@ export function transformData(
     })
 }
 
-// Helper function for grade comparison
-const compareGrades = (monthGrade: string, staticGrade: string): string => {
-    const monthNum = Number(monthGrade)
-    const staticNum = Number(staticGrade)
-    if (monthNum > staticNum) return "Degrade"
-    if (monthNum < staticNum) return "Upgrade"
-    return "No Change"
-}
-
-export function processSalesData(data: SalesDataItem[]): Map<string, { 
+export function processSalesData(data: SalesDataItem[]): Map<string, {
     rowLabel: string
     countOfItemSKUCode: number
-    sumOfSellingPrice: number 
+    sumOfSellingPrice: number
 }> {
     return data.reduce((acc, row) => {
         const sku = row['Item SKU Code']?.trim()
         const price = safeNumber(row['Selling Price'])
-        
+
         if (row['Sale Order Status'] === 'COMPLETE' && sku) {
             if (!acc.has(sku)) {
                 acc.set(sku, {
@@ -156,7 +117,7 @@ export function processSalesData(data: SalesDataItem[]): Map<string, {
             skuInfo.countOfItemSKUCode++
             skuInfo.sumOfSellingPrice += price
         }
-        
+
         return acc
     }, new Map())
 }
@@ -183,6 +144,124 @@ export function analysis(analysisData: MonthDataItem[], key?: string) {
         salesInventorySummary: calcSalesGrid(analysisData),
         orderSummary: calcOrderSummary(analysisData)
     }
+}
+
+export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof categorySizeMap) {
+
+    const categoryDisplay = {
+        "mensshoes": ["PU MEN SHOES", "LEATHER MEN SHOES"],
+        "womenshoes": ["LEATHER WOMEN SHOES", "PU WOMEN SHOES"],
+        "kidsshoes": ["LEATHER KID SHOES"],
+        "leatherjackets": ["LEATHER JACKETS"],
+        "leathermencasualbelt": ["LEATHER MEN CASUAL BELT"],
+        "othercategory": ["PU MEN SHOES", "LEATHER MEN SHOES", "LEATHER WOMEN SHOES", "PU WOMEN SHOES", "LEATHER KID SHOES", "LEATHER JACKETS", "LEATHER MEN CASUAL BELT"],
+    }
+
+    const categoryConfig = new Map(Object.entries(categoryDisplay));
+    const currentCategory = categoryConfig.get(key);
+
+    const skuMap = new Map<string, {
+        sku: string,
+        category: string,
+        subCategory: string,
+        salesSizes: Record<string, number>,
+        totalSaleQty: number,
+        totalSaleAmount: number,
+        avgSellingPrice: number,
+        monthGrade?: string,
+        orderQty: number,
+        sets: number,
+        availableInventorySize: Record<string, number>,
+        availableInventorySizeTotal: number,
+        openPurchaseSize: Record<string, number>,
+        openPurchaseSizeTotal: number,
+        orderQtySize: Record<string, number>,
+        orderQtySizeTotal: number,
+        saleThrough: number,
+        vendorPrice: number,
+        vendorName: string,
+        totalPrice: number,
+    }>();
+
+    const isOtherCategory = key === "othercategory";
+
+    analysisData.forEach(item => {
+        const size = item.Size;
+        const subCategory = item['Sub Category'];
+        const category = item['Category Name']
+
+        const isMatchingCriteria = isOtherCategory ? !currentCategory?.includes(subCategory) && !currentCategory?.includes(category) : ['leatherjackets', 'kidsshoes'].includes(key) ? currentCategory?.includes(category) : currentCategory?.includes(subCategory)
+       
+        if (!isMatchingCriteria || !categorySizeMap[key].includes(size)) {
+            return;
+        }
+
+        const sku = item["Parent SKU"];
+        let skuData = skuMap.get(sku);
+
+        if (!skuData) {
+            skuData = {
+                sku,
+                category,
+                subCategory,
+                salesSizes: {},
+                totalSaleQty: 0,
+                totalSaleAmount: 0,
+                avgSellingPrice: 0,
+                orderQty: 0,
+                sets: 0,
+                availableInventorySize: {},
+                availableInventorySizeTotal: 0,
+                openPurchaseSize: {},
+                openPurchaseSizeTotal: 0,
+                orderQtySize: {},
+                orderQtySizeTotal: 0,
+                saleThrough: 0,
+                vendorPrice: 0,
+                vendorName: "",
+                totalPrice: 0,
+            };
+            skuMap.set(sku, skuData);
+        }
+
+        const saleQty = safeNumber(item["Sale Qty"]);
+        const saleAmount = safeNumber(item["Sale Amount"]);
+        const availableInventory = safeNumber(item["Available Inventory"]);
+        const openPurchase = safeNumber(item['Open Purchase']);
+        const orderQty = safeNumber(item['Order Qty']);
+        const vendorPrice = safeNumber(item['Vendor Price']);
+
+        // Sales data
+        skuData.salesSizes[size] = (skuData.salesSizes[size] || 0) + saleQty;
+        skuData.totalSaleQty += saleQty;
+        skuData.totalSaleAmount += saleAmount;
+
+        // Inventory data
+        skuData.availableInventorySize[size] = (skuData.availableInventorySize[size] || 0) + availableInventory;
+        skuData.availableInventorySizeTotal += availableInventory;
+
+        // Purchase data
+        skuData.openPurchaseSize[size] = (skuData.openPurchaseSize[size] || 0) + openPurchase;
+        skuData.openPurchaseSizeTotal += openPurchase;
+
+        // Order data
+        skuData.orderQtySize[size] = (skuData.orderQtySize[size] || 0) + orderQty;
+        skuData.orderQtySizeTotal += orderQty;
+
+        // Calculate derived values
+        skuData.avgSellingPrice = skuData.totalSaleQty ? (skuData.totalSaleAmount / skuData.totalSaleQty) : 0;
+        skuData.monthGrade = calcMonthGrade(skuData.totalSaleQty).grade;
+        skuData.orderQty = saleQty * 2;
+        skuData.sets = safeNumber(getSupportData(subCategory, size)?.["Ratio Sum"] || 0);
+        skuData.saleThrough = safeNumber((skuData.totalSaleQty / (skuData.totalSaleQty + skuData.availableInventorySizeTotal)) * 100);
+        skuData.vendorPrice = vendorPrice;
+        skuData.vendorName = item['Vendor Name'];
+        skuData.totalPrice = skuData.vendorPrice * skuData.orderQtySizeTotal;
+    });
+
+    const result = Array.from(skuMap.values());
+
+    return result;
 }
 
 // Analysis helper functions
@@ -255,7 +334,7 @@ function calcOrderSummary(analysisData: MonthDataItem[]) {
         entry.totalSaleValue += safeNumber(item["Sale Amount"])
         entry.totalQuantity += safeNumber(item["Sale Qty"])
         entry.totalOrderValue += safeNumber(item["Total Amount"])
-        
+
         return acc
     }, {} as Record<string, OrderSummaryItem>)
 

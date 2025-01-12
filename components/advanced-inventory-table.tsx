@@ -38,7 +38,7 @@ import CsvDownloader from 'react-csv-downloader';
 
 
 const multiSelectFilter = (
-  row:  { getValue: (colName: string) => string  },
+  row: { getValue: (colName: string) => string },
   columnId: string,
   filterValue: string[]
 ) => {
@@ -80,7 +80,7 @@ export default function AdvancedInventoryTable({
   columnNames = [],
 }: {
   data: { [key: string]: string }[],
-  columnNames: string[]
+  columnNames?: string[]
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])

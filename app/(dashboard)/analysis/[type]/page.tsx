@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic' // This forces the page to be dynamic
+export const revalidate = 0 // This disables static page generation
+
 import { analysisData } from "@/action/csv"
 import AdvancedInventoryTable from "@/components/advanced-inventory-table"
 

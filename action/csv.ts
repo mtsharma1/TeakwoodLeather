@@ -2,9 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { parse } from 'csv-parse/sync'
-import { analysis, processSalesData, transformData } from '@/lib/action-utils'
-import { SUPPORT, UTILS } from '@/lib/helper'
+import { analysis, orderCategory, processSalesData, transformData } from '@/lib/action-utils'
 import { MonthDataItem, SalesDataItem } from '@/types/order'
+import { categorySizeMap } from '@/components/categories/data-table-filters'
 
 // Constants
 const CHUNK_SIZE = 1000
@@ -140,7 +140,7 @@ export async function fetchMonthlyData(
                 processedData.push(...processedChunk)
             }
 
-            const transformedData = transformData(processedData, SUPPORT, UTILS)
+            const transformedData = transformData(processedData)
             monthlyAnalysisCache.setData(transformedData)
         }
 
@@ -165,6 +165,19 @@ export async function analysisData(key: string) {
         }
 
         return analysis(monthlyAnalysisCache.getData(), key)
+    } catch (error) {
+        console.error('Error in analysisData:', error)
+        throw new Error('Failed to analyze data')
+    }
+}
+
+export async function categoryData(key: keyof typeof categorySizeMap) {
+    try {
+        if (monthlyAnalysisCache.isEmpty()) {
+            await fetchMonthlyData(0, 50)
+        }
+
+        return orderCategory(monthlyAnalysisCache.getData(), key)
     } catch (error) {
         console.error('Error in analysisData:', error)
         throw new Error('Failed to analyze data')

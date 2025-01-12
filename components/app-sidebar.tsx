@@ -75,6 +75,34 @@ const data = {
           url: "/analysis/ordersummary",
         },
       ],
+    },
+    {
+      title: "Category",
+      url: "/category",
+      icon: SquareTerminal,
+      isActive: true,
+      items: [
+        {
+          title: "Mens Shoes",
+          url: "/category/mens-shoes",
+        },
+        {
+          title: "Womens Shoes",
+          url: "/category/women-shoes",
+        },
+        {
+          title: "Kids Shoes",
+          url: "/category/kids-shoes",
+        },
+        {
+          title: "Leather Jackets",
+          url: "/category/leather-jackets",
+        },
+        {
+          title: "Leather Men Casual Belt",
+          url: "/category/leather-men-casual-belt",
+        },
+      ],
     }
   ],
   // projects: [
