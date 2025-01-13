@@ -124,10 +124,10 @@ export default function CategoryDataTable({
 
   const groupedColumns = [
     { title: 'Product Info', span: 3, color: 'bg-gray-100' },
-    { title: 'Sales Sizes', span: (groupLength+1), color: 'bg-blue-100' },
+    { title: 'Sales Sizes', span: (groupLength + 1), color: 'bg-blue-100' },
     { title: 'Sales Info', span: 5, color: 'bg-green-100' },
-    { title: 'Available Inventory', span: (groupLength+1), color: 'bg-yellow-100' },
-    { title: 'Open Purchase', span: (groupLength+1), color: 'bg-red-100' },
+    { title: 'Available Inventory', span: (groupLength + 1), color: 'bg-yellow-100' },
+    { title: 'Open Purchase', span: (groupLength + 1), color: 'bg-red-100' },
   ]
 
   return (
@@ -252,62 +252,64 @@ export default function CategoryDataTable({
 
       {/* Table */}
       <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {groupedColumns.map((group, index) => (
-                <TableHead
-                  key={index}
-                  colSpan={group.span}
-                  className={`text-center font-bold ${group.color}`}
-                >
-                  {group.title}
-                </TableHead>
-              ))}
-            </TableRow>
-            <TableRow>
-              {table.getFlatHeaders().map((header) => (
-                <TableHead key={header.id} className={`${getBgColor(header.id)}`}>
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      className={getBgColor(cell.column.id)}
-                      key={cell.id}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
+        <div className="relative w-full overflow-auto">
+          <Table className="min-w-[1200px]">
+            <TableHeader>
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
+                {groupedColumns.map((group, index) => (
+                  <TableHead
+                    key={index}
+                    colSpan={group.span}
+                    className={`text-center font-bold ${group.color}`}
+                  >
+                    {group.title}
+                  </TableHead>
+                ))}
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              <TableRow>
+                {table.getFlatHeaders().map((header, index) => (
+                  <TableHead key={header.id} className={`whitespace-nowrap ${index === 0 ? 'sticky left-0 z-20 bg-white' : ''} ${getBgColor(header.id)}`}>
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell, index) => (
+                      <TableCell
+                        className={`whitespace-nowrap ${index === 0 ? 'sticky left-0 z-20 bg-white' : ''} ${getBgColor(cell.column.id)}`}
+                        key={cell.id}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Pagination */}

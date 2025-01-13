@@ -286,13 +286,13 @@ export default function AdvancedInventoryTable({
         ))
       ))}
       <div className="rounded-md border">
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           {/* <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           > */}
-          <Table className="min-w-full">
+          <Table className="min-w-[1200px]">
             {/* <TableHeader>
                 <TableRow>
                   <SortableContext
@@ -310,10 +310,10 @@ export default function AdvancedInventoryTable({
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
+                  {headerGroup.headers.map((header, index) => {
                     return (
                       <TableHead key={header.id} colSpan={header.colSpan}
-                        className="min-w-[150px] max-w-[200px] text-ellipsis text-nowrap whitespace-nowrap"
+                        className={`${index === 0 ? "sticky left-0 z-10 bg-white" : ""} min-w-[150px] max-w-[200px] text-ellipsis text-nowrap whitespace-nowrap`}
                       >
                         {header.isPlaceholder
                           ? null
@@ -338,12 +338,11 @@ export default function AdvancedInventoryTable({
                           ${row.getIsSelected() ? "bg-blue-100" : ""}
                         `}
                     >
-                      {/* ${selectedColumn === cell.column.id ? "bg-opacity-80 ring-1 ring-inset ring-primary" : ""} */}
-                      {row.getVisibleCells().map((cell) => (
+                      {row.getVisibleCells().map((cell, index) => (
                         <TableCell
                           key={cell.id}
                           className={` 
-                              ${cell.column.id === "select" || cell.column.id === "skuCode" || cell.column.id === "expander" ? "sticky left-0 z-10" : ""}
+                              ${index === 0 ? "sticky left-0 z-10 bg-white" : ""}
                             `}
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}

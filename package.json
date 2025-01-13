@@ -26,6 +26,7 @@
     "csv-parse": "^5.6.0",
     "lucide-react": "^0.469.0",
     "next": "14.2.16",
+    "next-themes": "^0.4.4",
     "react": "^18",
     "react-csv-downloader": "^3.3.0",
     "react-dom": "^18",
