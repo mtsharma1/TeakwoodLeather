@@ -1,4 +1,12 @@
-export default async function Home() {
+"use client"
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+export default function Home() {
+  const router = useRouter()
+  useEffect(() => {
+    router.push('/analysis/understock')
+  }, [])
 
   // const result = await fetchMonthlyData(0, 0)
 
