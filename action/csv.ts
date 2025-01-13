@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { parse } from 'csv-parse/sync'
-import { analysis, orderCategory, processSalesData, transformData } from '@/lib/action-utils'
+import { analysis, orderCategory, transformData } from '@/lib/action-utils'
 import { MonthDataItem, SalesDataItem } from '@/types/order'
 import { categorySizeMap } from '@/components/categories/data-table-filters'
 
@@ -120,29 +120,33 @@ export async function fetchMonthlyData(
             monthlyCache.setData(result)
         }
 
-        if (salesCache.isEmpty()) {
-            await fetchSalesData(0, 1) // This will populate salesCache
-        }
+        // if (salesCache.isEmpty()) {
+        //     await fetchSalesData(0, 1) // This will populate salesCache
+        // }
 
         // Process data if not already processed
-        if (monthlyAnalysisCache.isEmpty()) {
-            const salesDataMap = processSalesData(salesCache.getData())
+        // if (monthlyAnalysisCache.isEmpty()) {
+        //     const salesDataMap = processSalesData(salesCache.getData())
 
-            // Process in chunks for better memory management
-            const processedData: MonthDataItem[] = []
-            for (let i = 0; i < monthlyCache.length(); i += CHUNK_SIZE) {
-                const chunk = monthlyCache.slice(i, i + CHUNK_SIZE)
-                const processedChunk = chunk.map(item => ({
-                    ...item,
-                    'Sale Qty': salesDataMap.get(item['Sku Code'])?.countOfItemSKUCode || 0,
-                    'Sale Amount': salesDataMap.get(item['Sku Code'])?.sumOfSellingPrice || 0
-                }))
-                processedData.push(...processedChunk)
-            }
+        //     // Process in chunks for better memory management
+        //     const processedData: MonthDataItem[] = []
+        //     for (let i = 0; i < monthlyCache.length(); i += CHUNK_SIZE) {
+        //         const chunk = monthlyCache.slice(i, i + CHUNK_SIZE)
+        //         const processedChunk = chunk.map(item => ({
+        //             ...item,
+        //             'Sale Qty': salesDataMap.get(item['Sku Code'])?.countOfItemSKUCode || 0,
+        //             'Sale Amount': salesDataMap.get(item['Sku Code'])?.sumOfSellingPrice || 0
+        //         }))
+        //         processedData.push(...processedChunk)
+        //     }
 
-            const transformedData = transformData(processedData)
-            monthlyAnalysisCache.setData(transformedData)
-        }
+        //     const transformedData = transformData(processedData)
+        //     monthlyAnalysisCache.setData(transformedData)
+        // }
+
+        console.log(monthlyCache.getData().length, "data")
+        const transformedData = transformData(monthlyCache.getData())
+        monthlyAnalysisCache.setData(transformedData)
 
         revalidatePath(CACHE_REVALIDATION_PATH)
 
