@@ -2,8 +2,6 @@
 
 import * as React from "react"
 import {
-  AudioWaveform,
-  Command,
   GalleryVerticalEnd,
   SquareTerminal,
 } from "lucide-react"
@@ -22,25 +20,15 @@ import {
 // This is sample data.
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
+    name: "Teackwood",
+    email: "Teackwood.com",
     avatar: "/avatars/shadcn.jpg",
   },
   teams: [
     {
-      name: "Acme Inc",
+      name: "Teackwood",
       logo: GalleryVerticalEnd,
       plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
     },
   ],
   navMain: [

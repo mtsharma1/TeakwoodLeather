@@ -123,11 +123,11 @@ export default function CategoryDataTable({
   }, [])
 
   const groupedColumns = [
-    { title: 'Product Info', span: 3, color: 'bg-gray-100' },
-    { title: 'Sales Sizes', span: (groupLength + 1), color: 'bg-blue-100' },
-    { title: 'Sales Info', span: 5, color: 'bg-green-100' },
-    { title: 'Available Inventory', span: (groupLength + 1), color: 'bg-yellow-100' },
-    { title: 'Open Purchase', span: (groupLength + 1), color: 'bg-red-100' },
+    { title: 'Product Info', span: 3, color: 'text-medium bg-gray-200' },
+    { title: 'Sales Sizes', span: (groupLength + 1), color: 'text-medium bg-blue-100' },
+    { title: 'Sales Info', span: 5, color: 'text-medium bg-green-100' },
+    { title: 'Available Inventory', span: (groupLength + 1), color: 'text-medium bg-yellow-100' },
+    { title: 'Open Purchase', span: (groupLength + 1), color: 'text-medium bg-red-100' },
   ]
 
   return (
@@ -251,7 +251,7 @@ export default function CategoryDataTable({
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-lg border">
         <div className="relative w-full overflow-auto">
           <Table className="min-w-[1200px]">
             <TableHeader>
@@ -268,7 +268,7 @@ export default function CategoryDataTable({
               </TableRow>
               <TableRow>
                 {table.getFlatHeaders().map((header, index) => (
-                  <TableHead key={header.id} className={`whitespace-nowrap ${index === 0 ? 'sticky left-0 z-20 bg-white' : ''} ${getBgColor(header.id)}`}>
+                  <TableHead key={header.id} className={`font-bold text-gray-800 whitespace-nowrap ${index === 0 ? 'sticky left-0 z-20 bg-white' : ''} ${getBgColor(header.id)}`}>
                     {flexRender(
                       header.column.columnDef.header,
                       header.getContext()
