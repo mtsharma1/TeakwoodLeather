@@ -17,59 +17,64 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
-]
+
+type BarChartProps = {
+  data?: {
+    inventoryValue: number
+    inventoryPercentage: number
+    grade: string
+  }[]
+}
 
 const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "hsl(var(--chart-1))",
-  },
-  mobile: {
-    label: "Mobile",
+  inventoryValue: {
+    label: "Inventory Value",
     color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig
 
-export function BarChartComponent() {
+export function InventoryBarChart({ data = [] }: BarChartProps) {
+  // Transform data for the chart
+  const chartData = data?.map((item) => ({
+    grade: item.grade,
+    inventoryValue: item.inventoryValue,
+  }))
+
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
-        <CardTitle>Bar Chart - Multiple</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardTitle>Inventory Analysis</CardTitle>
+        <CardDescription>Inventory value by grade</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
           <BarChart accessibilityLayer data={chartData}>
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="month"
+              dataKey="grade"
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              tickFormatter={(value) => value.slice(0, 3)}
             />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent indicator="dashed" />}
             />
-            <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-            <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
+            <Bar dataKey="inventoryValue" fill="var(--color-inventoryValue)" radius={4} />
           </BarChart>
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+          {data?.length > 0 && (
+            <>
+              Inventory trending {data[0].inventoryPercentage > 0 ? "up" : "down"} by{" "}
+              {Math.abs(data[0].inventoryPercentage)}% <TrendingUp className="h-4 w-4" />
+            </>
+          )}
         </div>
         <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
+          Showing inventory values by grade
         </div>
       </CardFooter>
     </Card>

@@ -1,6 +1,7 @@
 import { InputItem, OrderSummaryItem, MonthDataItem, SalesDataItem, SalesGridSummary } from "@/types/order"
 import { calcMonthGrade, calcStaticGrade, compareGrades, getSupportData, MonthGradeTypes, MULTIPLE_SELLING_PRICE } from "./helper"
 import { categorySizeMap } from "@/components/categories/data-table-filters"
+import { roundToDecimals, safeNumber } from "./utils"
 
 const CATEGORY_MAPPING: Record<string, string> = {
     "LEATHER WOMEN CASUAL BELT": "LEATHER WOMEN CASUAL BELT",
@@ -12,13 +13,6 @@ const DOH_THRESHOLDS = {
     OVERSTOCK: 180,
     UNDERSTOCK: 30
 } as const
-
-// Utility functions
-const safeNumber = (value: string | number): number =>
-    typeof value === 'string' ? Number(value) || 0 : value || 0
-
-const roundToDecimals = (value: number, decimals: number = 2): number =>
-    Number(value.toFixed(decimals))
 
 // Main transformation functions
 export function transformData(
@@ -122,6 +116,61 @@ export function processSalesData(data: SalesDataItem[]): Map<string, {
     }, new Map())
 }
 
+export function calc_Count_Amt(data: MonthDataItem[]) {
+    return {
+        graphs: {
+            bar: calcSalesGrid(data).rows
+        },
+        cards: data.reduce(
+            (summary, item) => {
+                const value = roundToDecimals(safeNumber(item["Total Amount"]));
+
+                // Over Stock
+                if (item.DOH > DOH_THRESHOLDS.OVERSTOCK) {
+                    summary["Over Stock"].count++;
+                    summary["Over Stock"].totalValue += value;
+                }
+
+                // Under Stock
+                if (item.DOH < DOH_THRESHOLDS.UNDERSTOCK) {
+                    summary['Under Stock'].count++;
+                    summary['Under Stock'].totalValue += value;
+                }
+
+                // Under Price 2
+                if (item['Multiple Price'] < MULTIPLE_SELLING_PRICE) {
+                    summary['Under Price 2'].count++;
+                    summary['Under Price 2'].totalValue += value;
+                }
+
+                // New Grade
+                if (item["Static Grade"].toLowerCase() === 'new') {
+                    summary['New Grade'].count++;
+                    summary['New Grade'].totalValue += value;
+                }
+
+                // Common Order Summary
+                summary['Common Order Summary'].count += safeNumber(item["Order Qty"]);
+                summary['Common Order Summary'].totalValue += roundToDecimals(calcCommonOrderTotalValue(item['Order Qty'], item['Vendor Price']));
+
+                // Order Summary Sheet
+                summary['Order Summary Sheet'].count += safeNumber(item["Sale Qty"]);
+                summary['Order Summary Sheet'].totalValue += roundToDecimals(safeNumber(item["Total Amount"]))
+
+                return summary;
+            },
+            {
+                'Over Stock': { count: 0, totalValue: 0 },
+                'Under Stock': { count: 0, totalValue: 0 },
+                'Under Price 2': { count: 0, totalValue: 0 },
+                'New Grade': { count: 0, totalValue: 0 },
+                'Common Order Summary': { count: 0, totalValue: 0 },
+                'Order Summary Sheet': { count: 0, totalValue: 0 },
+            }
+        )
+    };
+}
+
 export function analysis(analysisData: MonthDataItem[], key?: string) {
     const filters = {
         overstock: (item: MonthDataItem) => item.DOH > DOH_THRESHOLDS.OVERSTOCK,
@@ -191,7 +240,7 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         const category = item['Category Name']
 
         const isMatchingCriteria = isOtherCategory ? !currentCategory?.includes(subCategory) && !currentCategory?.includes(category) : ['leatherjackets', 'kidsshoes'].includes(key) ? currentCategory?.includes(category) : currentCategory?.includes(subCategory)
-       
+
         if (!isMatchingCriteria || !categorySizeMap[key].includes(size)) {
             return;
         }
@@ -357,8 +406,12 @@ function commonOrderSummary(analysisData: MonthDataItem[]) {
         orderQty: order['Order Qty'],
         vendorName: order['Vendor Name'],
         vendorPrice: order['Vendor Price'],
-        totalValue: roundToDecimals(
-            safeNumber(order['Order Qty']) * safeNumber(order['Vendor Price'])
-        )
+        totalValue: calcCommonOrderTotalValue(order['Order Qty'], order['Vendor Price'])
     }))
+}
+
+function calcCommonOrderTotalValue(orderQty: string, vendorPrice: string) {
+    return roundToDecimals(
+        safeNumber(orderQty) * safeNumber(vendorPrice)
+    )
 }

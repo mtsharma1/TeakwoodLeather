@@ -2,18 +2,17 @@
 
 import { revalidatePath } from 'next/cache'
 import { parse } from 'csv-parse/sync'
-import { analysis, orderCategory, transformData } from '@/lib/action-utils'
+import { analysis, calc_Count_Amt, orderCategory, transformData } from '@/lib/action-utils'
 import { MonthDataItem, SalesDataItem } from '@/types/order'
 import { categorySizeMap } from '@/components/categories/data-table-filters'
 
 // Constants
-const CHUNK_SIZE = 1000
 const CACHE_REVALIDATION_PATH = '/'
 
 // URLs should be in environment variables
 const SALES_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3ODRkNGYzNjZlNWJkMWE4ODMyZmZlZS9FeHBvcnQtU2FsZSUyME9yZGVycy10ZWFrd29vZGluZGlhXzEzMDEyMDI1MTQyNTMyLmNzdiMjIzY3ODRkNGYzNjZlNWJkMWE4ODMyZmZlZSMjIzEzXzAxXzIwMjU="
 
-const MONTHLY_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3ODRkNDdiNjZlNWJkMWE4ODMyZmIxYS9FeHBvcnQtTW9udGhseSUyME9yZGVyJTIwUmVwb3J0LXRlYWt3b29kaW5kaWFfMTMwMTIwMjUxNDI0MjUuY3N2IyMjNjc4NGQ0N2I2NmU1YmQxYTg4MzJmYjFhIyMjMTNfMDFfMjAyNQ=="
+const MONTHLY_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3OGZkYzA1MTVjOWFjNzZhMGY4MjQxMC9FeHBvcnQtTW9udGhseSUyME9yZGVyJTIwUmVwb3J0LXRlYWt3b29kaW5kaWFfMjEwMTIwMjUyMzExMzQuY3N2IyMjNjc4ZmRjMDUxNWM5YWM3NmEwZjgyNDEwIyMjMjFfMDFfMjAyNQ=="
 
 interface PaginatedResponse<T> {
     columns: string[]
@@ -144,7 +143,6 @@ export async function fetchMonthlyData(
         //     monthlyAnalysisCache.setData(transformedData)
         // }
 
-        console.log(monthlyCache.getData().length, "data")
         const transformedData = transformData(monthlyCache.getData())
         monthlyAnalysisCache.setData(transformedData)
 
@@ -169,6 +167,19 @@ export async function analysisData(key: string) {
         }
 
         return analysis(monthlyAnalysisCache.getData(), key)
+    } catch (error) {
+        console.error('Error in analysisData:', error)
+        throw new Error('Failed to analyze data')
+    }
+}
+
+export async function analysisDasboard() {
+    try {
+        if (monthlyAnalysisCache.isEmpty()) {
+            await fetchMonthlyData(0, 50)
+        }
+
+        return calc_Count_Amt(monthlyAnalysisCache.getData())
     } catch (error) {
         console.error('Error in analysisData:', error)
         throw new Error('Failed to analyze data')

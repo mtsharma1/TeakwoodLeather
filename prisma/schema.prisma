@@ -5,41 +5,51 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlserver"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model Product {
-  id                    String   @id @default(uuid())
-  skuCode               String   @unique
-  parentSku            String
-  size                 String
-  categoryName         String
-  subCategory         String
-  saleQty             Int
-  saleAmount          Decimal  @db.Decimal(10, 2)
-  vendorName          String
-  staticGrade         String
-  monthGrade          String?
-  availableInventory  Int      @default(0)
-  openPurchase        Int      @default(0)
-  requiredQty         Int?
-  orderQty            Int?
-  saleThrough         Decimal? @db.Decimal(10, 2)
-  vendorPrice         Decimal  @db.Decimal(10, 2)
-  totalAmount         Decimal  @db.Decimal(10, 2)
-  skuCodeId           String   @unique
+  id                      String   @id @default(uuid())
+  skuCode                 String   @unique
+  parentSku               String
+  size                    String
+  categoryName            String
+  subCategory             String
+  saleQty                 Int
+  saleAmount              Decimal  @db.Decimal(10, 2)
+  vendorName              String
+  staticGrade             String
+  monthGrade              String?
+  availableInventory      Int      @default(0)
+  openPurchase            Int      @default(0)
+  requiredQty             Int?
+  orderQty                Int?
+  saleThrough             Decimal? @db.Decimal(10, 2)
+  vendorPrice             Decimal  @db.Decimal(10, 2)
+  totalAmount             Decimal  @db.Decimal(10, 2)
+  skuCodeId               String   @unique
   daysOfPositiveInventory Int
-  roh                  Decimal? @db.Decimal(10, 2)
-  doh                  Decimal? @db.Decimal(10, 2)
-  newSkuCode          String?
-  staticGradeN        Int?
-  monthGradeN         Int?
-  comment             String?
-  avgSellingPrice     Decimal? @db.Decimal(10, 2)
-  multiplePrice       Decimal? @db.Decimal(10, 2)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  roh                     Decimal? @db.Decimal(10, 2)
+  doh                     Decimal? @db.Decimal(10, 2)
+  newSkuCode              String?
+  staticGradeN            Int?
+  monthGradeN             Int?
+  comment                 String?
+  avgSellingPrice         Decimal? @db.Decimal(10, 2)
+  multiplePrice           Decimal? @db.Decimal(10, 2)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   // Relations
+}
+
+model Token {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  password     String
+  accessToken  String   @db.Text
+  refreshToken String   @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
