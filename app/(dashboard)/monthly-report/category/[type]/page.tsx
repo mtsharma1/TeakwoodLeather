@@ -12,7 +12,7 @@ export default async function Category({ params }: { params: { type: string } })
   const data: any = await categoryData(key)
 
   return (
-    <Card className="w-full xl:max-w-[1600px] mx-auto">
+    <Card className="w-full xl:max-w-[1500px] mx-auto">
       <CardHeader>
         <CardTitle className="text-2xl font-bold capitalize">{params.type.replaceAll("-", " ")}</CardTitle>
       </CardHeader>

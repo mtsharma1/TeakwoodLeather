@@ -75,6 +75,21 @@ export const MensShoescolumns: ColumnDef<CategoryData>[] = [
         },
     },
     {
+        accessorKey: "staticGrade",
+        header: "Static Grade",
+        cell: ({ row }) => {
+            const grade: string = row.getValue("staticGrade")
+            return (
+                <div className={`font-medium ${grade === 'A' ? 'text-green-600' :
+                    grade === 'B' ? 'text-yellow-600' :
+                        'text-red-600'
+                    }`}>
+                    {grade}
+                </div>
+            )
+        },
+    },
+    {
         accessorKey: "monthGrade",
         header: "Month Grade",
         cell: ({ row }) => {
@@ -100,12 +115,17 @@ export const MensShoescolumns: ColumnDef<CategoryData>[] = [
     ...createSizeColumns(categorySizeMap.mensshoes, "availableInventorySize"),
     {
         accessorKey: "availableInventorySizeTotal",
-        header: "Available Inventory Total",
+        header: "Total",
     },
     ...createSizeColumns(categorySizeMap.mensshoes, "openPurchaseSize"),
     {
+        accessorKey: "openPurchaseSizeTotal",
+        header: "Total",
+    },
+    ...createSizeColumns(categorySizeMap.mensshoes, "orderQtySize"),
+    {
         accessorKey: "orderQtySizeTotal",
-        header: "Order Qty Total",
+        header: "Total",
     },
     {
         accessorKey: "saleThrough",
@@ -116,12 +136,12 @@ export const MensShoescolumns: ColumnDef<CategoryData>[] = [
         header: "Vendor Price",
     },
     {
-        accessorKey: "vendorName",
-        header: "Vendor Price",
-    },
-    {
         accessorKey: "totalPrice",
         header: "Total Price",
+    },
+    {
+        accessorKey: "vendorName",
+        header: "Vendor Name",
     },
 ]
 
@@ -167,6 +187,21 @@ export const WomensShoescolumns: ColumnDef<CategoryData>[] = [
         },
     },
     {
+        accessorKey: "staticGrade",
+        header: "Static Grade",
+        cell: ({ row }) => {
+            const grade: string = row.getValue("staticGrade")
+            return (
+                <div className={`font-medium ${grade === 'A' ? 'text-green-600' :
+                    grade === 'B' ? 'text-yellow-600' :
+                        'text-red-600'
+                    }`}>
+                    {grade}
+                </div>
+            )
+        },
+    },
+    {
         accessorKey: "monthGrade",
         header: "Month Grade",
         cell: ({ row }) => {
@@ -196,8 +231,13 @@ export const WomensShoescolumns: ColumnDef<CategoryData>[] = [
     },
     ...createSizeColumns(categorySizeMap.womenshoes, "openPurchaseSize"),
     {
+        accessorKey: "openPurchaseSizeTotal",
+        header: "Total",
+    },
+    ...createSizeColumns(categorySizeMap.womenshoes, "orderQtySize"),
+    {
         accessorKey: "orderQtySizeTotal",
-        header: "Order Qty Total",
+        header: "Total",
     },
     {
         accessorKey: "saleThrough",
@@ -208,12 +248,12 @@ export const WomensShoescolumns: ColumnDef<CategoryData>[] = [
         header: "Vendor Price",
     },
     {
-        accessorKey: "vendorName",
-        header: "Vendor Price",
-    },
-    {
         accessorKey: "totalPrice",
         header: "Total Price",
+    },
+    {
+        accessorKey: "vendorName",
+        header: "Vendor Name",
     },
 ]
 
@@ -259,6 +299,21 @@ export const KidsShoescolumns: ColumnDef<CategoryData>[] = [
         },
     },
     {
+        accessorKey: "staticGrade",
+        header: "Static Grade",
+        cell: ({ row }) => {
+            const grade: string = row.getValue("staticGrade")
+            return (
+                <div className={`font-medium ${grade === 'A' ? 'text-green-600' :
+                    grade === 'B' ? 'text-yellow-600' :
+                        'text-red-600'
+                    }`}>
+                    {grade}
+                </div>
+            )
+        },
+    },
+    {
         accessorKey: "monthGrade",
         header: "Month Grade",
         cell: ({ row }) => {
@@ -288,8 +343,13 @@ export const KidsShoescolumns: ColumnDef<CategoryData>[] = [
     },
     ...createSizeColumns(categorySizeMap.kidsshoes, "openPurchaseSize"),
     {
+        accessorKey: "openPurchaseSizeTotal",
+        header: "Total",
+    },
+    ...createSizeColumns(categorySizeMap.kidsshoes, "orderQtySize"),
+    {
         accessorKey: "orderQtySizeTotal",
-        header: "Order Qty Total",
+        header: "Total",
     },
     {
         accessorKey: "saleThrough",
@@ -300,12 +360,12 @@ export const KidsShoescolumns: ColumnDef<CategoryData>[] = [
         header: "Vendor Price",
     },
     {
-        accessorKey: "vendorName",
-        header: "Vendor Price",
-    },
-    {
         accessorKey: "totalPrice",
         header: "Total Price",
+    },
+    {
+        accessorKey: "vendorName",
+        header: "Vendor Name",
     },
 ]
 
@@ -351,6 +411,21 @@ export const Jacketcolumns: ColumnDef<CategoryData>[] = [
         },
     },
     {
+        accessorKey: "staticGrade",
+        header: "Static Grade",
+        cell: ({ row }) => {
+            const grade: string = row.getValue("staticGrade")
+            return (
+                <div className={`font-medium ${grade === 'A' ? 'text-green-600' :
+                    grade === 'B' ? 'text-yellow-600' :
+                        'text-red-600'
+                    }`}>
+                    {grade}
+                </div>
+            )
+        },
+    },
+    {
         accessorKey: "monthGrade",
         header: "Month Grade",
         cell: ({ row }) => {
@@ -380,8 +455,13 @@ export const Jacketcolumns: ColumnDef<CategoryData>[] = [
     },
     ...createSizeColumns(categorySizeMap.leatherjackets, "openPurchaseSize"),
     {
+        accessorKey: "openPurchaseSizeTotal",
+        header: "Total",
+    },
+    ...createSizeColumns(categorySizeMap.leatherjackets, "orderQtySize"),
+    {
         accessorKey: "orderQtySizeTotal",
-        header: "Order Qty Total",
+        header: "Total",
     },
     {
         accessorKey: "saleThrough",
@@ -392,12 +472,12 @@ export const Jacketcolumns: ColumnDef<CategoryData>[] = [
         header: "Vendor Price",
     },
     {
-        accessorKey: "vendorName",
-        header: "Vendor Price",
-    },
-    {
         accessorKey: "totalPrice",
         header: "Total Price",
+    },
+    {
+        accessorKey: "vendorName",
+        header: "Vendor Name",
     },
 ]
 
@@ -443,6 +523,21 @@ export const Beltcolumns: ColumnDef<CategoryData>[] = [
         },
     },
     {
+        accessorKey: "staticGrade",
+        header: "Static Grade",
+        cell: ({ row }) => {
+            const grade: string = row.getValue("staticGrade")
+            return (
+                <div className={`font-medium ${grade === 'A' ? 'text-green-600' :
+                    grade === 'B' ? 'text-yellow-600' :
+                        'text-red-600'
+                    }`}>
+                    {grade}
+                </div>
+            )
+        },
+    },
+    {
         accessorKey: "monthGrade",
         header: "Month Grade",
         cell: ({ row }) => {
@@ -472,8 +567,13 @@ export const Beltcolumns: ColumnDef<CategoryData>[] = [
     },
     ...createSizeColumns(categorySizeMap.leathermencasualbelt, "openPurchaseSize"),
     {
+        accessorKey: "openPurchaseSizeTotal",
+        header: "Total",
+    },
+    ...createSizeColumns(categorySizeMap.leathermencasualbelt, "orderQtySize"),
+    {
         accessorKey: "orderQtySizeTotal",
-        header: "Order Qty Total",
+        header: "Total",
     },
     {
         accessorKey: "saleThrough",
@@ -484,12 +584,12 @@ export const Beltcolumns: ColumnDef<CategoryData>[] = [
         header: "Vendor Price",
     },
     {
-        accessorKey: "vendorName",
-        header: "Vendor Price",
-    },
-    {
         accessorKey: "totalPrice",
         header: "Total Price",
+    },
+    {
+        accessorKey: "vendorName",
+        header: "Vendor Name",
     },
 ]
 
@@ -535,6 +635,21 @@ export const OtherColumns: ColumnDef<CategoryData>[] = [
         },
     },
     {
+        accessorKey: "staticGrade",
+        header: "Static Grade",
+        cell: ({ row }) => {
+            const grade: string = row.getValue("staticGrade")
+            return (
+                <div className={`font-medium ${grade === 'A' ? 'text-green-600' :
+                    grade === 'B' ? 'text-yellow-600' :
+                        'text-red-600'
+                    }`}>
+                    {grade}
+                </div>
+            )
+        },
+    },
+    {
         accessorKey: "monthGrade",
         header: "Month Grade",
         cell: ({ row }) => {
@@ -564,8 +679,13 @@ export const OtherColumns: ColumnDef<CategoryData>[] = [
     },
     ...createSizeColumns(categorySizeMap.othercategory, "openPurchaseSize"),
     {
+        accessorKey: "openPurchaseSizeTotal",
+        header: "Total",
+    },
+    ...createSizeColumns(categorySizeMap.othercategory, "orderQtySize"),
+    {
         accessorKey: "orderQtySizeTotal",
-        header: "Order Qty Total",
+        header: "Total",
     },
     {
         accessorKey: "saleThrough",
@@ -576,12 +696,12 @@ export const OtherColumns: ColumnDef<CategoryData>[] = [
         header: "Vendor Price",
     },
     {
-        accessorKey: "vendorName",
-        header: "Vendor Price",
-    },
-    {
         accessorKey: "totalPrice",
         header: "Total Price",
+    },
+    {
+        accessorKey: "vendorName",
+        header: "Vendor Name",
     },
 ]
 

@@ -79,6 +79,7 @@ export function transformData(
             "New SKU Code": `${item["Sku Code"]}_${item.Size}`,
             "Static Grade_N": staticGrade.rank,
             "Month Grade": monthlyGrade.grade ?? "",
+            "Static Grade": item["Static Grade"] ?? "",
             "Month Grade_N": monthlyGrade.rank,
             "Comment": item["Month Grade"]
                 ? compareGrades(item["Month Grade"], item["Static Grade"])
@@ -218,6 +219,7 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         totalSaleAmount: number,
         avgSellingPrice: number,
         monthGrade?: string,
+        staticGrade?: string,
         orderQty: number,
         sets: number,
         availableInventorySize: Record<string, number>,
@@ -300,6 +302,7 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         // Calculate derived values
         skuData.avgSellingPrice = skuData.totalSaleQty ? (skuData.totalSaleAmount / skuData.totalSaleQty) : 0;
         skuData.monthGrade = calcMonthGrade(skuData.totalSaleQty).grade;
+        skuData.staticGrade = item["Static Grade"];
         skuData.orderQty = saleQty * 2;
         skuData.sets = safeNumber(getSupportData(subCategory, size)?.["Ratio Sum"] || 0);
         skuData.saleThrough = safeNumber((skuData.totalSaleQty / (skuData.totalSaleQty + skuData.availableInventorySizeTotal)) * 100);
@@ -309,6 +312,7 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
     });
 
     const result = Array.from(skuMap.values());
+    console.log(result[0], "result")
 
     return result;
 }

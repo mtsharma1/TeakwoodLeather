@@ -38,8 +38,10 @@ const getBgColor = (columnId: string, isHeader: boolean = false): string => {
     return isHeader ? 'bg-blue-100' : 'bg-blue-50';
   } else if (columnId.startsWith('availableInventorySize_') || columnId === 'Available Inventory' || columnId === 'availableInventorySizeTotal') {
     return isHeader ? 'bg-green-100' : 'bg-yellow-50';
-  } else if (columnId.startsWith('openPurchaseSize_') || columnId === 'Open Purchase' || columnId === 'orderQtySizeTotal') {
+  } else if (columnId.startsWith('openPurchaseSize_') || columnId === 'Open Purchase' || columnId === 'openPurchaseSizeTotal') {
     return isHeader ? 'bg-yellow-100' : 'bg-red-50';
+  } else if (columnId.startsWith('orderQtySize_') || columnId === 'Order Qty' || columnId === 'orderQtySizeTotal') {
+    return isHeader ? 'bg-yellow-100' : 'bg-orange-50';
   }
   return '';
 };
@@ -119,9 +121,10 @@ export default function CategoryDataTable({
   const groupedColumns = [
     { title: 'Product Info', span: 3, color: 'text-medium bg-gray-200' },
     { title: 'Sales Sizes', span: (groupLength + 1), color: 'text-medium bg-blue-100' },
-    { title: 'Sales Info', span: 5, color: 'text-medium bg-green-100' },
+    { title: 'Sales Info', span: 6, color: 'text-medium bg-green-100' },
     { title: 'Available Inventory', span: (groupLength + 1), color: 'text-medium bg-yellow-100' },
     { title: 'Open Purchase', span: (groupLength + 1), color: 'text-medium bg-red-100' },
+    { title: 'Order Qty', span: (groupLength + 1), color: 'text-medium bg-orange-100' },
   ]
 
   return (

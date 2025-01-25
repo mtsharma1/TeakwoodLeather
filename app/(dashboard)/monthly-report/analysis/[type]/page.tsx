@@ -9,7 +9,7 @@ export const revalidate = 0
 
 export default async function OverStock({ params }: { params: { type: string } }) {
   return (
-    <Card className="w-full xl:max-w-[1600px] mx-auto">
+    <Card className="w-full xl:max-w-[1500px] mx-auto">
       <CardHeader>
         <CardTitle className="text-2xl font-bold capitalize">{params.type.replaceAll("-", " ")}</CardTitle>
       </CardHeader>

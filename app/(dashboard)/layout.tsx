@@ -22,7 +22,7 @@ export default function DashboardLayout({
 }) {
 
     return (
-        <SidebarProvider >
+        <SidebarProvider>
             <AppSidebar variant="inset"/>
             <SidebarInset className="overflow-x-visible">
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -45,7 +45,7 @@ export default function DashboardLayout({
                         {/* <DatePickerWithRange date={date} setDate={setDate} disabledDates={{ after: new Date() }} /> */}
                     </div>
                 </header>
-                <div className="flex flex-1 flex-col gap-4 p-4 pt-0 overflow-x-hidden">
+                <div className="flex flex-1 flex-col gap-4 p-4 pt-0 overflow-hidden">
                     {children}
                 </div>
             </SidebarInset>

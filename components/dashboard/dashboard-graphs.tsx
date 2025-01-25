@@ -8,7 +8,6 @@ import { GraphSkeleton } from "../loader/monthly-report-graph-loading"
 export async function DashboardGraphs() {
     const data = await analysisDasboard()
 
-    console.log(data.cards, "data.cards")
     return (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Suspense fallback={<GraphSkeleton />}>

@@ -2,8 +2,7 @@
 
 import * as React from "react"
 import {
-  GalleryVerticalEnd,
-  SquareTerminal,
+  Package,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -27,94 +26,90 @@ const data = {
   teams: [
     {
       name: "Teackwood",
-      logo: GalleryVerticalEnd,
+      logo: Package,
       plan: "Enterprise",
     },
   ],
   navMain: [
     {
-      title: "Analysis",
-      url: "/analysis",
-      icon: SquareTerminal,
+      title: "Dashboard",
+      url: "/",
+      icon: Package,
+    },
+    {
+      title: "Inventory",
+      url: "/monthly-report",
+      icon: Package,
       isActive: true,
       items: [
         {
-          title: "Over Stock",
-          url: "/analysis/overstock",
+          title: "Analysis",
+          url: "/monthly-report/analysis",
+          items: [
+            {
+              title: "Over Stock",
+              url: "/monthly-report/analysis/overstock",
+            },
+            {
+              title: "Under Stock",
+              url: "/monthly-report/analysis/understock",
+            },
+            {
+              title: "Under Price 2",
+              url: "/monthly-report/analysis/underprice2",
+            },
+            {
+              title: "Sales Grade & Inventory MIS",
+              url: "/monthly-report/analysis/salesinventorsSummary",
+            },
+            {
+              title: "Common Order",
+              url: "/monthly-report/analysis/commonordersummary",
+            },
+            {
+              title: "Order Summary",
+              url: "/monthly-report/analysis/ordersummary",
+            },
+          ],
         },
         {
-          title: "Under Stock",
-          url: "/analysis/understock",
-        },
-        {
-          title: "Under Price 2",
-          url: "/analysis/underprice2",
-        },
-        {
-          title: "Sales Grade & Inventory MIS",
-          url: "/analysis/salesinventorsSummary",
-        },
-        {
-          title: "Common Order",
-          url: "/analysis/commonordersummary",
-        },
-        {
-          title: "Order Summary",
-          url: "/analysis/ordersummary",
+          title: "Category",
+          url: "/monthly-report/category",
+          items: [
+            {
+              title: "Mens Shoes",
+              url: "/monthly-report/category/mens-shoes",
+            },
+            {
+              title: "Womens Shoes",
+              url: "/monthly-report/category/women-shoes",
+            },
+            {
+              title: "Kids Shoes",
+              url: "/monthly-report/category/kids-shoes",
+            },
+            {
+              title: "Leather Jackets",
+              url: "/monthly-report/category/leather-jackets",
+            },
+            {
+              title: "Leather Men Casual Belt",
+              url: "/monthly-report/category/leather-men-casual-belt",
+            },
+            {
+              title: "Other Category",
+              url: "/monthly-report/category/other-category",
+            },
+          ],
         },
       ],
     },
-    {
-      title: "Category",
-      url: "/category",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "Mens Shoes",
-          url: "/category/mens-shoes",
-        },
-        {
-          title: "Womens Shoes",
-          url: "/category/women-shoes",
-        },
-        {
-          title: "Kids Shoes",
-          url: "/category/kids-shoes",
-        },
-        {
-          title: "Leather Jackets",
-          url: "/category/leather-jackets",
-        },
-        {
-          title: "Leather Men Casual Belt",
-          url: "/category/leather-men-casual-belt",
-        },
-      ],
-    }
   ],
-  // projects: [
-  //   {
-  //     name: "Design Engineering",
-  //     url: "#",
-  //     icon: Frame,
-  //   },
-  //   {
-  //     name: "Sales & Marketing",
-  //     url: "#",
-  //     icon: PieChart,
-  //   },
-  //   {
-  //     name: "Travel",
-  //     url: "#",
-  //     icon: Map,
-  //   },
-  // ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="icon" {...props} className="bg-slate-800">
+    <Sidebar collapsible="icon" {...props} className="bg-slate-800 ">
       <SidebarHeader className="bg-slate-800 text-white">
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>

@@ -1,13 +1,13 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_noStore } from 'next/cache'
 import { parse } from 'csv-parse/sync'
 import { analysis, calc_Count_Amt, orderCategory, transformData } from '@/lib/action-utils'
 import { MonthDataItem, SalesDataItem } from '@/types/order'
 import { categorySizeMap } from '@/components/categories/data-table-filters'
 
 // Constants
-const CACHE_REVALIDATION_PATH = '/'
+const CACHE_REVALIDATION_PATH = '/analysis'
 
 // URLs should be in environment variables
 const SALES_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3ODRkNGYzNjZlNWJkMWE4ODMyZmZlZS9FeHBvcnQtU2FsZSUyME9yZGVycy10ZWFrd29vZGluZGlhXzEzMDEyMDI1MTQyNTMyLmNzdiMjIzY3ODRkNGYzNjZlNWJkMWE4ODMyZmZlZSMjIzEzXzAxXzIwMjU="
@@ -60,7 +60,7 @@ const monthlyAnalysisCache = new DataCache<any>()
 // Utility functions
 async function fetchCSV<T>(url: string): Promise<T[]> {
     const response = await fetch(url, {
-        cache: 'no-store',
+        cache: process.env.NODE_ENV === 'production' ? 'force-cache' : 'no-store',
         headers: {
             'Content-Type': 'text/csv',
         },
@@ -112,41 +112,17 @@ export async function fetchMonthlyData(
     startIndex: number,
     stopIndex: number
 ): Promise<PaginatedResponse<MonthDataItem>> {
+    // Disable static rendering
+    unstable_noStore()
+
     try {
-        // Load data if needed
         if (monthlyCache.isEmpty()) {
             const result = await fetchCSV<MonthDataItem>(MONTHLY_ORDER_URL)
             monthlyCache.setData(result)
         }
 
-        // if (salesCache.isEmpty()) {
-        //     await fetchSalesData(0, 1) // This will populate salesCache
-        // }
-
-        // Process data if not already processed
-        // if (monthlyAnalysisCache.isEmpty()) {
-        //     const salesDataMap = processSalesData(salesCache.getData())
-
-        //     // Process in chunks for better memory management
-        //     const processedData: MonthDataItem[] = []
-        //     for (let i = 0; i < monthlyCache.length(); i += CHUNK_SIZE) {
-        //         const chunk = monthlyCache.slice(i, i + CHUNK_SIZE)
-        //         const processedChunk = chunk.map(item => ({
-        //             ...item,
-        //             'Sale Qty': salesDataMap.get(item['Sku Code'])?.countOfItemSKUCode || 0,
-        //             'Sale Amount': salesDataMap.get(item['Sku Code'])?.sumOfSellingPrice || 0
-        //         }))
-        //         processedData.push(...processedChunk)
-        //     }
-
-        //     const transformedData = transformData(processedData)
-        //     monthlyAnalysisCache.setData(transformedData)
-        // }
-
         const transformedData = transformData(monthlyCache.getData())
         monthlyAnalysisCache.setData(transformedData)
-
-        revalidatePath(CACHE_REVALIDATION_PATH)
 
         return {
             columns: Object.keys(monthlyAnalysisCache.getData()[0]),
@@ -161,6 +137,9 @@ export async function fetchMonthlyData(
 }
 
 export async function analysisData(key: string) {
+    // Disable static rendering
+    unstable_noStore()
+
     try {
         if (monthlyAnalysisCache.isEmpty()) {
             await fetchMonthlyData(0, 50)
@@ -173,7 +152,9 @@ export async function analysisData(key: string) {
     }
 }
 
+// Similar modification for other server actions
 export async function analysisDasboard() {
+    unstable_noStore()
     try {
         if (monthlyAnalysisCache.isEmpty()) {
             await fetchMonthlyData(0, 50)
@@ -187,6 +168,7 @@ export async function analysisDasboard() {
 }
 
 export async function categoryData(key: keyof typeof categorySizeMap) {
+    unstable_noStore()
     try {
         if (monthlyAnalysisCache.isEmpty()) {
             await fetchMonthlyData(0, 50)
@@ -198,4 +180,3 @@ export async function categoryData(key: keyof typeof categorySizeMap) {
         throw new Error('Failed to analyze data')
     }
 }
-
