@@ -1,21 +1,21 @@
-import { Suspense } from 'react'
+import { cache, Suspense } from "react"
 import { analysisData } from "@/action/csv"
 import AdvancedInventoryTable from "@/components/advanced-inventory-table"
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import LoadingSkeleton from '@/components/loader/table-skelaton'
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import LoadingSkeleton from "@/components/loader/table-skelaton"
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+const getCachedAnalysisData = cache(async (type: string) => await analysisData(type))
 
 export default async function OverStock({ params }: { params: { type: string } }) {
+  const key = params.type.replaceAll("-", "")
   return (
-    <Card className="w-full xl:max-w-[1500px] mx-auto">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold capitalize">{params.type.replaceAll("-", " ")}</CardTitle>
+    <Card className="w-full overflow-hidden">
+      <CardHeader className="border-b">
+        <CardTitle className="text-xl md:text-2xl font-bold capitalize">{params.type.replaceAll("-", " ")}</CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
-        <Suspense fallback={<LoadingSkeleton/>}>
-          <OverStockContent type={params.type} />
+      <CardContent className="p-2 sm:p-4">
+        <Suspense fallback={<LoadingSkeleton />}>
+          <OverStockContent type={key} />
         </Suspense>
       </CardContent>
     </Card>
@@ -24,17 +24,27 @@ export default async function OverStock({ params }: { params: { type: string } }
 
 async function OverStockContent({ type }: { type: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const data : any = await analysisData(type)
+  const data: any = await getCachedAnalysisData(type)
 
   return (
-    <>
-      {data?.totalSale && <h1 className="text-lg font-bold mb-4 capitalize">Total Sale: {data.totalSale}</h1>}
-      {data?.totalInventory && <h1 className="text-lg font-bold mb-4 capitalize">Total Inventory: {data.totalInventory}</h1>}
-      <AdvancedInventoryTable
-        data={data.rows || data || []}
-        columnNames={data?.cols || Object.keys(data[0]) || {}}
-      />
-    </>
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2 p-4">
+        {data?.totalSale && (
+          <div className="rounded-lg border p-3">
+            <h2 className="text-sm font-medium text-muted-foreground">Total Sale</h2>
+            <p className="text-2xl font-bold">{data.totalSale}</p>
+          </div>
+        )}
+        {data?.totalInventory && (
+          <div className="rounded-lg border p-3">
+            <h2 className="text-sm font-medium text-muted-foreground">Total Inventory</h2>
+            <p className="text-2xl font-bold">{data.totalInventory}</p>
+          </div>
+        )}
+      </div>
+      <div className="relative w-full overflow-hidden">
+        <AdvancedInventoryTable data={data.rows || data || []} columnNames={data?.cols || Object.keys(data[0]) || []} />
+      </div>
+    </div>
   )
 }
-

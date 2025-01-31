@@ -56,19 +56,19 @@ const data = {
             },
             {
               title: "Under Price 2",
-              url: "/monthly-report/analysis/underprice2",
+              url: "/monthly-report/analysis/under-price-2",
             },
             {
               title: "Sales Grade & Inventory MIS",
-              url: "/monthly-report/analysis/salesinventorsSummary",
+              url: "/monthly-report/analysis/sales-inventors-Summary",
             },
             {
               title: "Common Order",
-              url: "/monthly-report/analysis/commonordersummary",
+              url: "/monthly-report/analysis/common-order-summary",
             },
             {
               title: "Order Summary",
-              url: "/monthly-report/analysis/ordersummary",
+              url: "/monthly-report/analysis/order-summary",
             },
           ],
         },
@@ -104,6 +104,31 @@ const data = {
         },
       ],
     },
+    {
+      title: "Price Checklist",
+      url: "/price-checklist",
+      icon: Package,
+      isActive: true,
+      items: [
+        {
+          title: "Analysis",
+          icon: Package,
+          url: "/price-checklist/analysis",
+        },
+        {
+          title: "Stop",
+          url: "/price-checklist/stop",
+        },
+        {
+          title: "Check",
+          url: "/price-checklist/check",
+        },
+        {
+          title: "Under 300",
+          url: "/price-checklist/u300",
+        },
+      ],
+    },
   ],
 }
 
@@ -113,7 +138,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="bg-slate-800 text-white">
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
-      <SidebarContent className="bg-slate-800 text-white">
+      <SidebarContent className="bg-slate-800 scrollbar-none text-white">
         <NavMain items={data.navMain} />
         {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>

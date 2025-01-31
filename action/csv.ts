@@ -3,16 +3,19 @@
 import { revalidatePath, unstable_noStore } from 'next/cache'
 import { parse } from 'csv-parse/sync'
 import { analysis, calc_Count_Amt, orderCategory, transformData } from '@/lib/action-utils'
-import { MonthDataItem, SalesDataItem } from '@/types/order'
+import { InvoiceData, MonthDataItem, SalesDataItem } from '@/types/order'
 import { categorySizeMap } from '@/components/categories/data-table-filters'
+import { transformInvoiceData } from '@/lib/invoice-action-utils'
 
 // Constants
 const CACHE_REVALIDATION_PATH = '/analysis'
 
 // URLs should be in environment variables
-const SALES_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3ODRkNGYzNjZlNWJkMWE4ODMyZmZlZS9FeHBvcnQtU2FsZSUyME9yZGVycy10ZWFrd29vZGluZGlhXzEzMDEyMDI1MTQyNTMyLmNzdiMjIzY3ODRkNGYzNjZlNWJkMWE4ODMyZmZlZSMjIzEzXzAxXzIwMjU="
+// const SALES_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3ODRkNGYzNjZlNWJkMWE4ODMyZmZlZS9FeHBvcnQtU2FsZSUyME9yZGVycy10ZWFrd29vZGluZGlhXzEzMDEyMDI1MTQyNTMyLmNzdiMjIzY3ODRkNGYzNjZlNWJkMWE4ODMyZmZlZSMjIzEzXzAxXzIwMjU="
 
-const MONTHLY_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3OGZkYzA1MTVjOWFjNzZhMGY4MjQxMC9FeHBvcnQtTW9udGhseSUyME9yZGVyJTIwUmVwb3J0LXRlYWt3b29kaW5kaWFfMjEwMTIwMjUyMzExMzQuY3N2IyMjNjc4ZmRjMDUxNWM5YWM3NmEwZjgyNDEwIyMjMjFfMDFfMjAyNQ=="
+const INVOICE_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3OWE4NWRlZGM4NGUzMjk0MmZhYThiNC9FeHBvcnQtSW52b2ljZS10ZWFrd29vZGluZGlhXzMwMDEyMDI1MDExNzQzLmNzdiMjIzY3OWE4NWRlZGM4NGUzMjk0MmZhYThiNCMjIzMwXzAxXzIwMjU="
+
+const MONTHLY_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3OWE4NWQ0OWJiYTY1MmJiYTRkNTZhMS9FeHBvcnQtTW9udGhseSUyME9yZGVyJTIwUmVwb3J0LXRlYWt3b29kaW5kaWFfMzAwMTIwMjUwMTE4NDEuY3N2IyMjNjc5YTg1ZDQ5YmJhNjUyYmJhNGQ1NmExIyMjMzBfMDFfMjAyNQ=="
 
 interface PaginatedResponse<T> {
     columns: string[]
@@ -53,14 +56,15 @@ class DataCache<T> {
 }
 
 // Initialize caches
+const invoiceCache = new DataCache<InvoiceData>()
 const salesCache = new DataCache<SalesDataItem>()
 const monthlyCache = new DataCache<MonthDataItem>()
-const monthlyAnalysisCache = new DataCache<any>()
+const monthlyAnalysisCache = new DataCache<MonthDataItem>()
 
 // Utility functions
 async function fetchCSV<T>(url: string): Promise<T[]> {
     const response = await fetch(url, {
-        cache: process.env.NODE_ENV === 'production' ? 'force-cache' : 'no-store',
+        // cache: process.env.NODE_ENV === 'production' ? 'force-cache' : 'no-store',
         headers: {
             'Content-Type': 'text/csv',
         },
@@ -82,14 +86,13 @@ function processCSVData<T>(csvText: string): T[] {
     }) as T[]
 }
 
-// Server actions
 export async function fetchSalesData(
     startIndex: number,
     stopIndex: number
 ): Promise<PaginatedResponse<SalesDataItem>> {
     try {
         if (salesCache.isEmpty()) {
-            const result = await fetchCSV<SalesDataItem>(SALES_ORDER_URL)
+            const result = await fetchCSV<SalesDataItem>(INVOICE_URL)
             salesCache.setData(result, Object.keys(result[0]))
         }
 
@@ -137,9 +140,6 @@ export async function fetchMonthlyData(
 }
 
 export async function analysisData(key: string) {
-    // Disable static rendering
-    unstable_noStore()
-
     try {
         if (monthlyAnalysisCache.isEmpty()) {
             await fetchMonthlyData(0, 50)
@@ -152,7 +152,6 @@ export async function analysisData(key: string) {
     }
 }
 
-// Similar modification for other server actions
 export async function analysisDasboard() {
     unstable_noStore()
     try {
@@ -168,13 +167,50 @@ export async function analysisDasboard() {
 }
 
 export async function categoryData(key: keyof typeof categorySizeMap) {
-    unstable_noStore()
     try {
         if (monthlyAnalysisCache.isEmpty()) {
             await fetchMonthlyData(0, 50)
         }
 
         return orderCategory(monthlyAnalysisCache.getData(), key)
+    } catch (error) {
+        console.error('Error in analysisData:', error)
+        throw new Error('Failed to analyze data')
+    }
+}
+
+
+/**************Invoice Data**************/
+export async function fetchInvoiceData(
+    startIndex: number,
+    stopIndex: number
+): Promise<PaginatedResponse<InvoiceData>> {
+    try {
+        if (invoiceCache.isEmpty()) {
+            const result = await fetchCSV<InvoiceData>(INVOICE_URL)
+            invoiceCache.setData(result, Object.keys(result[0]))
+        }
+
+        const rows = invoiceCache.slice(startIndex, stopIndex)
+
+        return {
+            columns: invoiceCache.getColumns(),
+            rows,
+            hasMore: stopIndex < invoiceCache.length(),
+            totalItems: invoiceCache.length()
+        }
+    } catch (error) {
+        console.error('Error in fetchInvoiceData:', error)
+        throw new Error('Failed to fetchInvoiceData')
+    }
+}
+
+export async function priceCheckListData() {
+    try {
+        if (invoiceCache.isEmpty()) {
+            await fetchInvoiceData(0, 50)
+        }
+        return transformInvoiceData(invoiceCache.getData())
     } catch (error) {
         console.error('Error in analysisData:', error)
         throw new Error('Failed to analyze data')

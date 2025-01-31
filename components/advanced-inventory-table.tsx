@@ -25,10 +25,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ChevronDown, Search, X, DownloadIcon } from 'lucide-react'
+import { ChevronDown, Search, X, DownloadIcon, ArrowUpDownIcon, PinIcon } from 'lucide-react'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import CsvDownloader from 'react-csv-downloader';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "./ui/pagination"
 
 
 const multiSelectFilter = (
@@ -84,7 +86,8 @@ export default function AdvancedInventoryTable({
   const [globalFilter, setGlobalFilter] = React.useState("")
   const [activeFilters, setActiveFilters] = React.useState<Record<string, string[]>>({})
   const [columnOrder, setColumnOrder] = React.useState<string[]>([])
-
+  const [pageSize, setPageSize] = React.useState(20)
+  const [pinnedColumns, setPinnedColumns] = React.useState<string[]>([])
 
   const columns = generateColumns(columnNames);
 
@@ -109,6 +112,7 @@ export default function AdvancedInventoryTable({
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
     onColumnOrderChange: setColumnOrder,
+    pageCount: Math.ceil(data.length / pageSize),
     filterFns: {
       multiSelect: multiSelectFilter,
     },
@@ -118,6 +122,12 @@ export default function AdvancedInventoryTable({
   React.useEffect(() => {
     setColumnOrder(table.getAllLeafColumns().map(d => d.id))
   }, [table])
+
+
+  React.useEffect(() => {
+    table.setPageSize(pageSize)
+  }, [pageSize, table])
+
 
   // const sensors = useSensors(
   //   useSensor(PointerSensor),
@@ -163,9 +173,31 @@ export default function AdvancedInventoryTable({
     }
   }
 
+  const toggleColumnPin = (columnId: string) => {
+    setPinnedColumns((prevPinnedColumns) => {
+      if (prevPinnedColumns.includes(columnId)) {
+        return prevPinnedColumns.filter((id) => id !== columnId)
+      } else {
+        return [...prevPinnedColumns, columnId]
+      }
+    })
+  }
+
+  React.useEffect(() => {
+    const newColumnOrder = [
+      ...pinnedColumns,
+      ...table
+        .getAllLeafColumns()
+        .filter((column) => !pinnedColumns.includes(column.id))
+        .map((column) => column.id),
+    ]
+    table.setColumnOrder(newColumnOrder)
+  }, [pinnedColumns, table])
+
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="lg:flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Input
             placeholder="Filter all columns..."
@@ -173,11 +205,6 @@ export default function AdvancedInventoryTable({
             onChange={(event) => setGlobalFilter(String(event.target.value))}
             className="max-w-sm"
           />
-          <CsvDownloader filename="AwbTransacs" datas={data} columns={columnNames.map(x => ({ id: x, displayName: x }))}>
-            <Button size={'icon'}>
-              <DownloadIcon size={18} />
-            </Button>
-          </CsvDownloader>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="ml-auto">
@@ -238,33 +265,31 @@ export default function AdvancedInventoryTable({
             </PopoverContent>
           </Popover>
         </div>
-        {/* Col visibility */}
-        {/* <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDown className="ml-2 h-4 w-4" />
+        <div className="flex gap-2 justify-center mt-2 lg:mt-0 items-center text-center text-sm text-muted-foreground">
+          <Button variant={'ghost'} size={'sm'}>Total Rows: {table.getFilteredRowModel().rows.length}</Button>
+          <Select
+            value={`${pageSize}`}
+            onValueChange={(value) => {
+              setPageSize(Number(value))
+            }}
+          >
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue placeholder={pageSize} />
+            </SelectTrigger>
+            <SelectContent side="top">
+              {[20, 40, 60, 80, 100].map((size) => (
+                <SelectItem key={size} value={`${size}`}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <CsvDownloader filename="AwbTransacs" datas={data} columns={columnNames.map(x => ({ id: x, displayName: x }))}>
+            <Button size={'icon'}>
+              <DownloadIcon size={18} />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu> */}
+          </CsvDownloader>
+        </div>
       </div>
       {Object.entries(activeFilters).map(([columnId, filters]) => (
         filters.map((filter) => (
@@ -306,15 +331,51 @@ export default function AdvancedInventoryTable({
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header, index) => {
+                    const isPinned = pinnedColumns.includes(header.column.id)
+
                     return (
-                      <TableHead key={header.id} colSpan={header.colSpan}
-                        className={`${index === 0 ? "sticky left-0 z-10 bg-white" : ""} min-w-[150px] max-w-[200px] text-ellipsis text-nowrap whitespace-nowrap`}
+                      <TableHead
+                        key={header.id}
+                        colSpan={header.colSpan}
+                        className={`
+                  ${isPinned ? `sticky left-0 z-10 bg-blue-50 shadow-lg' : 'bg-white'` : ''} 
+                  min-w-[150px] max-w-[250px] text-ellipsis text-nowrap whitespace-nowrap
+                `}
+                        style={index === 0 && isPinned ? { position: 'sticky', left: 0 } : {}}
                       >
                         {header.isPlaceholder
                           ? null
-                          : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
+                          : (
+                            <div>
+                              <div
+                                className="flex items-center cursor-pointer"
+                                onClick={() => header.column.toggleSorting()}
+                              >
+                                {flexRender(header.column.columnDef.header, header.getContext())}
+                                {header.column.getCanSort() &&
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                  >
+                                    <ArrowUpDownIcon />
+                                  </Button>
+                                }
+                                {index === 0 && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      toggleColumnPin(header.column.id)
+                                    }}
+                                  >
+                                    <PinIcon
+                                      className={`h-4 w-4 ${isPinned ? "text-blue-500" : "text-gray-500"}`}
+                                    />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
                           )}
                       </TableHead>
                     )
@@ -324,35 +385,40 @@ export default function AdvancedInventoryTable({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row, rowIndex) => (
-                  <React.Fragment key={row.id}>
-                    <TableRow
-                      data-state={row.getIsSelected() && "selected"}
-                      className={`
+                table.getRowModel().rows.map((row, rowIndex) => {
+                  const firstColumnId = table.getHeaderGroups()[0].headers[0].column.id
+                  const isPinned = pinnedColumns.includes(firstColumnId)
+
+                  return (
+                    <React.Fragment key={row.id}>
+                      <TableRow
+                        data-state={row.getIsSelected() && "selected"}
+                        className={`
                           ${rowIndex % 2 === 0 ? "bg-gray-50" : ""}
                           ${row.getIsSelected() ? "bg-blue-100" : ""}
                         `}
-                    >
-                      {row.getVisibleCells().map((cell, index) => (
-                        <TableCell
-                          key={cell.id}
-                          className={` 
-                              ${index === 0 ? "sticky left-0 z-10 bg-white" : ""}
+                      >
+                        {row.getVisibleCells().map((cell, cellIndex) => (
+                          <TableCell
+                            key={cell.id}
+                            className={` 
+                              ${cellIndex === 0 && isPinned ? "sticky left-0 z-10 bg-blue-50 shadow-lg " : ""}
                             `}
-                        >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                    {row.getIsExpanded() && (
-                      <TableRow>
-                        <TableCell colSpan={row.getVisibleCells().length}>
-                          {/* ExpandedRowContent will go here */}
-                        </TableCell>
+                          >
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </TableCell>
+                        ))}
                       </TableRow>
-                    )}
-                  </React.Fragment>
-                ))
+                      {row.getIsExpanded() && (
+                        <TableRow>
+                          <TableCell colSpan={row.getVisibleCells().length}>
+                            {/* ExpandedRowContent will go here */}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  )
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
@@ -365,30 +431,124 @@ export default function AdvancedInventoryTable({
           {/* </DndContext> */}
         </div>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+      <Pagination>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                table.previousPage()
+              }}
+              aria-disabled={!table.getCanPreviousPage()}
+              className={!table.getCanPreviousPage() ? "pointer-events-none opacity-50" : ""}
+            />
+          </PaginationItem>
+          {table.getPageCount() > 0 && (
+            <>
+              {/* First Page */}
+              <PaginationItem>
+                <PaginationLink
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    table.setPageIndex(0)
+                  }}
+                  isActive={table.getState().pagination.pageIndex === 0}
+                >
+                  1
+                </PaginationLink>
+              </PaginationItem>
+
+              {/* Show ellipsis if there are many pages before current */}
+              {table.getState().pagination.pageIndex > 2 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+
+              {/* Current page and surrounding pages */}
+              {table.getState().pagination.pageIndex > 1 && (
+                <PaginationItem>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      table.setPageIndex(table.getState().pagination.pageIndex - 1)
+                    }}
+                  >
+                    {table.getState().pagination.pageIndex}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+
+              {table.getState().pagination.pageIndex > 0 &&
+                table.getState().pagination.pageIndex < table.getPageCount() - 1 && (
+                  <PaginationItem>
+                    <PaginationLink
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        table.setPageIndex(table.getState().pagination.pageIndex)
+                      }}
+                      isActive={true}
+                    >
+                      {table.getState().pagination.pageIndex + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                )}
+
+              {table.getState().pagination.pageIndex < table.getPageCount() - 2 && (
+                <PaginationItem>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      table.setPageIndex(table.getState().pagination.pageIndex + 1)
+                    }}
+                  >
+                    {table.getState().pagination.pageIndex + 2}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+
+              {/* Show ellipsis if there are many pages after current */}
+              {table.getState().pagination.pageIndex < table.getPageCount() - 3 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+
+              {/* Last Page */}
+              {table.getPageCount() > 1 && (
+                <PaginationItem>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      table.setPageIndex(table.getPageCount() - 1)
+                    }}
+                    isActive={table.getState().pagination.pageIndex === table.getPageCount() - 1}
+                  >
+                    {table.getPageCount()}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+            </>
+          )}
+          <PaginationItem>
+            <PaginationNext
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                table.nextPage()
+              }}
+              aria-disabled={!table.getCanNextPage()}
+              className={!table.getCanNextPage() ? "pointer-events-none opacity-50" : ""}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
     </div>
   )
 }
@@ -399,7 +559,7 @@ export const generateColumns = (columnNames: string[]): ColumnDef<{
 }>[] => {
   const dynamicColumns = columnNames?.map((colName) => ({
     accessorKey: colName,
-    header: () => <span className="w-64">{colName}</span>,
+    header: () => <span className="w-64 text-gray-800 font-semibold">{colName.toLocaleUpperCase()}</span>,
     cell: ({ row }: { row: { getValue: (colName: string) => string } }) => {
       const value = row.getValue(colName)
       return (

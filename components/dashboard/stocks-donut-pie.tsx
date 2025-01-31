@@ -116,8 +116,6 @@ export function MonthlyReportDonutPieChart({ data }: { data: CardsData }) {
               }}
             />
             <Pie
-              label
-              labelLine
               data={chartData}
               dataKey="value"
               nameKey="category"

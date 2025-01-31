@@ -69,3 +69,68 @@ export interface OrderSummaryItem {
     totalQuantity: number
     totalOrderValue: number
 }
+
+export type InvoiceData = {
+    "Order No": string;
+    "Invoice No": string;
+    "Shipping Package Code": string;
+    "Shipping Package Status Code": string;
+    "Invoice Created Date": string;
+    "Channel Invoice Created Date": string;
+    "EWayBill No": string;
+    "EWayBill Date": string;
+    "EWayBill Valid Till": string;
+    "Customer Name": string;
+    "SKU Code": string;
+    "SKU Name": string;
+    "Quantity": number;
+    "Invoice Tax": number;
+    "Invoice Total": number;
+    "Invoice Cancelled": string;
+    "HSN Code": number;
+    "GST Tax Type Code": number;
+    "Tax Type Code": number;
+    "CGST": number;
+    "IGST": number;
+    "SGST": number;
+    "UTGST": number;
+    "VAT": number;
+    "CST": number;
+    "Additional Tax": number;
+    "Additional Tax Percentage": number;
+    "Tax Percentage": number;
+    "CESS": number;
+    "CGST Rate": number;
+    "IGST Rate": number;
+    "SGST Rate": number;
+    "UTGST Rate": number;
+    "CESS Rate": number;
+    "Shipping Charge": number;
+    "COD Charge": number;
+    "TCS Amount": number;
+    "Channel Name": string;
+    "Uniware Invoice Code": string;
+    "Adjustment In Selling Price": number;
+    "Adjustment In Discount": number;
+    "Grade": string;
+    "MRP": number;
+    "Color": string;
+    "Brand": string;
+    "Size": string;
+    "Seller Sku Code": string;
+    "Cost Price": number;
+    "Business Type": string;
+};
+
+export type PriceCheckData = {
+    // "Business Type": string;
+    "Concate Article": string;
+    "Total Cost": string;
+    "Total Selling Price": string;
+    "Status": string;
+    "Selling Price < 300": string;
+    "Invoice Count": string; // Count of Articals
+    "Discount %": string;
+};
+
+export type PriceCheckInvoiceData = InvoiceData & PriceCheckData;
