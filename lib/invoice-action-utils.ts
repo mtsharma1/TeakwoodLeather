@@ -26,7 +26,7 @@ export function transformInvoiceData(INPUT: InvoiceData[]): PriceCheckInvoiceDat
 
     const calculateMultiplePrice = (totalCost: number, invoiceTotal: number): number => {
         if (totalCost === 0) return 0;
-        return roundToDecimals(safeNumber((invoiceTotal / totalCost) * 1000));
+        return roundToDecimals(safeNumber((invoiceTotal / totalCost)));
     };
 
     const aggregatedData = new Map<string, { skuCodes: string[]; totalCost: number; invoiceTotal: number }>();
@@ -76,6 +76,46 @@ export function transformInvoiceData(INPUT: InvoiceData[]): PriceCheckInvoiceDat
             //   "Business Type": item["Business Type"] || "",
         };
     });
+}
+
+export function invoiceGradeAnalysis(analysisData: PriceCheckInvoiceData[]) {
+    const grades = ['A', 'B', 'C', 'D', 'A+', 'NEW'] as const;
+    
+    const initialGradeSummary = Object.fromEntries(
+        grades.map(grade => [grade, { saleValue: 0, salePercentage: 0 }])
+    ) as Record<typeof grades[number], { saleValue: number; salePercentage: number }>;
+
+    const summary = analysisData.reduce((acc, item) => {
+        const saleAmount = safeNumber(item['Total Selling Price']);
+        const grade = (item['Grade'] || 'NEW') as keyof typeof initialGradeSummary;
+
+        acc.totalSale += saleAmount;
+
+        if (grade in acc.gradeWiseSales) {
+            acc.gradeWiseSales[grade].saleValue += saleAmount;
+        }
+
+        return acc;
+    }, {
+        totalSale: 0,
+        gradeWiseSales: initialGradeSummary
+    });
+
+    Object.values(summary.gradeWiseSales).forEach(grade => {
+        grade.salePercentage = summary.totalSale > 0 
+            ? roundToDecimals((grade.saleValue / summary.totalSale) * 100) 
+            : 0;
+        grade.saleValue = roundToDecimals(grade.saleValue);
+    });
+
+    return {
+        totalSale: roundToDecimals(summary.totalSale),
+        rows: Object.entries(summary.gradeWiseSales).map(([grade, data]) => ({
+            grade,
+            ...data
+        })),
+        cols: ['grade', 'saleValue', 'salePercentage']
+    };
 }
 
 

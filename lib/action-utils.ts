@@ -312,7 +312,6 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
     });
 
     const result = Array.from(skuMap.values());
-    console.log(result[0], "result")
 
     return result;
 }

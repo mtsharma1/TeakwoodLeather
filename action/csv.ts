@@ -5,7 +5,8 @@ import { parse } from 'csv-parse/sync'
 import { analysis, calc_Count_Amt, orderCategory, transformData } from '@/lib/action-utils'
 import { InvoiceData, MonthDataItem, SalesDataItem } from '@/types/order'
 import { categorySizeMap } from '@/components/categories/data-table-filters'
-import { transformInvoiceData } from '@/lib/invoice-action-utils'
+import { invoiceGradeAnalysis, transformInvoiceData } from '@/lib/invoice-action-utils'
+import { safeNumber } from '@/lib/utils'
 
 // Constants
 const CACHE_REVALIDATION_PATH = '/analysis'
@@ -205,14 +206,32 @@ export async function fetchInvoiceData(
     }
 }
 
-export async function priceCheckListData() {
+export async function priceCheckListData(type: string) {
     try {
         if (invoiceCache.isEmpty()) {
-            await fetchInvoiceData(0, 50)
+            await fetchInvoiceData(0, 50);
         }
-        return transformInvoiceData(invoiceCache.getData())
+
+        const rawData = invoiceCache.getData();
+        const data = transformInvoiceData(rawData);
+
+        switch (type) {
+            case "overview":
+                return data;
+
+            case "analysis":
+                return invoiceGradeAnalysis(data);
+
+            case "stop":
+                return data.filter(({ Status }) => Status?.toUpperCase() === "STOP");
+
+            case "under300":
+                return data.filter(({ "Invoice Total": total }) => safeNumber(total) < 300);
+            default:
+                throw new Error("Invalid request type");
+        }
     } catch (error) {
-        console.error('Error in analysisData:', error)
-        throw new Error('Failed to analyze data')
+        console.error(error);
+        throw new Error("Failed to analyze data");
     }
 }

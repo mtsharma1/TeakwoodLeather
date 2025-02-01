@@ -18,6 +18,7 @@ import {
 interface SubItem {
   title: string
   url: string
+  isActive?: boolean
   items?: SubItem[]
 }
 
@@ -35,9 +36,9 @@ export function NavMain({ items }: { items: MenuItem[] }) {
       {subItems.map((subItem) => (
         <SidebarMenuSubItem key={subItem.title}>
           {subItem.items ? (
-            <Collapsible defaultOpen className="w-full">
+            <Collapsible defaultOpen={subItem?.isActive} className="w-full">
               <CollapsibleTrigger asChild>
-                <SidebarMenuSubButton 
+                <SidebarMenuSubButton
                   className="w-full text-slate-100 justify-between hover:text-white hover:bg-slate-700/50 transition-colors duration-200 rounded-md pl-8 pr-4 py-2 flex items-center group"
                 >
                   <span className="truncate">{subItem.title}</span>
@@ -49,8 +50,8 @@ export function NavMain({ items }: { items: MenuItem[] }) {
               </CollapsibleContent>
             </Collapsible>
           ) : (
-            <SidebarMenuSubButton 
-              asChild 
+            <SidebarMenuSubButton
+              asChild
               className="w-full text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors duration-200 rounded-md pl-12 pr-4 py-2"
             >
               <a href={subItem.url}>
@@ -77,12 +78,12 @@ export function NavMain({ items }: { items: MenuItem[] }) {
                 className="group w-full"
               >
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton 
+                  <SidebarMenuButton
                     tooltip={item.title}
                     className="w-full hover:bg-slate-700/50 hover:text-white justify-between transition-colors duration-200 rounded-md group px-4 py-2"
                   >
                     <div className="flex gap-2 items-center">{item.icon && <item.icon size={16} className="transition-colors duration-150" />}
-                    <span className="font-medium truncate">{item.title}</span></div>
+                      <span className="font-medium truncate">{item.title}</span></div>
                     <ChevronRight className="ml-2 h-4 w-4 flex-shrink-0 text-slate-400 transition-transform duration-200 group-data-[state=open]:rotate-90" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
@@ -91,7 +92,7 @@ export function NavMain({ items }: { items: MenuItem[] }) {
                 </CollapsibleContent>
               </Collapsible>
             ) : (
-              <SidebarMenuButton 
+              <SidebarMenuButton
                 asChild
                 tooltip={item.title}
                 className="w-full hover:bg-slate-700/50 hover:text-white transition-colors duration-200 rounded-md px-4 py-2"

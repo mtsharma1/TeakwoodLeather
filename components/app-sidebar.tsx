@@ -40,11 +40,12 @@ const data = {
       title: "Inventory",
       url: "/monthly-report",
       icon: Package,
-      isActive: true,
+      isActive: false,
       items: [
         {
           title: "Analysis",
           url: "/monthly-report/analysis",
+          isActive: true,
           items: [
             {
               title: "Over Stock",
@@ -75,6 +76,7 @@ const data = {
         {
           title: "Category",
           url: "/monthly-report/category",
+          isActive: false,
           items: [
             {
               title: "Mens Shoes",
@@ -106,28 +108,8 @@ const data = {
     },
     {
       title: "Price Checklist",
-      url: "/price-checklist",
+      url: "/price-checklist/overview",
       icon: Package,
-      isActive: true,
-      items: [
-        {
-          title: "Analysis",
-          icon: Package,
-          url: "/price-checklist/analysis",
-        },
-        {
-          title: "Stop",
-          url: "/price-checklist/stop",
-        },
-        {
-          title: "Check",
-          url: "/price-checklist/check",
-        },
-        {
-          title: "Under 300",
-          url: "/price-checklist/u300",
-        },
-      ],
     },
   ],
 }
