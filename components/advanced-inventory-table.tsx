@@ -2,10 +2,10 @@
 
 import * as React from "react"
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -13,70 +13,37 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ChevronDown, Search, X, DownloadIcon, ArrowUpDownIcon, PinIcon } from 'lucide-react'
+import { ChevronDown, Search, X, DownloadIcon, ArrowUpDownIcon, PinIcon } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import CsvDownloader from 'react-csv-downloader';
+import CsvDownloader from "react-csv-downloader"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "./ui/pagination"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "./ui/pagination"
 
-
-const multiSelectFilter = (
-  row: { getValue: (colName: string) => string },
-  columnId: string,
-  filterValue: string[]
-) => {
+const multiSelectFilter = (row: { getValue: (colName: string) => string }, columnId: string, filterValue: string[]) => {
   if (!filterValue.length) return true
   const cellValue = row.getValue(columnId)
   return filterValue.includes(String(cellValue))
 }
-
-// const DraggableTableHeader = ({ header, table }) => {
-//   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
-//     id: header.id,
-//   })
-
-//   const style = {
-//     transform: CSS.Transform.toString(transform),
-//     transition,
-//   }
-
-//   return (
-//     <TableHead
-//       ref={setNodeRef}
-//       style={style}
-//       {...attributes}
-//       className={`
-//         cursor-move
-//         ${header.column.id === "select" || header.column.id === "skuCode" || header.column.id === "expander" ? "sticky left-0 z-10" : ""}
-//         `}
-//     >
-//       <div className="flex items-center">
-//         <GripVertical className="mr-2 h-4 w-4" {...listeners} />
-//         {flexRender(header.column.columnDef.header, header.getContext())}
-//       </div>
-//     </TableHead>
-//   )
-// }
 
 export default function AdvancedInventoryTable({
   data = [],
   columnNames = [],
   filename,
 }: {
-  data: { [key: string]: string }[],
+  data: { [key: string]: string }[]
   columnNames?: string[]
   filename: string
 }) {
@@ -84,7 +51,6 @@ export default function AdvancedInventoryTable({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
-  // const [selectedColumn, setSelectedColumn] = React.useState<string | null>(null)
   const [globalFilter, setGlobalFilter] = React.useState("")
   const [activeFilters, setActiveFilters] = React.useState<Record<string, string[]>>({})
   const [columnOrder, setColumnOrder] = React.useState<string[]>([])
@@ -122,32 +88,12 @@ export default function AdvancedInventoryTable({
   })
 
   React.useEffect(() => {
-    setColumnOrder(table.getAllLeafColumns().map(d => d.id))
+    setColumnOrder(table.getAllLeafColumns().map((d) => d.id))
   }, [table])
-
 
   React.useEffect(() => {
     table.setPageSize(pageSize)
   }, [pageSize, table])
-
-
-  // const sensors = useSensors(
-  //   useSensor(PointerSensor),
-  //   useSensor(KeyboardSensor, {
-  //     coordinateGetter: sortableKeyboardCoordinates,
-  //   })
-  // )
-
-  // const handleDragEnd = (event: DragEndEvent) => {
-  //   const { active, over } = event
-  //   if (active.id !== over?.id) {
-  //     setColumnOrder((prev) => {
-  //       const oldIndex = prev.indexOf(active.id as string)
-  //       const newIndex = prev.indexOf(over?.id as string)
-  //       return arrayMove(prev, oldIndex, newIndex)
-  //     })
-  //   }
-  // }
 
   const handleFilterChange = (columnId: string, filterValue: string) => {
     setActiveFilters((prev) => ({
@@ -196,7 +142,6 @@ export default function AdvancedInventoryTable({
     table.setColumnOrder(newColumnOrder)
   }, [pinnedColumns, table])
 
-
   return (
     <div className="space-y-4">
       <div className="lg:flex items-center justify-between">
@@ -218,49 +163,52 @@ export default function AdvancedInventoryTable({
               <div className="grid gap-4">
                 <div className="space-y-2">
                   <h4 className="font-medium leading-none">Search Columns</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Select columns to filter the table
-                  </p>
+                  <p className="text-sm text-muted-foreground">Select columns to filter the table</p>
                 </div>
                 <ScrollArea className="h-[300px]">
                   <div className="grid gap-2">
-                    {table.getAllColumns().filter((column) => column.getCanFilter() || column.id === "skuCode").map((column) => {
-                      return (
-                        <Popover key={column.id}>
-                          <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start">
-                              {column.id}
-                              <ChevronDown className="ml-auto h-4 w-4" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[200px] p-0" align="end">
-                            <ScrollArea className="h-72 p-2">
-                              <Input
-                                placeholder={`Search ${column.id}...`}
-                                value={(column.getFilterValue() as string) ?? ""}
-                                onChange={(event) => column.setFilterValue(event.target.value)}
-                                className="max-w-sm mb-2"
-                              />
-                              {Array.from(new Set(data.map((item) => String(item[column.id as keyof typeof item])))).map((value) => (
-                                <div key={value} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    checked={activeFilters[column.id]?.includes(value)}
-                                    onCheckedChange={(checked) => {
-                                      if (checked) {
-                                        handleFilterChange(column.id, value)
-                                      } else {
-                                        removeFilter(column.id, value)
-                                      }
-                                    }}
-                                  />
-                                  <label className="text-sm">{value}</label>
-                                </div>
-                              ))}
-                            </ScrollArea>
-                          </PopoverContent>
-                        </Popover>
-                      )
-                    })}
+                    {table
+                      .getAllColumns()
+                      .filter((column) => column.getCanFilter() || column.id === "skuCode")
+                      .map((column) => {
+                        return (
+                          <Popover key={column.id}>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" className="w-full justify-start">
+                                {column.id}
+                                <ChevronDown className="ml-auto h-4 w-4" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[200px] p-0" align="end">
+                              <ScrollArea className="h-72 p-2">
+                                <Input
+                                  placeholder={`Search ${column.id}...`}
+                                  value={(column.getFilterValue() as string) ?? ""}
+                                  onChange={(event) => column.setFilterValue(event.target.value)}
+                                  className="max-w-sm mb-2"
+                                />
+                                {Array.from(
+                                  new Set(data.map((item) => String(item[column.id as keyof typeof item]))),
+                                ).map((value) => (
+                                  <div key={value} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      checked={activeFilters[column.id]?.includes(value)}
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          handleFilterChange(column.id, value)
+                                        } else {
+                                          removeFilter(column.id, value)
+                                        }
+                                      }}
+                                    />
+                                    <label className="text-sm">{value}</label>
+                                  </div>
+                                ))}
+                              </ScrollArea>
+                            </PopoverContent>
+                          </Popover>
+                        )
+                      })}
                   </div>
                 </ScrollArea>
               </div>
@@ -268,7 +216,9 @@ export default function AdvancedInventoryTable({
           </Popover>
         </div>
         <div className="flex gap-2 justify-center mt-2 lg:mt-0 items-center text-center text-sm text-muted-foreground">
-          <Button variant={'ghost'} size={'sm'}>Total Rows: {table.getFilteredRowModel().rows.length}</Button>
+          <Button variant={"ghost"} size={"sm"}>
+            Total Rows: {table.getFilteredRowModel().rows.length}
+          </Button>
           <Select
             value={`${pageSize}`}
             onValueChange={(value) => {
@@ -286,14 +236,14 @@ export default function AdvancedInventoryTable({
               ))}
             </SelectContent>
           </Select>
-          <CsvDownloader filename={filename} datas={data} columns={columnNames.map(x => ({ id: x, displayName: x }))}>
-            <Button size={'icon'}>
+          <CsvDownloader filename={filename} datas={data} columns={columnNames.map((x) => ({ id: x, displayName: x }))}>
+            <Button size={"icon"}>
               <DownloadIcon size={18} />
             </Button>
           </CsvDownloader>
         </div>
       </div>
-      {Object.entries(activeFilters).map(([columnId, filters]) => (
+      {Object.entries(activeFilters).map(([columnId, filters]) =>
         filters.map((filter) => (
           <Badge key={`${columnId}-${filter}`} variant="secondary" className="mr-2">
             {columnId}: {filter}
@@ -305,63 +255,39 @@ export default function AdvancedInventoryTable({
               <X className="h-3 w-3" />
             </Button>
           </Badge>
-        ))
-      ))}
+        )),
+      )}
       <div className="rounded-md border">
-        <div className="relative overflow-x-auto">
-          {/* <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          > */}
-          <Table className="min-w-[1200px]">
-            {/* <TableHeader>
-                <TableRow>
-                  <SortableContext
-                    items={columnOrder}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      headerGroup.headers.map((header) => (
-                        <DraggableTableHeader key={header.id} header={header} table={table} />
-                      ))
-                    ))}
-                  </SortableContext>
-                </TableRow>
-              </TableHeader> */}
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header, index) => {
-                    const isPinned = pinnedColumns.includes(header.column.id)
-
-                    return (
-                      <TableHead
-                        key={header.id}
-                        colSpan={header.colSpan}
-                        className={`
-                  ${isPinned ? `sticky left-0 z-10 bg-blue-50 shadow-lg' : 'bg-white'` : ''} 
-                  min-w-[150px] max-w-[265px] text-ellipsis text-nowrap whitespace-nowrap
-                `}
-                        style={index === 0 && isPinned ? { position: 'sticky', left: 0 } : {}}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : (
-                            <div>
-                              <div
-                                className="flex items-center cursor-pointer"
-                                onClick={() => header.column.toggleSorting()}
-                              >
-                                {flexRender(header.column.columnDef.header, header.getContext())}
-                                {header.column.getCanSort() &&
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                  >
-                                    <ArrowUpDownIcon />
+        <div className="relative w-full overflow-auto" style={{ height: "calc(100vh - 300px)" }}>
+          <div className="w-full min-w-[1200px]">
+            <div className="sticky top-0 z-10 w-full">
+              <div className="bg-white shadow-sm">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <div key={headerGroup.id} className="flex">
+                    {headerGroup.headers.map((header, index) => {
+                      const isPinned = pinnedColumns.includes(header.column.id)
+                      return (
+                        <div
+                          key={header.id}
+                          colSpan={header.colSpan}
+                          className={`
+                            ${isPinned ? "sticky left-0 z-20 bg-blue-50 shadow-lg" : "bg-white"} 
+                            p-2 min-w-[150px] max-w-[265px] flex-1 text-left align-middle font-medium text-muted-foreground
+                          `}
+                          style={index === 0 && isPinned ? { position: "sticky", left: 0 } : {}}
+                        >
+                          {header.isPlaceholder ? null : (
+                            <div
+                              className="flex items-center justify-between"
+                              onClick={() => header.column.toggleSorting()}
+                            >
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                              <div className="flex items-center">
+                                {header.column.getCanSort() && (
+                                  <Button variant="ghost" size="icon">
+                                    <ArrowUpDownIcon className="h-4 w-4" />
                                   </Button>
-                                }
+                                )}
                                 {index === 0 && (
                                   <Button
                                     variant="ghost"
@@ -371,72 +297,50 @@ export default function AdvancedInventoryTable({
                                       toggleColumnPin(header.column.id)
                                     }}
                                   >
-                                    <PinIcon
-                                      className={`h-4 w-4 ${isPinned ? "text-blue-500" : "text-gray-500"}`}
-                                    />
+                                    <PinIcon className={`h-4 w-4 ${isPinned ? "text-blue-500" : "text-gray-500"}`} />
                                   </Button>
                                 )}
                               </div>
                             </div>
                           )}
-                      </TableHead>
-                    )
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="bg-white">
               {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row, rowIndex) => {
-                  const firstColumnId = table.getHeaderGroups()[0].headers[0].column.id
-                  const isPinned = pinnedColumns.includes(firstColumnId)
-
-                  return (
-                    <React.Fragment key={row.id}>
-                      <TableRow
-                        data-state={row.getIsSelected() && "selected"}
-                        className={` h-10
-                          ${rowIndex % 2 === 0 ? "bg-gray-50" : ""}
-                          ${row.getIsSelected() ? "bg-blue-100" : ""}
-                        `}
-                      >
-                        {row.getVisibleCells().map((cell, cellIndex) => (
-                          <TableCell
-                            key={cell.id}
-                            className={`
-                            truncate 
-                            overflow-hidden 
-                            max-w-[40px] 
-                            px-2
-                            ${cellIndex === 0 && isPinned ? "sticky left-0 z-10 bg-blue-50 shadow-lg" : ""}
+                table.getRowModel().rows.map((row, rowIndex) => (
+                  <div
+                    key={row.id}
+                    className={`flex ${rowIndex % 2 === 0 ? "bg-gray-50" : ""} ${
+                      row.getIsSelected() ? "bg-blue-100" : ""
+                    }`}
+                  >
+                    {row.getVisibleCells().map((cell, cellIndex) => {
+                      const isPinned =
+                        pinnedColumns.includes(table.getHeaderGroups()[0].headers[0].column.id) && cellIndex === 0
+                      return (
+                        <div
+                          key={cell.id}
+                          className={`
+                            p-2 min-w-[150px] max-w-[265px] flex-1 overflow-hidden
+                            ${isPinned ? "sticky left-0 z-10 bg-blue-50 shadow-lg" : ""}
                           `}
-                          >
-                            <div className="overflow-hidden text-ellipsis whitespace-nowrap">
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </div>
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                      {row.getIsExpanded() && (
-                        <TableRow>
-                          <TableCell colSpan={row.getVisibleCells().length}>
-                            {/* ExpandedRowContent will go here */}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </React.Fragment>
-                  )
-                })
+                        >
+                          <div className="truncate">{flexRender(cell.column.columnDef.cell, cell.getContext())}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))
               ) : (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No results.
-                  </TableCell>
-                </TableRow>
+                <div className="text-center p-4">No results.</div>
               )}
-            </TableBody>
-          </Table>
-          {/* </DndContext> */}
+            </div>
+          </div>
         </div>
       </div>
       <Pagination>
@@ -561,25 +465,27 @@ export default function AdvancedInventoryTable({
   )
 }
 
-
-export const generateColumns = (columnNames: string[]): ColumnDef<{
-  [key: string]: string;
+export const generateColumns = (
+  columnNames: string[],
+): ColumnDef<{
+  [key: string]: string
 }>[] => {
-  const dynamicColumns = columnNames?.map((colName) => ({
-    accessorKey: colName,
-    header: () => <span className="w-64 text-gray-800 font-semibold">{colName.toLocaleUpperCase()}</span>,
-    cell: ({ row }: { row: { getValue: (colName: string) => string } }) => {
-      const value = row.getValue(colName)
-      return (
-        <div className="capitalize">
-          <span>{value}</span>
-        </div>
-      )
-    },
-    enableSorting: true,
-    enableHiding: true,
-    filterFn: multiSelectFilter,
-  })) || [];
-  return dynamicColumns;
-};
+  const dynamicColumns =
+    columnNames?.map((colName) => ({
+      accessorKey: colName,
+      header: () => <span className="w-64 text-gray-800 font-semibold">{colName.toLocaleUpperCase()}</span>,
+      cell: ({ row }: { row: { getValue: (colName: string) => string } }) => {
+        const value = row.getValue(colName)
+        return (
+          <div className="capitalize">
+            <span>{value}</span>
+          </div>
+        )
+      },
+      enableSorting: true,
+      enableHiding: true,
+      filterFn: multiSelectFilter,
+    })) || []
+  return dynamicColumns
+}
 
