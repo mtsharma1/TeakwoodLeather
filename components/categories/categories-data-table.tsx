@@ -2,10 +2,10 @@
 
 import * as React from "react"
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -13,35 +13,30 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ChevronDown, Search, X } from 'lucide-react'
+import { ChevronDown, PinIcon, Search, X } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { enhancedMultiSelectFilter, getUniqueColumnValues } from './data-table-filters'
-import { CategoryData } from "./categories-cols"
+import { enhancedMultiSelectFilter, getUniqueColumnValues } from "./data-table-filters"
+import type { CategoryData } from "./categories-cols"
+import { ArrowUpDown } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "../ui/pagination"
 // import CsvDownloader from 'react-csv-downloader';
-
 
 const getBgColor = (columnId: string, isHeader: boolean = false): string => {
   if (columnId.startsWith('salesSizes_') || columnId === 'Sales Sizes' || columnId === 'totalSaleQty') {
     return isHeader ? 'bg-blue-100' : 'bg-blue-50';
   } else if (columnId.startsWith('availableInventorySize_') || columnId === 'Available Inventory' || columnId === 'availableInventorySizeTotal') {
-    return isHeader ? 'bg-green-100' : 'bg-yellow-50';
+    return isHeader ? 'bg-yellow-100' : 'bg-yellow-50';
   } else if (columnId.startsWith('openPurchaseSize_') || columnId === 'Open Purchase' || columnId === 'openPurchaseSizeTotal') {
-    return isHeader ? 'bg-yellow-100' : 'bg-red-50';
+    return isHeader ? 'bg-red-100' : 'bg-red-50';
   } else if (columnId.startsWith('orderQtySize_') || columnId === 'Order Qty' || columnId === 'orderQtySizeTotal') {
-    return isHeader ? 'bg-yellow-100' : 'bg-orange-50';
+    return isHeader ? 'bg-orange-100' : 'bg-orange-50';
   }
   return '';
 };
@@ -60,6 +55,8 @@ export default function CategoryDataTable({
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState("")
+  const [pinnedColumns, setPinnedColumns] = React.useState<string[]>([])
+  const [pageSize, setPageSize] = React.useState(20)
 
   const table = useReactTable({
     data,
@@ -80,10 +77,15 @@ export default function CategoryDataTable({
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
+    pageCount: Math.ceil(data.length / pageSize),
     filterFns: {
       multiSelect: enhancedMultiSelectFilter,
     },
   })
+
+  React.useEffect(() => {
+    table.setPageSize(pageSize)
+  }, [pageSize, table])
 
   const handleFilterChange = React.useCallback((columnId: string, filterValue: string) => {
     setColumnFilters((prev) => {
@@ -118,13 +120,34 @@ export default function CategoryDataTable({
     })
   }, [])
 
+  const toggleColumnPin = React.useCallback((columnId: string) => {
+    setPinnedColumns((prevPinnedColumns) => {
+      if (prevPinnedColumns.includes(columnId)) {
+        return prevPinnedColumns.filter((id) => id !== columnId)
+      } else {
+        return [...prevPinnedColumns, columnId]
+      }
+    })
+  }, [])
+
+  React.useEffect(() => {
+    const newColumnOrder = [
+      ...pinnedColumns,
+      ...table
+        .getAllLeafColumns()
+        .filter((column) => !pinnedColumns.includes(column.id))
+        .map((column) => column.id),
+    ]
+    table.setColumnOrder(newColumnOrder)
+  }, [pinnedColumns, table])
+
   const groupedColumns = [
-    { title: 'Product Info', span: 3, color: 'text-medium bg-gray-200' },
-    { title: 'Sales Sizes', span: (groupLength + 1), color: 'text-medium bg-blue-100' },
-    { title: 'Sales Info', span: 6, color: 'text-medium bg-green-100' },
-    { title: 'Available Inventory', span: (groupLength + 1), color: 'text-medium bg-yellow-100' },
-    { title: 'Open Purchase', span: (groupLength + 1), color: 'text-medium bg-red-100' },
-    { title: 'Order Qty', span: (groupLength + 1), color: 'text-medium bg-orange-100' },
+    { title: "Product Info", span: 3, color: "text-medium bg-gray-200" },
+    { title: "Sales Sizes", span: groupLength + 1, color: "text-medium bg-blue-100" },
+    { title: "Sales Info", span: 6, color: "text-medium bg-green-100" },
+    { title: "Available Inventory", span: groupLength + 1, color: "text-medium bg-yellow-100" },
+    { title: "Open Purchase", span: groupLength + 1, color: "text-medium bg-red-100" },
+    { title: "Order Qty", span: groupLength + 1, color: "text-medium bg-orange-100" },
   ]
 
   return (
@@ -137,11 +160,6 @@ export default function CategoryDataTable({
             onChange={(event) => setGlobalFilter(String(event.target.value))}
             className="max-w-sm"
           />
-          {/* <CsvDownloader filename="AwbTransacs" datas={data} columns={table.getAllColumns().map(x => ({ id: x.id, displayName: x.id }))}>
-            <Button size={'icon'}>
-              <DownloadIcon size={18} />
-            </Button>
-          </CsvDownloader> */}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="ml-auto">
@@ -153,13 +171,12 @@ export default function CategoryDataTable({
               <div className="grid gap-4">
                 <div className="space-y-2">
                   <h4 className="font-medium leading-none">Search Columns</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Select columns to filter the table
-                  </p>
+                  <p className="text-sm text-muted-foreground">Select columns to filter the table</p>
                 </div>
                 <ScrollArea className="h-[300px]">
                   <div className="grid gap-2">
-                    {table.getAllColumns()
+                    {table
+                      .getAllColumns()
                       .filter((column) => column.getCanFilter())
                       .map((column) => {
                         const uniqueValues = getUniqueColumnValues(data, column.id)
@@ -201,8 +218,35 @@ export default function CategoryDataTable({
             </PopoverContent>
           </Popover>
         </div>
-        {/* Col visibility */}
-        {/* <DropdownMenu>
+
+        <div className="flex gap-2 justify-center mt-2 lg:mt-0 items-center text-center text-sm text-muted-foreground">
+          <Button variant={'ghost'} size={'sm'}>Total Rows: {table.getFilteredRowModel().rows.length}</Button>
+          <Select
+            value={`${pageSize}`}
+            onValueChange={(value) => {
+              setPageSize(Number(value))
+            }}
+          >
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue placeholder={pageSize} />
+            </SelectTrigger>
+            <SelectContent side="top">
+              {[20, 40, 60, 80, 100].map((size) => (
+                <SelectItem key={size} value={`${size}`}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {/* <CsvDownloader filename={filename} datas={data} columns={columnNames.map(x => ({ id: x, displayName: x }))}>
+            <Button size={'icon'}>
+              <DownloadIcon size={18} />
+            </Button>
+          </CsvDownloader> */}
+        </div>
+      </div>
+      {/* Col visibility */}
+      {/* <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
               Columns <ChevronDown className="ml-2 h-4 w-4" />
@@ -228,7 +272,6 @@ export default function CategoryDataTable({
               })}
           </DropdownMenuContent>
         </DropdownMenu> */}
-      </div>
 
       {/* Active filters display */}
       <div className="flex flex-wrap gap-2">
@@ -244,7 +287,7 @@ export default function CategoryDataTable({
                 <X className="h-3 w-3" />
               </Button>
             </Badge>
-          ))
+          )),
         )}
       </div>
 
@@ -265,42 +308,66 @@ export default function CategoryDataTable({
                 ))}
               </TableRow>
               <TableRow>
-                {table.getFlatHeaders().map((header, index) => (
-                  <TableHead key={header.id} className={`font-bold text-gray-800 whitespace-nowrap ${index === 0 ? 'sticky left-0 z-20 bg-white' : ''} ${getBgColor(header.id)}`}>
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </TableHead>
-                ))}
+                {table.getFlatHeaders().map((header, index) => {
+                  const isPinned = pinnedColumns.includes(header.column.id)
+                  return (
+                    <TableHead
+                      key={header.id}
+                      className={`font-bold text-gray-800 whitespace-nowrap ${index === 0 && isPinned ? "sticky left-0 z-20 bg-white" : ""
+                        } ${getBgColor(header.id, true)}`}
+                    >
+                      <div className="flex items-center">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getCanSort() && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="ml-2 h-8 w-8 p-0"
+                            onClick={() => header.column.toggleSorting()}
+                          >
+                            <ArrowUpDown className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {index === 0 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleColumnPin(header.column.id)
+                            }}
+                          >
+                            <PinIcon
+                              className={`h-4 w-4 ${isPinned ? "text-blue-500" : "text-gray-500"}`}
+                            />
+                          </Button>
+                        )}
+                      </div>
+                    </TableHead>
+                  )
+                })}
               </TableRow>
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell, index) => (
-                      <TableCell
-                        className={`whitespace-nowrap ${index === 0 ? 'sticky left-0 z-20 bg-white' : ''} ${getBgColor(cell.column.id)}`}
-                        key={cell.id}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
+                  <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                    {row.getVisibleCells().map((cell, index) => {
+                      const isPinned = pinnedColumns.includes(cell.column.id)
+                      return (
+                        <TableCell
+                          className={`whitespace-nowrap  ${index === 0 && isPinned ? "sticky left-0 z-10 bg-blue-50 shadow-lg" : ""} ${getBgColor(cell.column.id)}`}
+                          key={cell.id}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      )
+                    })}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
                     No results.
                   </TableCell>
                 </TableRow>
@@ -309,33 +376,124 @@ export default function CategoryDataTable({
           </Table>
         </div>
       </div>
+      <Pagination>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                table.previousPage()
+              }}
+              aria-disabled={!table.getCanPreviousPage()}
+              className={!table.getCanPreviousPage() ? "pointer-events-none opacity-50" : ""}
+            />
+          </PaginationItem>
+          {table.getPageCount() > 0 && (
+            <>
+              {/* First Page */}
+              <PaginationItem>
+                <PaginationLink
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    table.setPageIndex(0)
+                  }}
+                  isActive={table.getState().pagination.pageIndex === 0}
+                >
+                  1
+                </PaginationLink>
+              </PaginationItem>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+              {/* Show ellipsis if there are many pages before current */}
+              {table.getState().pagination.pageIndex > 2 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+
+              {/* Current page and surrounding pages */}
+              {table.getState().pagination.pageIndex > 1 && (
+                <PaginationItem>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      table.setPageIndex(table.getState().pagination.pageIndex - 1)
+                    }}
+                  >
+                    {table.getState().pagination.pageIndex}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+
+              {table.getState().pagination.pageIndex > 0 &&
+                table.getState().pagination.pageIndex < table.getPageCount() - 1 && (
+                  <PaginationItem>
+                    <PaginationLink
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        table.setPageIndex(table.getState().pagination.pageIndex)
+                      }}
+                      isActive={true}
+                    >
+                      {table.getState().pagination.pageIndex + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                )}
+
+              {table.getState().pagination.pageIndex < table.getPageCount() - 2 && (
+                <PaginationItem>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      table.setPageIndex(table.getState().pagination.pageIndex + 1)
+                    }}
+                  >
+                    {table.getState().pagination.pageIndex + 2}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+
+              {/* Show ellipsis if there are many pages after current */}
+              {table.getState().pagination.pageIndex < table.getPageCount() - 3 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+
+              {/* Last Page */}
+              {table.getPageCount() > 1 && (
+                <PaginationItem>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      table.setPageIndex(table.getPageCount() - 1)
+                    }}
+                    isActive={table.getState().pagination.pageIndex === table.getPageCount() - 1}
+                  >
+                    {table.getPageCount()}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+            </>
+          )}
+          <PaginationItem>
+            <PaginationNext
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                table.nextPage()
+              }}
+              aria-disabled={!table.getCanNextPage()}
+              className={!table.getCanNextPage() ? "pointer-events-none opacity-50" : ""}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
     </div>
   )
 }
-

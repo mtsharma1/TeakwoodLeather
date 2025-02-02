@@ -6,7 +6,11 @@ import { analysis, calc_Count_Amt, orderCategory, transformData } from '@/lib/ac
 import { InvoiceData, MonthDataItem, SalesDataItem } from '@/types/order'
 import { categorySizeMap } from '@/components/categories/data-table-filters'
 import { invoiceGradeAnalysis, transformInvoiceData } from '@/lib/invoice-action-utils'
-import { safeNumber } from '@/lib/utils'
+import { roundToDecimals, safeNumber } from '@/lib/utils'
+import { cache } from 'react'
+import { calculateCategoryMetrics, calculatePoralMetrics } from '@/lib/category-poral-action-utils'
+import { SalesRecord } from '@/types/category-poral-monthly'
+import { getDaysInMonth } from 'date-fns'
 
 // Constants
 const CACHE_REVALIDATION_PATH = '/analysis'
@@ -14,9 +18,9 @@ const CACHE_REVALIDATION_PATH = '/analysis'
 // URLs should be in environment variables
 // const SALES_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3ODRkNGYzNjZlNWJkMWE4ODMyZmZlZS9FeHBvcnQtU2FsZSUyME9yZGVycy10ZWFrd29vZGluZGlhXzEzMDEyMDI1MTQyNTMyLmNzdiMjIzY3ODRkNGYzNjZlNWJkMWE4ODMyZmZlZSMjIzEzXzAxXzIwMjU="
 
-const INVOICE_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3OWE4NWRlZGM4NGUzMjk0MmZhYThiNC9FeHBvcnQtSW52b2ljZS10ZWFrd29vZGluZGlhXzMwMDEyMDI1MDExNzQzLmNzdiMjIzY3OWE4NWRlZGM4NGUzMjk0MmZhYThiNCMjIzMwXzAxXzIwMjU="
+const INVOICE_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3OWYxZGQwNjZlMjRhMmFkNmNlNmQxZC9FeHBvcnQtSW52b2ljZS10ZWFrd29vZGluZGlhXzAyMDIyMDI1MTI1NTA2LmNzdiMjIzY3OWYxZGQwNjZlMjRhMmFkNmNlNmQxZCMjIzAyXzAyXzIwMjU="
 
-const MONTHLY_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3OWE4NWQ0OWJiYTY1MmJiYTRkNTZhMS9FeHBvcnQtTW9udGhseSUyME9yZGVyJTIwUmVwb3J0LXRlYWt3b29kaW5kaWFfMzAwMTIwMjUwMTE4NDEuY3N2IyMjNjc5YTg1ZDQ5YmJhNjUyYmJhNGQ1NmExIyMjMzBfMDFfMjAyNQ=="
+const MONTHLY_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3OWYyODlmZDQ1MDNkNWMwODkwMTEzYi9FeHBvcnQtTW9udGhseSUyME9yZGVyJTIwUmVwb3J0LXRlYWt3b29kaW5kaWFfMDIwMjIwMjUxMzQyMjAuY3N2IyMjNjc5ZjI4OWZkNDUwM2Q1YzA4OTAxMTNiIyMjMDJfMDJfMjAyNQ=="
 
 interface PaginatedResponse<T> {
     columns: string[]
@@ -58,6 +62,7 @@ class DataCache<T> {
 
 // Initialize caches
 const invoiceCache = new DataCache<InvoiceData>()
+const invoiceAnalysisCache = new DataCache<InvoiceData>()
 const salesCache = new DataCache<SalesDataItem>()
 const monthlyCache = new DataCache<MonthDataItem>()
 const monthlyAnalysisCache = new DataCache<MonthDataItem>()
@@ -181,7 +186,7 @@ export async function categoryData(key: keyof typeof categorySizeMap) {
 }
 
 
-/**************Invoice Data**************/
+/**************Invoice Data (Price Checklist)**************/
 export async function fetchInvoiceData(
     startIndex: number,
     stopIndex: number
@@ -227,6 +232,9 @@ export async function priceCheckListData(type: string) {
 
             case "under300":
                 return data.filter(({ "Invoice Total": total }) => safeNumber(total) < 300);
+            case "check":
+                return data.filter(({ "Invoice Total": total }) => safeNumber(total) < 300);
+
             default:
                 throw new Error("Invalid request type");
         }
@@ -235,3 +243,110 @@ export async function priceCheckListData(type: string) {
         throw new Error("Failed to analyze data");
     }
 }
+
+/**************Category and Poral**************/
+export const categoryPoralData = cache(async (type: string) => {
+    if (invoiceCache.isEmpty()) {
+        await fetchInvoiceData(0, 50)
+    }
+
+    const rawData = invoiceCache.getData()
+    const transformedData = transformInvoiceData(rawData)
+    invoiceAnalysisCache.setData(transformedData)
+
+    const formatDate = (date: Date) => {
+        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`
+    }
+
+    // Get today's date
+    const today = new Date()
+    const todayString = formatDate(today)
+
+    // Get yesterday's date
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayString = formatDate(yesterday)
+
+    const yesterdayData = transformedData.filter((item) => item["Invoice Created Date"].startsWith(yesterdayString))
+    const todayData = transformedData.filter((item) => item["Invoice Created Date"].startsWith(todayString))
+
+    if (type === "overview") return transformedData
+    if (type === "yesterday") return yesterdayData
+    if (type === "today") return todayData
+    if (type === "poral") return calculatePoralMetrics(yesterdayData, todayData)
+    if (type === "category") return calculateCategoryMetrics(yesterdayData, todayData)
+})
+
+export const calculateCategoryMonthlyReport = async (formData: FormData) => {
+    try {
+        const file = formData.get("file") as File
+        if (!file) {
+            throw new Error("No file uploaded")
+        }
+        const data: SalesRecord[] = processCSVData(await file.text())
+
+        const productMap = new Map();
+
+        data.forEach(record => {
+            const productName = record['Product Name'];
+            const quantity = safeNumber(record['Qty']);
+
+            if (productMap.has(productName)) {
+                productMap.set(productName, productMap.get(productName) + quantity);
+            } else {
+                productMap.set(productName, quantity);
+            }
+        });
+
+        const daysInCurrentMonth = getDaysInMonth(new Date())
+
+        const result = Array.from(productMap, ([productName, quantity]) => ({
+            productName,
+            quantity,
+            monthAvg: roundToDecimals(safeNumber((quantity / daysInCurrentMonth) * 100)).toString()
+        }));
+
+        result.sort((a, b) => a.productName.localeCompare(b.productName));
+
+        return result;
+    } catch {
+        return null
+    }
+};
+
+export const calculatePoralMonthlyReport = async (formData: FormData) => {
+    try {
+        const file = formData.get("file") as File
+        if (!file) {
+            throw new Error("No file uploaded")
+        }
+        const data: SalesRecord[] = processCSVData(await file.text())
+
+        const productMap = new Map();
+
+        data.forEach(record => {
+            const productName = record['Channel Ledger'];
+            const quantity = safeNumber(record['Qty']);
+
+            if (productMap.has(productName)) {
+                productMap.set(productName, productMap.get(productName) + quantity);
+            } else {
+                productMap.set(productName, quantity);
+            }
+        });
+
+        const daysInCurrentMonth = getDaysInMonth(new Date())
+
+        const result = Array.from(productMap, ([productName, quantity]) => ({
+            productName,
+            quantity,
+            monthAvg: roundToDecimals(safeNumber((quantity / daysInCurrentMonth) * 100)).toString()
+        }));
+
+        result.sort((a, b) => a.productName.localeCompare(b.productName));
+
+        return result;
+    } catch {
+        return null
+    }
+};

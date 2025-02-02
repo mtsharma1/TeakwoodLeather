@@ -134,3 +134,20 @@ export type PriceCheckData = {
 };
 
 export type PriceCheckInvoiceData = InvoiceData & PriceCheckData;
+
+export interface Metrics {
+    skuName: string;
+    yesterdayQty: number;
+    todayQty: number;
+    total: number;
+    invoiceTotal: number;
+    asp: number;
+}
+
+
+export interface ProcessedData {
+    portal: string;
+    yesterdayOrders: number;
+    todayOrders: number;
+    total: number;
+}

@@ -74,9 +74,11 @@ const multiSelectFilter = (
 export default function AdvancedInventoryTable({
   data = [],
   columnNames = [],
+  filename,
 }: {
   data: { [key: string]: string }[],
   columnNames?: string[]
+  filename: string
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -89,7 +91,7 @@ export default function AdvancedInventoryTable({
   const [pageSize, setPageSize] = React.useState(20)
   const [pinnedColumns, setPinnedColumns] = React.useState<string[]>([])
 
-  const columns = generateColumns(columnNames);
+  const columns = React.useMemo(() => generateColumns(columnNames), [columnNames])
 
   const table = useReactTable({
     data,
@@ -198,7 +200,7 @@ export default function AdvancedInventoryTable({
   return (
     <div className="space-y-4">
       <div className="lg:flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 p-1">
           <Input
             placeholder="Filter all columns..."
             value={globalFilter ?? ""}
@@ -284,7 +286,7 @@ export default function AdvancedInventoryTable({
               ))}
             </SelectContent>
           </Select>
-          <CsvDownloader filename="AwbTransacs" datas={data} columns={columnNames.map(x => ({ id: x, displayName: x }))}>
+          <CsvDownloader filename={filename} datas={data} columns={columnNames.map(x => ({ id: x, displayName: x }))}>
             <Button size={'icon'}>
               <DownloadIcon size={18} />
             </Button>
@@ -339,7 +341,7 @@ export default function AdvancedInventoryTable({
                         colSpan={header.colSpan}
                         className={`
                   ${isPinned ? `sticky left-0 z-10 bg-blue-50 shadow-lg' : 'bg-white'` : ''} 
-                  min-w-[150px] max-w-[250px] text-ellipsis text-nowrap whitespace-nowrap
+                  min-w-[150px] max-w-[265px] text-ellipsis text-nowrap whitespace-nowrap
                 `}
                         style={index === 0 && isPinned ? { position: 'sticky', left: 0 } : {}}
                       >
@@ -393,7 +395,7 @@ export default function AdvancedInventoryTable({
                     <React.Fragment key={row.id}>
                       <TableRow
                         data-state={row.getIsSelected() && "selected"}
-                        className={`
+                        className={` h-10
                           ${rowIndex % 2 === 0 ? "bg-gray-50" : ""}
                           ${row.getIsSelected() ? "bg-blue-100" : ""}
                         `}
@@ -401,11 +403,17 @@ export default function AdvancedInventoryTable({
                         {row.getVisibleCells().map((cell, cellIndex) => (
                           <TableCell
                             key={cell.id}
-                            className={` 
-                              ${cellIndex === 0 && isPinned ? "sticky left-0 z-10 bg-blue-50 shadow-lg " : ""}
-                            `}
+                            className={`
+                            truncate 
+                            overflow-hidden 
+                            max-w-[40px] 
+                            px-2
+                            ${cellIndex === 0 && isPinned ? "sticky left-0 z-10 bg-blue-50 shadow-lg" : ""}
+                          `}
                           >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </div>
                           </TableCell>
                         ))}
                       </TableRow>

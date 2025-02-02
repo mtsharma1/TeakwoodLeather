@@ -10,7 +10,7 @@ export default function DashboardLayout({
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full overflow-hidden">
-        <AppSidebar variant="inset" className="hidden md:flex" />
+        <AppSidebar variant="sidebar" className="hidden md:flex" />
         <SidebarInset className="flex w-full flex-col overflow-hidden">
           <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 transition-[width,height] ease-linear">
             <div className="flex items-center gap-2">

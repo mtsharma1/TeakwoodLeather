@@ -53,13 +53,12 @@ export function transformData(
 
         const requiredQty = (saleQty * 2) - (availableInventory + openPurchase)
 
-        const orderQty = supportData
-            ? Math.max(0, Math.ceil(
-                ((sumSalesQty * 2) / (Number(supportData["Ratio Sum"]) || 1)) *
-                safeNumber(supportData["Ratio"]) -
-                (availableInventory + openPurchase)
-            ))
-            : 0
+
+        const orderQty = parseInt((supportData
+            ? Math.max(0,
+                safeNumber(((sumSalesQty * 2) / (safeNumber(supportData["Ratio Sum"])) * safeNumber(supportData["Ratio"])) -
+                (availableInventory + openPurchase))
+            ): 0).toString())
 
         const saleThrough = roundToDecimals((saleQty / (availableInventory + saleQty)) * 100)
         const totalAmount = vendorPrice * orderQty
