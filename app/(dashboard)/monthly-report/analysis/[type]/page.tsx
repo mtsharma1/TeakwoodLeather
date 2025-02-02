@@ -43,7 +43,7 @@ async function OverStockContent({ type }: { type: string }) {
         )}
       </div>
       <div className="relative w-full overflow-hidden">
-        <AdvancedInventoryTable data={data.rows || data || []} columnNames={data?.cols || Object.keys(data[0]) || []} />
+        <AdvancedInventoryTable data={data.rows || data || []} columnNames={data?.cols || Object.keys(data[0]) || []} filename={type} />
       </div>
     </div>
   )

@@ -111,6 +111,38 @@ const data = {
       url: "/price-checklist/overview",
       icon: Package,
     },
+    {
+      title: "Category and Poral",
+      url: "/category-poral",
+      icon: Package,
+      isActive: false,
+      items: [
+        {
+          title: "Overview",
+          url: "/category-poral/overview",
+        },
+        {
+          title: "Yesterday",
+          url: "/category-poral/yesterday",
+        },
+        {
+          title: "Today",
+          url: "/category-poral/today",
+        },
+        {
+          title: "Poral",
+          url: "/category-poral/report/poral",
+        },
+        {
+          title: "Category",
+          url: "/category-poral/report/category",
+        },
+        {
+          title: "Monthly Report",
+          url: "/category-poral/monthly-report",
+        },
+      ]
+    }
   ],
 }
 
