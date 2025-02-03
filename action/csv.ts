@@ -10,17 +10,14 @@ import { roundToDecimals, safeNumber } from '@/lib/utils'
 import { cache } from 'react'
 import { calculateCategoryMetrics, calculatePoralMetrics } from '@/lib/category-poral-action-utils'
 import { SalesRecord } from '@/types/category-poral-monthly'
-import { getDaysInMonth } from 'date-fns'
+import { format, getDaysInMonth } from 'date-fns'
+import { createInvoiceJob, createMontlyReportJob, getJobStatus } from '@/lib/api'
 
 // Constants
 const CACHE_REVALIDATION_PATH = '/analysis'
 
 // URLs should be in environment variables
 // const SALES_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3ODRkNGYzNjZlNWJkMWE4ODMyZmZlZS9FeHBvcnQtU2FsZSUyME9yZGVycy10ZWFrd29vZGluZGlhXzEzMDEyMDI1MTQyNTMyLmNzdiMjIzY3ODRkNGYzNjZlNWJkMWE4ODMyZmZlZSMjIzEzXzAxXzIwMjU="
-
-const INVOICE_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3OWYxZGQwNjZlMjRhMmFkNmNlNmQxZC9FeHBvcnQtSW52b2ljZS10ZWFrd29vZGluZGlhXzAyMDIyMDI1MTI1NTA2LmNzdiMjIzY3OWYxZGQwNjZlMjRhMmFkNmNlNmQxZCMjIzAyXzAyXzIwMjU="
-
-const MONTHLY_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3OWYyODlmZDQ1MDNkNWMwODkwMTEzYi9FeHBvcnQtTW9udGhseSUyME9yZGVyJTIwUmVwb3J0LXRlYWt3b29kaW5kaWFfMDIwMjIwMjUxMzQyMjAuY3N2IyMjNjc5ZjI4OWZkNDUwM2Q1YzA4OTAxMTNiIyMjMDJfMDJfMjAyNQ=="
 
 interface PaginatedResponse<T> {
     columns: string[]
@@ -67,6 +64,98 @@ const salesCache = new DataCache<SalesDataItem>()
 const monthlyCache = new DataCache<MonthDataItem>()
 const monthlyAnalysisCache = new DataCache<MonthDataItem>()
 
+export async function exportInvoices() {
+    try {
+        const today = new Date()
+        const yesterday = format(new Date().setDate(today.getDate() - 1), "yyyy-MM-dd");
+        const dayBeforeYesterday = format(new Date().setDate(today.getDate() - 2), "yyyy-MM-dd");
+
+        const jobResponse = await createInvoiceJob(dayBeforeYesterday, yesterday)
+
+        if (!jobResponse.successful) {
+            throw new Error(`Failed to create export job: ${JSON.stringify(jobResponse)}`)
+        }
+
+        const jobCode = jobResponse.jobCode
+
+        // Poll for job status
+        let statusResponse
+        let attempts = 0
+        const maxAttempts = 10
+        const delay = 2000 // 2 seconds
+
+        while (attempts < maxAttempts) {
+            statusResponse = await getJobStatus(jobCode)
+
+            if (statusResponse.status === "COMPLETE") {
+                return {
+                    success: true,
+                    message: "Export completed successfully",
+                    filePath: statusResponse.filePath,
+                }
+            } else if (statusResponse.status === "FAILED") {
+                throw new Error(`Export job failed: ${JSON.stringify(statusResponse)}`)
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, delay))
+            attempts++
+        }
+
+        throw new Error("Export job timed out")
+    } catch (error) {
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : "An unknown error occurred",
+            error: error instanceof Error ? error.stack : String(error),
+        }
+    }
+}
+
+export async function exportMonthlyReport() {
+    try {
+
+        const jobResponse = await createMontlyReportJob()
+
+        if (!jobResponse.successful) {
+            throw new Error(`Failed to create export job: ${JSON.stringify(jobResponse)}`)
+        }
+
+        const jobCode = jobResponse.jobCode
+
+        // Poll for job status
+        let statusResponse
+        let attempts = 0
+        const maxAttempts = 25
+        const delay = 8000 //  seconds
+
+        while (attempts < maxAttempts) {
+            statusResponse = await getJobStatus(jobCode)
+            console.log(statusResponse, 'statusResponse')
+
+            if (statusResponse.status === "COMPLETE") {
+                return {
+                    success: true,
+                    message: "Export completed successfully",
+                    filePath: statusResponse.filePath,
+                }
+            } else if (statusResponse.status === "FAILED") {
+                throw new Error(`Export job failed: ${JSON.stringify(statusResponse)}`)
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, delay))
+            attempts++
+        }
+
+        throw new Error("Export job timed out")
+    } catch (error) {
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : "An unknown error occurred",
+            error: error instanceof Error ? error.stack : String(error),
+        }
+    }
+}
+
 // Utility functions
 async function fetchCSV<T>(url: string): Promise<T[]> {
     const response = await fetch(url, {
@@ -98,7 +187,8 @@ export async function fetchSalesData(
 ): Promise<PaginatedResponse<SalesDataItem>> {
     try {
         if (salesCache.isEmpty()) {
-            const result = await fetchCSV<SalesDataItem>(INVOICE_URL)
+            const path = (await exportInvoices()).filePath
+            const result = await fetchCSV<SalesDataItem>(path)
             salesCache.setData(result, Object.keys(result[0]))
         }
 
@@ -126,7 +216,9 @@ export async function fetchMonthlyData(
 
     try {
         if (monthlyCache.isEmpty()) {
-            const result = await fetchCSV<MonthDataItem>(MONTHLY_ORDER_URL)
+            const path = (await exportMonthlyReport()).filePath
+            console.log(path, 'mont')
+            const result = await fetchCSV<MonthDataItem>(path)
             monthlyCache.setData(result)
         }
 
@@ -193,7 +285,8 @@ export async function fetchInvoiceData(
 ): Promise<PaginatedResponse<InvoiceData>> {
     try {
         if (invoiceCache.isEmpty()) {
-            const result = await fetchCSV<InvoiceData>(INVOICE_URL)
+            const path = (await exportInvoices()).filePath
+            const result = await fetchCSV<InvoiceData>(path)
             invoiceCache.setData(result, Object.keys(result[0]))
         }
 

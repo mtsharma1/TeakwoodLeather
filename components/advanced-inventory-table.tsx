@@ -1,5 +1,4 @@
 "use client"
-
 import * as React from "react"
 import {
   type ColumnDef,
@@ -22,7 +21,7 @@ import { ChevronDown, Search, X, DownloadIcon, ArrowUpDownIcon, PinIcon } from "
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import CsvDownloader from "react-csv-downloader"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Pagination,
   PaginationContent,
@@ -31,41 +30,13 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "./ui/pagination"
+} from "@/components/ui/pagination"
 
 const multiSelectFilter = (row: { getValue: (colName: string) => string }, columnId: string, filterValue: string[]) => {
   if (!filterValue.length) return true
   const cellValue = row.getValue(columnId)
   return filterValue.includes(String(cellValue))
 }
-
-// const DraggableTableHeader = ({ header, table }) => {
-//   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
-//     id: header.id,
-//   })
-
-//   const style = {
-//     transform: CSS.Transform.toString(transform),
-//     transition,
-//   }
-
-//   return (
-//     <TableHead
-//       ref={setNodeRef}
-//       style={style}
-//       {...attributes}
-//       className={`
-//         cursor-move
-//         ${header.column.id === "select" || header.column.id === "skuCode" || header.column.id === "expander" ? "sticky left-0 z-10" : ""}
-//         `}
-//     >
-//       <div className="flex items-center">
-//         <GripVertical className="mr-2 h-4 w-4" {...listeners} />
-//         {flexRender(header.column.columnDef.header, header.getContext())}
-//       </div>
-//     </TableHead>
-//   )
-// }
 
 export default function AdvancedInventoryTable({
   data = [],
@@ -80,7 +51,6 @@ export default function AdvancedInventoryTable({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
-  // const [selectedColumn, setSelectedColumn] = React.useState<string | null>(null)
   const [globalFilter, setGlobalFilter] = React.useState("")
   const [activeFilters, setActiveFilters] = React.useState<Record<string, string[]>>({})
   const [columnOrder, setColumnOrder] = React.useState<string[]>([])
@@ -114,7 +84,6 @@ export default function AdvancedInventoryTable({
     filterFns: {
       multiSelect: multiSelectFilter,
     },
-    getRowCanExpand: () => true,
   })
 
   React.useEffect(() => {
@@ -124,24 +93,6 @@ export default function AdvancedInventoryTable({
   React.useEffect(() => {
     table.setPageSize(pageSize)
   }, [pageSize, table])
-
-  // const sensors = useSensors(
-  //   useSensor(PointerSensor),
-  //   useSensor(KeyboardSensor, {
-  //     coordinateGetter: sortableKeyboardCoordinates,
-  //   })
-  // )
-
-  // const handleDragEnd = (event: DragEndEvent) => {
-  //   const { active, over } = event
-  //   if (active.id !== over?.id) {
-  //     setColumnOrder((prev) => {
-  //       const oldIndex = prev.indexOf(active.id as string)
-  //       const newIndex = prev.indexOf(over?.id as string)
-  //       return arrayMove(prev, oldIndex, newIndex)
-  //     })
-  //   }
-  // }
 
   const handleFilterChange = (columnId: string, filterValue: string) => {
     setActiveFilters((prev) => ({
@@ -217,7 +168,7 @@ export default function AdvancedInventoryTable({
                   <div className="grid gap-2">
                     {table
                       .getAllColumns()
-                      .filter((column) => column.getCanFilter() || column.id === "skuCode")
+                      .filter((column) => column.getCanFilter())
                       .map((column) => {
                         return (
                           <Popover key={column.id}>
@@ -264,7 +215,7 @@ export default function AdvancedInventoryTable({
           </Popover>
         </div>
         <div className="flex gap-2 justify-center mt-2 lg:mt-0 items-center text-center text-sm text-muted-foreground">
-          <Button variant={"ghost"} size={"sm"}>
+          <Button variant="ghost" size="sm">
             Total Rows: {table.getFilteredRowModel().rows.length}
           </Button>
           <Select
@@ -285,12 +236,13 @@ export default function AdvancedInventoryTable({
             </SelectContent>
           </Select>
           <CsvDownloader filename={filename} datas={data} columns={columnNames.map((x) => ({ id: x, displayName: x }))}>
-            <Button size={"icon"}>
+            <Button size="icon">
               <DownloadIcon size={18} />
             </Button>
           </CsvDownloader>
         </div>
       </div>
+
       {Object.entries(activeFilters).map(([columnId, filters]) =>
         filters.map((filter) => (
           <Badge key={`${columnId}-${filter}`} variant="secondary" className="mr-2">
@@ -305,83 +257,87 @@ export default function AdvancedInventoryTable({
           </Badge>
         )),
       )}
+
       <div className="rounded-md border">
-        <div className="relative overflow-x-auto max-h-[calc(100vh-300px)] overflow-y-auto">
-          <Table className="min-w-[1200px] relative">
-            <TableHeader className="sticky top-0 z-10 bg-white shadow-sm">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header, index) => {
-                    const isPinned = pinnedColumns.includes(header.column.id)
+        <div className="relative">
+          <div className="max-h-[800px] overflow-auto">
+            <Table>
+              <TableHeader className="sticky top-0 z-50 bg-white">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header, index) => {
+                      const isPinned = pinnedColumns.includes(header.column.id)
+
+                      return (
+                        <TableHead
+                          key={header.id}
+                          colSpan={header.colSpan}
+                          className={`
+                        ${index === 0 && isPinned ? "sticky top-0 left-0 bg-blue-50  shadow-lg" : ""}
+                            min-w-[150px]
+                            text-ellipsis
+                            text-nowrap
+                            whitespace-nowrap
+                          `}
+                        >
+                          {header.isPlaceholder ? null : (
+                            <div>
+                              <div
+                                className="flex items-center cursor-pointer"
+                                onClick={() => header.column.toggleSorting()}
+                              >
+                                {flexRender(header.column.columnDef.header, header.getContext())}
+                                {header.column.getCanSort() && (
+                                  <Button variant="ghost" size="icon">
+                                    <ArrowUpDownIcon className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {index === 0 && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      toggleColumnPin(header.column.id)
+                                    }}
+                                  >
+                                    <PinIcon className={`h-4 w-4 ${isPinned ? "text-blue-500" : "text-gray-500"}`} />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </TableHead>
+                      )
+                    })}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row, rowIndex) => {
+                    const firstColumnId = table.getHeaderGroups()[0].headers[0].column.id
+                    const isPinned = pinnedColumns.includes(firstColumnId)
 
                     return (
-                      <TableHead
-                        key={header.id}
-                        colSpan={header.colSpan}
-                        className={`
-                    ${isPinned ? "sticky left-0 z-20 bg-blue-50 shadow-lg" : "bg-white"} 
-                    min-w-[150px] max-w-[265px] text-ellipsis text-nowrap whitespace-nowrap
-                  `}
-                        style={index === 0 && isPinned ? { position: "sticky", left: 0 } : {}}
-                      >
-                        {header.isPlaceholder ? null : (
-                          <div>
-                            <div
-                              className="flex items-center cursor-pointer"
-                              onClick={() => header.column.toggleSorting()}
-                            >
-                              {flexRender(header.column.columnDef.header, header.getContext())}
-                              {header.column.getCanSort() && (
-                                <Button variant="ghost" size="icon">
-                                  <ArrowUpDownIcon />
-                                </Button>
-                              )}
-                              {index === 0 && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    toggleColumnPin(header.column.id)
-                                  }}
-                                >
-                                  <PinIcon className={`h-4 w-4 ${isPinned ? "text-blue-500" : "text-gray-500"}`} />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </TableHead>
-                    )
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row, rowIndex) => {
-                  const firstColumnId = table.getHeaderGroups()[0].headers[0].column.id
-                  const isPinned = pinnedColumns.includes(firstColumnId)
-
-                  return (
-                    <React.Fragment key={row.id}>
                       <TableRow
+                        key={row.id}
                         data-state={row.getIsSelected() && "selected"}
-                        className={`h-10
-                    ${rowIndex % 2 === 0 ? "bg-gray-50" : ""}
-                    ${row.getIsSelected() ? "bg-blue-100" : ""}
-                  `}
+                        className={`
+                          ${rowIndex % 2 === 0 ? "bg-gray-50" : ""}
+                          ${row.getIsSelected() ? "bg-blue-100" : ""}
+                        `}
                       >
                         {row.getVisibleCells().map((cell, cellIndex) => (
                           <TableCell
                             key={cell.id}
                             className={`
-                        truncate 
-                        overflow-hidden 
-                        max-w-[40px] 
-                        px-2
-                        ${cellIndex === 0 && isPinned ? "sticky left-0 z-10 bg-blue-50 shadow-lg" : ""}
-                      `}
+                              min-w-[150px]
+                              truncate
+                              overflow-hidden
+                              px-4
+                        ${cellIndex === 0 && isPinned ? "sticky left-0 -z-50 bg-blue-50 shadow-lg" : ""}
+                            `}
                           >
                             <div className="overflow-hidden text-ellipsis whitespace-nowrap">
                               {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -389,27 +345,21 @@ export default function AdvancedInventoryTable({
                           </TableCell>
                         ))}
                       </TableRow>
-                      {row.getIsExpanded() && (
-                        <TableRow>
-                          <TableCell colSpan={row.getVisibleCells().length}>
-                            {/* ExpandedRowContent will go here */}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </React.Fragment>
-                  )
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No results.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                    )
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
+
       <Pagination>
         <PaginationContent>
           <PaginationItem>
@@ -425,7 +375,6 @@ export default function AdvancedInventoryTable({
           </PaginationItem>
           {table.getPageCount() > 0 && (
             <>
-              {/* First Page */}
               <PaginationItem>
                 <PaginationLink
                   href="#"
@@ -439,14 +388,12 @@ export default function AdvancedInventoryTable({
                 </PaginationLink>
               </PaginationItem>
 
-              {/* Show ellipsis if there are many pages before current */}
               {table.getState().pagination.pageIndex > 2 && (
                 <PaginationItem>
                   <PaginationEllipsis />
                 </PaginationItem>
               )}
 
-              {/* Current page and surrounding pages */}
               {table.getState().pagination.pageIndex > 1 && (
                 <PaginationItem>
                   <PaginationLink
@@ -491,14 +438,12 @@ export default function AdvancedInventoryTable({
                 </PaginationItem>
               )}
 
-              {/* Show ellipsis if there are many pages after current */}
               {table.getState().pagination.pageIndex < table.getPageCount() - 3 && (
                 <PaginationItem>
                   <PaginationEllipsis />
                 </PaginationItem>
               )}
 
-              {/* Last Page */}
               {table.getPageCount() > 1 && (
                 <PaginationItem>
                   <PaginationLink
@@ -532,7 +477,7 @@ export default function AdvancedInventoryTable({
   )
 }
 
-export const generateColumns = (
+const generateColumns = (
   columnNames: string[],
 ): ColumnDef<{
   [key: string]: string
@@ -555,4 +500,3 @@ export const generateColumns = (
     })) || []
   return dynamicColumns
 }
-
