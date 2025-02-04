@@ -2,7 +2,7 @@
 
 import { revalidatePath, unstable_noStore } from "next/cache"
 import { parse } from "csv-parse/sync"
-import { analysis, calc_Count_Amt, orderCategory, transformData } from "@/lib/action-utils"
+import { analysis, calc_Count_Amt, orderCategory } from "@/lib/action-utils"
 import type { InvoiceData, MonthDataItem, SalesDataItem } from "@/types/order"
 import type { categorySizeMap } from "@/components/categories/data-table-filters"
 import { invoiceGradeAnalysis, transformInvoiceData } from "@/lib/invoice-action-utils"
@@ -12,6 +12,7 @@ import { calculateCategoryMetrics, calculatePoralMetrics } from "@/lib/category-
 import type { SalesRecord } from "@/types/category-poral-monthly"
 import { format, getDaysInMonth } from "date-fns"
 import { createInvoiceJob, createMontlyReportJob, getJobStatus } from "@/lib/api"
+import prisma from "@/lib/prisma"
 
 // Constants
 const CACHE_REVALIDATION_PATH = process.env.CACHE_REVALIDATION_PATH || "/analysis"
@@ -76,7 +77,7 @@ class DataCache<T> {
 const invoiceCache = new DataCache<InvoiceData>()
 const invoiceAnalysisCache = new DataCache<InvoiceData>()
 const salesCache = new DataCache<SalesDataItem>()
-const monthlyCache = new DataCache<MonthDataItem>()
+// const monthlyCache = new DataCache<MonthDataItem>()
 const monthlyAnalysisCache = new DataCache<MonthDataItem>()
 
 export async function exportInvoices(): Promise<{
@@ -188,20 +189,49 @@ export async function fetchMonthlyData(
     startIndex: number,
     stopIndex: number,
 ): Promise<PaginatedResponse<MonthDataItem>> {
-    // Disable static rendering
-    unstable_noStore()
 
     try {
-        if (monthlyCache.isEmpty()) {
-            const path = (await exportMonthlyReport()).filePath
-            if (path) {
-                const result = await fetchCSV<MonthDataItem>(path)
-                monthlyCache.setData(result)
-            }
-        }
+        // if (monthlyCache.isEmpty()) {
 
-        const transformedData = transformData(monthlyCache.getData())
-        monthlyAnalysisCache.setData(transformedData)
+        // const path = (await exportMonthlyReport()).filePath
+        // if (path) {
+        //     const result = await fetchCSV<MonthDataItem>(path)
+        //     monthlyCache.setData(result)
+        // }
+        // }
+
+        // const transformedData = transformData(monthlyCache.getData())
+        const monthlyData = await prisma.monthDataItem.findMany();
+        const formatData = monthlyData.map((x) => ({
+            "Sku Code": x.skuCode,
+            "Parent SKU": x.parentSKU,
+            "Size": x.size,
+            "Category Name": x.categoryName,
+            "Sub Category": x.subCategory,
+            "Sale Qty": safeNumber(x.saleQty),
+            "Sale Amount": safeNumber(x.saleAmount),
+            "Vendor Name": x.vendorName,
+            "Static Grade": x.staticGrade,
+            "Month Grade": x.monthGrade,
+            "Available Inventory": x.availableInventory,
+            "Open Purchase": x.openPurchase,
+            "Required Qty": x.requiredQty,
+            "Order Qty": x.orderQty,
+            "Sale Through": x.saleThrough,
+            "Vendor Price": x.vendorPrice,
+            "Total Amount": x.totalAmount,
+            "Sku Code ID ": x.skuCodeID,
+            "Days of positive inventory": x.daysOfPositiveInventory,
+            "ROH": safeNumber(x.roh),
+            "DOH": safeNumber(x.doh),
+            "New SKU Code": x.newSkuCode,
+            "Static Grade_N": safeNumber(x.staticGradeN),
+            "Month Grade_N": safeNumber(x.monthGradeN),
+            "Comment": x.comment,
+            "Avg Selling Price": safeNumber(x.avgSellingPrice),
+            "Multiple Price": safeNumber(x.multiplePrice),
+        }))
+        monthlyAnalysisCache.setData(formatData)
 
         return {
             columns: Object.keys(monthlyAnalysisCache.getData()[0] || {}),

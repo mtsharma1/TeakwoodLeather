@@ -12,16 +12,29 @@ type TabsI = {
 
 export default function AnimatedTabs({ tabs }: { tabs: TabsI }) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-  const [activeIndex, setActiveIndex] = useState(0)
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [hoverStyle, setHoverStyle] = useState({})
-  const [activeStyle, setActiveStyle] = useState({ left: "0px", width: "0px" })
+  const [activeStyle, setActiveStyle] = useState({})
   const tabRefs = useRef<(HTMLDivElement | null)[]>([])
   const pathname = usePathname()
+  const isFirstRender = useRef(true)
 
   const updateActiveIndex = useCallback(() => {
     const index = tabs.findIndex((tab) => tab.href === pathname)
     if (index !== -1) {
       setActiveIndex(index)
+      // Only update the active style immediately on first render
+      if (isFirstRender.current) {
+        const activeElement = tabRefs.current[index]
+        if (activeElement) {
+          const { offsetLeft, offsetWidth } = activeElement
+          setActiveStyle({
+            left: `${offsetLeft}px`,
+            width: `${offsetWidth}px`,
+          })
+        }
+        isFirstRender.current = false
+      }
     }
   }, [pathname, tabs])
 
@@ -42,19 +55,25 @@ export default function AnimatedTabs({ tabs }: { tabs: TabsI }) {
     }
   }, [hoveredIndex])
 
+  // Separate effect for updating active style with a slight delay
   useEffect(() => {
-    const activeElement = tabRefs.current[activeIndex]
-    if (activeElement) {
-      const { offsetLeft, offsetWidth } = activeElement
-      setActiveStyle({
-        left: `${offsetLeft}px`,
-        width: `${offsetWidth}px`,
-      })
+    if (activeIndex !== null && !isFirstRender.current) {
+      const activeElement = tabRefs.current[activeIndex]
+      if (activeElement) {
+        const { offsetLeft, offsetWidth } = activeElement
+        // Use requestAnimationFrame to ensure the transition happens after the route change
+        requestAnimationFrame(() => {
+          setActiveStyle({
+            left: `${offsetLeft}px`,
+            width: `${offsetWidth}px`,
+          })
+        })
+      }
     }
   }, [activeIndex])
 
   return (
-    <Card className="w-full h-[100px] border-none shadow-none relative flex items-center justify-center">
+    <Card className="w-full h-[50px] pb-3 border-none shadow-none relative flex items-center justify-start">
       <CardContent className="p-0">
         <div className="relative">
           {/* Hover Highlight */}
@@ -83,7 +102,6 @@ export default function AnimatedTabs({ tabs }: { tabs: TabsI }) {
                 }`}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
-                onClick={() => setActiveIndex(index)}
               >
                 <div
                   ref={(el) => {

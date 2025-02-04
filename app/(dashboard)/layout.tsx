@@ -19,7 +19,7 @@ export default function DashboardLayout({
             </div>
           </header>
           <main className="flex-1 overflow-auto">
-            <div className="container mx-auto p-4">{children}</div>
+            <div className="mx-auto p-4">{children}</div>
           </main>
         </SidebarInset>
       </div>

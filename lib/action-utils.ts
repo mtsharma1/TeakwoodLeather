@@ -57,10 +57,10 @@ export function transformData(
         const orderQty = parseInt((supportData
             ? Math.max(0,
                 safeNumber(((sumSalesQty * 2) / (safeNumber(supportData["Ratio Sum"])) * safeNumber(supportData["Ratio"])) -
-                (availableInventory + openPurchase))
-            ): 0).toString())
+                    (availableInventory + openPurchase))
+            ) : 0).toString())
 
-        const saleThrough = roundToDecimals((saleQty / (availableInventory + saleQty)) * 100)
+        const saleThrough = roundToDecimals(safeNumber((saleQty / (availableInventory + saleQty))) * 100)
         const totalAmount = vendorPrice * orderQty
         const roh = daysPositive ? (saleQty / daysPositive) : 0
         const doh = roh ? (availableInventory / roh) : 0

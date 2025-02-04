@@ -1,3 +1,6 @@
+'use client'
+
+import { useRouter } from "next/navigation"
 import { ChevronRight, type LucideIcon } from "lucide-react"
 import {
   Collapsible,
@@ -31,6 +34,16 @@ interface MenuItem {
 }
 
 export function NavMain({ items }: { items: MenuItem[] }) {
+  const router = useRouter()
+
+  const handleNavigation = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault()
+    const href = e.currentTarget.getAttribute('href')
+    if (href) {
+      router.push(href)
+    }
+  }
+
   const renderSubItems = (subItems: SubItem[]) => (
     <SidebarMenuSub>
       {subItems.map((subItem) => (
@@ -54,7 +67,7 @@ export function NavMain({ items }: { items: MenuItem[] }) {
               asChild
               className="w-full text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors duration-200 rounded-md pl-12 pr-4 py-2"
             >
-              <a href={subItem.url}>
+              <a href={subItem.url} onClick={handleNavigation}>
                 <span className="truncate">{subItem.title}</span>
               </a>
             </SidebarMenuSubButton>
@@ -82,8 +95,10 @@ export function NavMain({ items }: { items: MenuItem[] }) {
                     tooltip={item.title}
                     className="w-full hover:bg-slate-700/50 hover:text-white justify-between transition-colors duration-200 rounded-md group px-4 py-2"
                   >
-                    <div className="flex gap-2 items-center">{item.icon && <item.icon size={16} className="transition-colors duration-150" />}
-                      <span className="font-medium truncate">{item.title}</span></div>
+                    <div className="flex gap-2 items-center">
+                      {item.icon && <item.icon size={16} className="transition-colors duration-150" />}
+                      <span className="font-medium truncate">{item.title}</span>
+                    </div>
                     <ChevronRight className="ml-2 h-4 w-4 flex-shrink-0 text-slate-400 transition-transform duration-200 group-data-[state=open]:rotate-90" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
@@ -97,7 +112,7 @@ export function NavMain({ items }: { items: MenuItem[] }) {
                 tooltip={item.title}
                 className="w-full hover:bg-slate-700/50 hover:text-white transition-colors duration-200 rounded-md px-4 py-2"
               >
-                <a href={item.url} className="flex items-center">
+                <a href={item.url} onClick={handleNavigation} className="flex items-center">
                   {item.icon && <item.icon className="text-slate-300 group-hover:text-white transition-colors duration-200" />}
                   <span className="font-medium truncate">{item.title}</span>
                 </a>

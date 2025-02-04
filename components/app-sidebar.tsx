@@ -1,10 +1,7 @@
-"use client"
+'use client'
 
 import * as React from "react"
-import {
-  Package,
-} from "lucide-react"
-
+import { Package } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
@@ -148,13 +145,12 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="icon" {...props} className="bg-slate-800 ">
+    <Sidebar collapsible="icon" {...props} className="bg-slate-800">
       <SidebarHeader className="bg-slate-800 text-white">
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent className="bg-slate-800 scrollbar-none text-white">
         <NavMain items={data.navMain} />
-        {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter className="bg-slate-800 text-white">
         <NavUser user={data.user} />

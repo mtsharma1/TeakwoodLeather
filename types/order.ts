@@ -6,8 +6,6 @@ export interface InputItem {
     "Size": string
     "Category Name": string
     "Sub Category": string
-    "Sale Qty": number
-    "Sale Amount": number
     "Vendor Name": string
     "Static Grade": string
     "Month Grade": string
@@ -20,6 +18,8 @@ export interface InputItem {
     "Total Amount": string
     "Sku Code ID ": string
     "Days of positive inventory": string
+    "Sale Qty": number
+    "Sale Amount": number
 }
 
 export interface SalesDataItem {
@@ -31,12 +31,12 @@ export interface SalesDataItem {
 export interface MonthDataItem extends InputItem {
     "ROH": number
     "DOH": number
-    "New SKU Code": string
     "Static Grade_N": number
     "Month Grade_N": number
-    "Comment": string
     "Avg Selling Price": number
     "Multiple Price": number
+    "Comment": string
+    "New SKU Code": string
 }
 
 export interface SupportItem {
