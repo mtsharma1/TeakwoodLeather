@@ -1,23 +1,37 @@
-'use server'
+"use server"
 
-import { revalidatePath, unstable_noStore } from 'next/cache'
-import { parse } from 'csv-parse/sync'
-import { analysis, calc_Count_Amt, orderCategory, transformData } from '@/lib/action-utils'
-import { InvoiceData, MonthDataItem, SalesDataItem } from '@/types/order'
-import { categorySizeMap } from '@/components/categories/data-table-filters'
-import { invoiceGradeAnalysis, transformInvoiceData } from '@/lib/invoice-action-utils'
-import { roundToDecimals, safeNumber } from '@/lib/utils'
-import { cache } from 'react'
-import { calculateCategoryMetrics, calculatePoralMetrics } from '@/lib/category-poral-action-utils'
-import { SalesRecord } from '@/types/category-poral-monthly'
-import { format, getDaysInMonth } from 'date-fns'
-import { createInvoiceJob, createMontlyReportJob, getJobStatus } from '@/lib/api'
+import { revalidatePath, unstable_noStore } from "next/cache"
+import { parse } from "csv-parse/sync"
+import { analysis, calc_Count_Amt, orderCategory, transformData } from "@/lib/action-utils"
+import type { InvoiceData, MonthDataItem, SalesDataItem } from "@/types/order"
+import type { categorySizeMap } from "@/components/categories/data-table-filters"
+import { invoiceGradeAnalysis, transformInvoiceData } from "@/lib/invoice-action-utils"
+import { roundToDecimals, safeNumber } from "@/lib/utils"
+import { cache } from "react"
+import { calculateCategoryMetrics, calculatePoralMetrics } from "@/lib/category-poral-action-utils"
+import type { SalesRecord } from "@/types/category-poral-monthly"
+import { format, getDaysInMonth } from "date-fns"
+import { createInvoiceJob, createMontlyReportJob, getJobStatus } from "@/lib/api"
 
 // Constants
-const CACHE_REVALIDATION_PATH = '/analysis'
+const CACHE_REVALIDATION_PATH = process.env.CACHE_REVALIDATION_PATH || "/analysis"
+const MAX_ATTEMPTS = Number.parseInt(process.env.MAX_ATTEMPTS || "10", 10)
+const DELAY = Number.parseInt(process.env.DELAY || "2000", 10)
 
-// URLs should be in environment variables
-// const SALES_ORDER_URL = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3ODRkNGYzNjZlNWJkMWE4ODMyZmZlZS9FeHBvcnQtU2FsZSUyME9yZGVycy10ZWFrd29vZGluZGlhXzEzMDEyMDI1MTQyNTMyLmNzdiMjIzY3ODRkNGYzNjZlNWJkMWE4ODMyZmZlZSMjIzEzXzAxXzIwMjU="
+async function pollJobStatus(jobCode: string, maxAttempts: number, delay: number) {
+    let attempts = 0
+    while (attempts < maxAttempts) {
+        const statusResponse = await getJobStatus(jobCode)
+        if (statusResponse.status === "COMPLETE") {
+            return { success: true, message: "Export completed successfully", filePath: statusResponse.filePath }
+        } else if (statusResponse.status === "FAILED") {
+            throw new Error(`Export job failed: ${JSON.stringify(statusResponse)}`)
+        }
+        await new Promise((resolve) => setTimeout(resolve, delay))
+        attempts++
+    }
+    throw new Error("Export job timed out")
+}
 
 interface PaginatedResponse<T> {
     columns: string[]
@@ -26,10 +40,10 @@ interface PaginatedResponse<T> {
     totalItems: number
 }
 
-// Cache management
 class DataCache<T> {
     private data: T[] = []
     private columns: string[] = []
+    private map: Map<string, T> = new Map()
 
     isEmpty(): boolean {
         return this.data.length === 0
@@ -38,6 +52,7 @@ class DataCache<T> {
     setData(data: T[], columns?: string[]) {
         this.data = data
         if (columns) this.columns = columns
+        this.map = new Map(data.map((item, index) => [index.toString(), item]))
     }
 
     getData(): T[] {
@@ -49,7 +64,7 @@ class DataCache<T> {
     }
 
     slice(start: number, end: number): T[] {
-        return this.data.slice(start, end)
+        return Array.from({ length: end - start }, (_, i) => this.map.get((i + start).toString())!).filter(Boolean)
     }
 
     length(): number {
@@ -64,11 +79,16 @@ const salesCache = new DataCache<SalesDataItem>()
 const monthlyCache = new DataCache<MonthDataItem>()
 const monthlyAnalysisCache = new DataCache<MonthDataItem>()
 
-export async function exportInvoices() {
+export async function exportInvoices(): Promise<{
+    success: boolean;
+    message: string;
+    filePath?: string;
+    error?: string;
+}> {
     try {
         const today = new Date()
-        const yesterday = format(new Date().setDate(today.getDate() - 1), "yyyy-MM-dd");
-        const dayBeforeYesterday = format(new Date().setDate(today.getDate() - 2), "yyyy-MM-dd");
+        const yesterday = format(new Date().setDate(today.getDate() - 1), "yyyy-MM-dd")
+        const dayBeforeYesterday = format(new Date().setDate(today.getDate() - 2), "yyyy-MM-dd")
 
         const jobResponse = await createInvoiceJob(dayBeforeYesterday, yesterday)
 
@@ -79,29 +99,8 @@ export async function exportInvoices() {
         const jobCode = jobResponse.jobCode
 
         // Poll for job status
-        let statusResponse
-        let attempts = 0
-        const maxAttempts = 10
-        const delay = 2000 // 2 seconds
-
-        while (attempts < maxAttempts) {
-            statusResponse = await getJobStatus(jobCode)
-
-            if (statusResponse.status === "COMPLETE") {
-                return {
-                    success: true,
-                    message: "Export completed successfully",
-                    filePath: statusResponse.filePath,
-                }
-            } else if (statusResponse.status === "FAILED") {
-                throw new Error(`Export job failed: ${JSON.stringify(statusResponse)}`)
-            }
-
-            await new Promise((resolve) => setTimeout(resolve, delay))
-            attempts++
-        }
-
-        throw new Error("Export job timed out")
+        const result = await pollJobStatus(jobCode, MAX_ATTEMPTS, DELAY)
+        return result
     } catch (error) {
         return {
             success: false,
@@ -111,9 +110,13 @@ export async function exportInvoices() {
     }
 }
 
-export async function exportMonthlyReport() {
+export async function exportMonthlyReport(): Promise<{
+    success: boolean;
+    message: string;
+    filePath?: string;
+    error?: string;
+}> {
     try {
-
         const jobResponse = await createMontlyReportJob()
 
         if (!jobResponse.successful) {
@@ -123,30 +126,8 @@ export async function exportMonthlyReport() {
         const jobCode = jobResponse.jobCode
 
         // Poll for job status
-        let statusResponse
-        let attempts = 0
-        const maxAttempts = 25
-        const delay = 8000 //  seconds
-
-        while (attempts < maxAttempts) {
-            statusResponse = await getJobStatus(jobCode)
-            console.log(statusResponse, 'statusResponse')
-
-            if (statusResponse.status === "COMPLETE") {
-                return {
-                    success: true,
-                    message: "Export completed successfully",
-                    filePath: statusResponse.filePath,
-                }
-            } else if (statusResponse.status === "FAILED") {
-                throw new Error(`Export job failed: ${JSON.stringify(statusResponse)}`)
-            }
-
-            await new Promise((resolve) => setTimeout(resolve, delay))
-            attempts++
-        }
-
-        throw new Error("Export job timed out")
+        const result = await pollJobStatus(jobCode, MAX_ATTEMPTS, DELAY * 4) // Increased delay and attempts for monthly report
+        return result
     } catch (error) {
         return {
             success: false,
@@ -157,39 +138,35 @@ export async function exportMonthlyReport() {
 }
 
 // Utility functions
-async function fetchCSV<T>(url: string): Promise<T[]> {
+export async function fetchCSV<T>(url: string): Promise<T[]> {
     const response = await fetch(url, {
-        // cache: process.env.NODE_ENV === 'production' ? 'force-cache' : 'no-store',
-        headers: {
-            'Content-Type': 'text/csv',
-        },
-    });
+        headers: { "Content-Type": "text/csv" },
+        cache: "no-cache"
+    })
 
     if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`)
     }
 
-    const csvText = await response.text();
-    // Process the CSV data in memory instead of caching
-    return processCSVData(csvText);
+    const csvText = await response.text()
+    return processCSVData(csvText)
 }
 
 function processCSVData<T>(csvText: string): T[] {
     return parse(csvText, {
         columns: true,
-        skip_empty_lines: true
+        skip_empty_lines: true,
     }) as T[]
 }
 
-export async function fetchSalesData(
-    startIndex: number,
-    stopIndex: number
-): Promise<PaginatedResponse<SalesDataItem>> {
+export async function fetchSalesData(startIndex: number, stopIndex: number): Promise<PaginatedResponse<SalesDataItem>> {
     try {
         if (salesCache.isEmpty()) {
             const path = (await exportInvoices()).filePath
-            const result = await fetchCSV<SalesDataItem>(path)
-            salesCache.setData(result, Object.keys(result[0]))
+            if (path) {
+                const result = await fetchCSV<SalesDataItem>(path)
+                salesCache.setData(result, Object.keys(result[0]))
+            }
         }
 
         const rows = salesCache.slice(startIndex, stopIndex)
@@ -199,17 +176,17 @@ export async function fetchSalesData(
             columns: salesCache.getColumns(),
             rows,
             hasMore: stopIndex < salesCache.length(),
-            totalItems: salesCache.length()
+            totalItems: salesCache.length(),
         }
     } catch (error) {
-        console.error('Error in fetchSalesData:', error)
-        throw new Error('Failed to fetch sales data')
+        console.error("Error in fetchSalesData:", error)
+        throw new Error("Failed to fetch sales data")
     }
 }
 
 export async function fetchMonthlyData(
     startIndex: number,
-    stopIndex: number
+    stopIndex: number,
 ): Promise<PaginatedResponse<MonthDataItem>> {
     // Disable static rendering
     unstable_noStore()
@@ -217,23 +194,24 @@ export async function fetchMonthlyData(
     try {
         if (monthlyCache.isEmpty()) {
             const path = (await exportMonthlyReport()).filePath
-            console.log(path, 'mont')
-            const result = await fetchCSV<MonthDataItem>(path)
-            monthlyCache.setData(result)
+            if (path) {
+                const result = await fetchCSV<MonthDataItem>(path)
+                monthlyCache.setData(result)
+            }
         }
 
         const transformedData = transformData(monthlyCache.getData())
         monthlyAnalysisCache.setData(transformedData)
 
         return {
-            columns: Object.keys(monthlyAnalysisCache.getData()[0]),
+            columns: Object.keys(monthlyAnalysisCache.getData()[0] || {}),
             rows: monthlyAnalysisCache.slice(startIndex, stopIndex),
             hasMore: stopIndex < monthlyAnalysisCache.length(),
-            totalItems: monthlyAnalysisCache.length()
+            totalItems: monthlyAnalysisCache.length(),
         }
     } catch (error) {
-        console.error('Error in fetchMonthlyData:', error)
-        throw new Error('Failed to fetch monthly data')
+        console.error("Error in fetchMonthlyData:", error)
+        throw new Error("Failed to fetch monthly data")
     }
 }
 
@@ -245,8 +223,8 @@ export async function analysisData(key: string) {
 
         return analysis(monthlyAnalysisCache.getData(), key)
     } catch (error) {
-        console.error('Error in analysisData:', error)
-        throw new Error('Failed to analyze data')
+        console.error("Error in analysisData:", error)
+        throw new Error("Failed to analyze data")
     }
 }
 
@@ -259,8 +237,8 @@ export async function analysisDasboard() {
 
         return calc_Count_Amt(monthlyAnalysisCache.getData())
     } catch (error) {
-        console.error('Error in analysisData:', error)
-        throw new Error('Failed to analyze data')
+        console.error("Error in analysisData:", error)
+        throw new Error("Failed to analyze data")
     }
 }
 
@@ -272,22 +250,20 @@ export async function categoryData(key: keyof typeof categorySizeMap) {
 
         return orderCategory(monthlyAnalysisCache.getData(), key)
     } catch (error) {
-        console.error('Error in analysisData:', error)
-        throw new Error('Failed to analyze data')
+        console.error("Error in analysisData:", error)
+        throw new Error("Failed to analyze data")
     }
 }
 
-
 /**************Invoice Data (Price Checklist)**************/
-export async function fetchInvoiceData(
-    startIndex: number,
-    stopIndex: number
-): Promise<PaginatedResponse<InvoiceData>> {
+export async function fetchInvoiceData(startIndex: number, stopIndex: number): Promise<PaginatedResponse<InvoiceData>> {
     try {
         if (invoiceCache.isEmpty()) {
             const path = (await exportInvoices()).filePath
-            const result = await fetchCSV<InvoiceData>(path)
-            invoiceCache.setData(result, Object.keys(result[0]))
+            if (path) {
+                const result = await fetchCSV<InvoiceData>(path)
+                invoiceCache.setData(result, Object.keys(result[0]))
+            }
         }
 
         const rows = invoiceCache.slice(startIndex, stopIndex)
@@ -296,44 +272,44 @@ export async function fetchInvoiceData(
             columns: invoiceCache.getColumns(),
             rows,
             hasMore: stopIndex < invoiceCache.length(),
-            totalItems: invoiceCache.length()
+            totalItems: invoiceCache.length(),
         }
     } catch (error) {
-        console.error('Error in fetchInvoiceData:', error)
-        throw new Error('Failed to fetchInvoiceData')
+        console.error("Error in fetchInvoiceData:", error)
+        throw new Error("Failed to fetchInvoiceData")
     }
 }
 
 export async function priceCheckListData(type: string) {
     try {
         if (invoiceCache.isEmpty()) {
-            await fetchInvoiceData(0, 50);
+            await fetchInvoiceData(0, 50)
         }
 
-        const rawData = invoiceCache.getData();
-        const data = transformInvoiceData(rawData);
+        const rawData = invoiceCache.getData()
+        const data = transformInvoiceData(rawData)
 
         switch (type) {
             case "overview":
-                return data;
+                return data
 
             case "analysis":
-                return invoiceGradeAnalysis(data);
+                return invoiceGradeAnalysis(data)
 
             case "stop":
-                return data.filter(({ Status }) => Status?.toUpperCase() === "STOP");
+                return data.filter(({ Status }) => Status?.toUpperCase() === "STOP")
 
             case "under300":
-                return data.filter(({ "Invoice Total": total }) => safeNumber(total) < 300);
+                return data.filter(({ "Invoice Total": total }) => safeNumber(total) < 300)
             case "check":
-                return data.filter(({ "Invoice Total": total }) => safeNumber(total) < 300);
+                return data.filter(({ "Invoice Total": total }) => safeNumber(total) < 300)
 
             default:
-                throw new Error("Invalid request type");
+                throw new Error("Invalid request type")
         }
     } catch (error) {
-        console.error(error);
-        throw new Error("Failed to analyze data");
+        console.error(error)
+        throw new Error("Failed to analyze data")
     }
 }
 
@@ -378,34 +354,34 @@ export const calculateCategoryMonthlyReport = async (formData: FormData) => {
         }
         const data: SalesRecord[] = processCSVData(await file.text())
 
-        const productMap = new Map();
+        const productMap = new Map()
 
-        data.forEach(record => {
-            const productName = record['Product Name'];
-            const quantity = safeNumber(record['Qty']);
+        data.forEach((record) => {
+            const productName = record["Product Name"]
+            const quantity = safeNumber(record["Qty"])
 
             if (productMap.has(productName)) {
-                productMap.set(productName, productMap.get(productName) + quantity);
+                productMap.set(productName, productMap.get(productName) + quantity)
             } else {
-                productMap.set(productName, quantity);
+                productMap.set(productName, quantity)
             }
-        });
+        })
 
         const daysInCurrentMonth = getDaysInMonth(new Date())
 
         const result = Array.from(productMap, ([productName, quantity]) => ({
             productName,
             quantity,
-            monthAvg: roundToDecimals(safeNumber((quantity / daysInCurrentMonth) * 100)).toString()
-        }));
+            monthAvg: roundToDecimals(safeNumber((quantity / daysInCurrentMonth) * 100)).toString(),
+        }))
 
-        result.sort((a, b) => a.productName.localeCompare(b.productName));
+        result.sort((a, b) => a.productName.localeCompare(b.productName))
 
-        return result;
+        return result
     } catch {
         return null
     }
-};
+}
 
 export const calculatePoralMonthlyReport = async (formData: FormData) => {
     try {
@@ -415,31 +391,31 @@ export const calculatePoralMonthlyReport = async (formData: FormData) => {
         }
         const data: SalesRecord[] = processCSVData(await file.text())
 
-        const productMap = new Map();
+        const productMap = new Map()
 
-        data.forEach(record => {
-            const productName = record['Channel Ledger'];
-            const quantity = safeNumber(record['Qty']);
+        data.forEach((record) => {
+            const productName = record["Channel Ledger"]
+            const quantity = safeNumber(record["Qty"])
 
             if (productMap.has(productName)) {
-                productMap.set(productName, productMap.get(productName) + quantity);
+                productMap.set(productName, productMap.get(productName) + quantity)
             } else {
-                productMap.set(productName, quantity);
+                productMap.set(productName, quantity)
             }
-        });
+        })
 
         const daysInCurrentMonth = getDaysInMonth(new Date())
 
         const result = Array.from(productMap, ([productName, quantity]) => ({
             productName,
             quantity,
-            monthAvg: roundToDecimals(safeNumber((quantity / daysInCurrentMonth) * 100)).toString()
-        }));
+            monthAvg: roundToDecimals(safeNumber((quantity / daysInCurrentMonth) * 100)).toString(),
+        }))
 
-        result.sort((a, b) => a.productName.localeCompare(b.productName));
+        result.sort((a, b) => a.productName.localeCompare(b.productName))
 
-        return result;
+        return result
     } catch {
         return null
     }
-};
+}

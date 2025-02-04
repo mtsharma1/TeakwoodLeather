@@ -28,7 +28,7 @@ type BarChartProps = {
 
 const chartConfig = {
   inventoryValue: {
-    label: "Inventory Value",
+    label: "Inventory Count",
     color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig

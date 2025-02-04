@@ -1,55 +1,142 @@
-// This is your Prisma schema file
-
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-model Product {
-  id                      String   @id @default(uuid())
-  skuCode                 String   @unique
-  parentSku               String
-  size                    String
-  categoryName            String
-  subCategory             String
-  saleQty                 Int
-  saleAmount              Decimal  @db.Decimal(10, 2)
-  vendorName              String
-  staticGrade             String
-  monthGrade              String?
-  availableInventory      Int      @default(0)
-  openPurchase            Int      @default(0)
-  requiredQty             Int?
-  orderQty                Int?
-  saleThrough             Decimal? @db.Decimal(10, 2)
-  vendorPrice             Decimal  @db.Decimal(10, 2)
-  totalAmount             Decimal  @db.Decimal(10, 2)
-  skuCodeId               String   @unique
-  daysOfPositiveInventory Int
-  roh                     Decimal? @db.Decimal(10, 2)
-  doh                     Decimal? @db.Decimal(10, 2)
-  newSkuCode              String?
-  staticGradeN            Int?
-  monthGradeN             Int?
-  comment                 String?
-  avgSellingPrice         Decimal? @db.Decimal(10, 2)
-  multiplePrice           Decimal? @db.Decimal(10, 2)
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
-
-  // Relations
+generator client {
+  provider = "prisma-client-js"
 }
 
-model Token {
-  id           String   @id @default(uuid())
-  username     String   @unique
-  password     String
-  accessToken  String   @db.Text
-  refreshToken String   @db.Text
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+model SalesDataItem {
+  id              Int    @id @default(autoincrement())
+  itemSkuCode     String @map("Item SKU Code")
+  sellingPrice    String @map("Selling Price")
+  saleOrderStatus String @map("Sale Order Status")
+}
+
+model MonthDataItem {
+  id                      Int    @id @default(autoincrement())
+  skuCode                 String @map("Sku Code")
+  parentSKU               String @map("Parent SKU")
+  size                    String @map("Size")
+  categoryName            String @map("Category Name")
+  subCategory             String @map("Sub Category")
+  saleQty                 Int    @map("Sale Qty")
+  saleAmount              Float  @map("Sale Amount")
+  vendorName              String @map("Vendor Name")
+  staticGrade             String @map("Static Grade")
+  monthGrade              String @map("Month Grade")
+  availableInventory      String @map("Available Inventory")
+  openPurchase            String @map("Open Purchase")
+  requiredQty             String @map("Required Qty")
+  orderQty                String @map("Order Qty")
+  saleThrough             String @map("Sale Through")
+  vendorPrice             String @map("Vendor Price")
+  totalAmount             String @map("Total Amount")
+  skuCodeID               String @map("Sku Code ID")
+  daysOfPositiveInventory String @map("Days of positive inventory")
+  roh                     Float  @map("ROH")
+  doh                     Float  @map("DOH")
+  newSkuCode              String @map("New SKU Code")
+  staticGradeN            Int    @map("Static Grade_N")
+  monthGradeN             Int    @map("Month Grade_N")
+  comment                 String @map("Comment")
+  avgSellingPrice         Float  @map("Avg Selling Price")
+  multiplePrice           Float  @map("Multiple Price")
+}
+
+model SupportItem {
+  id             Int     @id @default(autoincrement())
+  category       String  @map("Category")
+  subCategory    String  @map("Sub Category")
+  subCategoryNew String? @map("Sub Category New")
+  ratioSum       String  @map("Ratio Sum")
+  ratio          String  @map("Ratio")
+  size           String  @map("Size")
+}
+
+model Utils {
+  id    Int    @id @default(autoincrement())
+  grade String
+  value Int
+
+  @@unique([grade])
+}
+
+model PriceCheckData {
+  id                        Int       @id @default(autoincrement())
+  orderNo                   String    @map("Order No")
+  invoiceNo                 String    @map("Invoice No")
+  shippingPackageCode       String    @map("Shipping Package Code")
+  shippingPackageStatusCode String    @map("Shipping Package Status Code")
+  invoiceCreatedDate        DateTime  @map("Invoice Created Date")
+  channelInvoiceCreatedDate DateTime  @map("Channel Invoice Created Date")
+  eWayBillNo                String?   @map("EWayBill No")
+  eWayBillDate              DateTime? @map("EWayBill Date")
+  eWayBillValidTill         DateTime? @map("EWayBill Valid Till")
+  customerName              String    @map("Customer Name")
+  skuCode                   String    @map("SKU Code")
+  skuName                   String    @map("SKU Name")
+  quantity                  Int       @map("Quantity")
+  invoiceTax                Float     @map("Invoice Tax")
+  invoiceTotal              Float     @map("Invoice Total")
+  invoiceCancelled          String    @map("Invoice Cancelled")
+  hsnCode                   Int       @map("HSN Code")
+  gstTaxTypeCode            Int       @map("GST Tax Type Code")
+  taxTypeCode               Int       @map("Tax Type Code")
+  cgst                      Float     @map("CGST")
+  igst                      Float     @map("IGST")
+  sgst                      Float     @map("SGST")
+  utgst                     Float     @map("UTGST")
+  vat                       Float     @map("VAT")
+  cst                       Float     @map("CST")
+  additionalTax             Float     @map("Additional Tax")
+  additionalTaxPercentage   Float     @map("Additional Tax Percentage")
+  taxPercentage             Float     @map("Tax Percentage")
+  cess                      Float     @map("CESS")
+  cgstRate                  Float     @map("CGST Rate")
+  igstRate                  Float     @map("IGST Rate")
+  sgstRate                  Float     @map("SGST Rate")
+  utgstRate                 Float     @map("UTGST Rate")
+  cessRate                  Float     @map("CESS Rate")
+  shippingCharge            Float     @map("Shipping Charge")
+  codCharge                 Float     @map("COD Charge")
+  tcsAmount                 Float     @map("TCS Amount")
+  channelName               String    @map("Channel Name")
+  uniwareInvoiceCode        String    @map("Uniware Invoice Code")
+  adjustmentInSellingPrice  Float     @map("Adjustment In Selling Price")
+  adjustmentInDiscount      Float     @map("Adjustment In Discount")
+  grade                     String    @map("Grade")
+  mrp                       Float     @map("MRP")
+  color                     String    @map("Color")
+  brand                     String    @map("Brand")
+  size                      String    @map("Size")
+  sellerSkuCode             String    @map("Seller Sku Code")
+  costPrice                 Float     @map("Cost Price")
+  businessType              String    @map("Business Type")
+  concateArticle            String    @map("Concate Article")
+  totalCost                 String    @map("Total Cost")
+  totalSellingPrice         String    @map("Total Selling Price")
+  status                    String    @map("Status")
+  sellingPriceLt300         String    @map("Selling Price < 300")
+  invoiceCount              String    @map("Invoice Count")
+  discountPercentage        String    @map("Discount %")
+}
+
+model Metrics {
+  id           Int    @id @default(autoincrement())
+  skuName      String
+  yesterdayQty Int
+  todayQty     Int
+  total        Int
+  invoiceTotal Float
+  asp          Float
+}
+
+model ProcessedData {
+  id              Int    @id @default(autoincrement())
+  portal          String // channels
+  yesterdayOrders Int
+  todayOrders     Int
+  total           Int
 }
