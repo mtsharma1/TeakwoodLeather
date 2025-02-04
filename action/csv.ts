@@ -257,6 +257,8 @@ export async function categoryData(key: keyof typeof categorySizeMap) {
 
 /**************Invoice Data (Price Checklist)**************/
 export async function fetchInvoiceData(startIndex: number, stopIndex: number): Promise<PaginatedResponse<InvoiceData>> {
+    unstable_noStore()
+
     try {
         if (invoiceCache.isEmpty()) {
             const path = (await exportInvoices()).filePath
