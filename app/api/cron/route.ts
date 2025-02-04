@@ -1,38 +1,58 @@
-import { unstable_noStore } from "next/cache"
+import { NextRequest, NextResponse } from "next/server";
 // import type { MonthDataItem } from "@/types/order"
 // import { saveMonthlyDataOptimally } from "@/action/db_action"
 // import { exportMonthlyReport, fetchCSV } from "@/action/csv"
 // import { transformData } from "@/lib/action-utils"
 // import { NextRequest, NextResponse } from "next/server"
 
-async function fetchAndSaveMonthlyData() {
-  unstable_noStore()
+// async function fetchAndSaveMonthlyData() {
+//   unstable_noStore()
+
+//   try {
+//     // Fetch and transform data
+//     console.log("1st");
+//     // const path = (await exportMonthlyReport()).filePath
+//     // if (!path) {
+//     //   throw new Error("Failed to get monthly report path")
+//     // }
+
+//     // const rawData = await fetchCSV<MonthDataItem>(path)
+//     // const transformedData = transformData(rawData)
+
+//     // // Save data to database
+//     // await saveMonthlyDataOptimally(transformedData)
+
+//   } catch (error) {
+//     console.error("Error in fetchAndSaveMonthlyData:", error)
+//   }
+// }
+
+export async function GET(request: NextRequest) {
+  // Verify the request is a cron job (optional but recommended)
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
-    // Fetch and transform data
-    console.log("1st");
-    // const path = (await exportMonthlyReport()).filePath
-    // if (!path) {
-    //   throw new Error("Failed to get monthly report path")
-    // }
+    // Perform your scheduled task here
+    console.log('Cron job executed at', new Date().toISOString());
+    
+    // Example task: Cleanup or maintenance
+    // await performScheduledTask();
 
-    // const rawData = await fetchCSV<MonthDataItem>(path)
-    // const transformedData = transformData(rawData)
-
-    // // Save data to database
-    // await saveMonthlyDataOptimally(transformedData)
-
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Cron job completed successfully' 
+    });
   } catch (error) {
-    console.error("Error in fetchAndSaveMonthlyData:", error)
+    console.error('Cron job failed:', error);
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Cron job failed' 
+    }, { status: 500 });
   }
-}
-
-export async function GET() {
-  // convert to "POST" eventually
-  // Verify the request is coming from Vercel's cron job
-  // You might want to add additional security checks here
-  console.log("ayah to ha ")
-  await fetchAndSaveMonthlyData()
-  return Response.json({ message: "Monthly data updated successfully", status: 200 })
-
 }
