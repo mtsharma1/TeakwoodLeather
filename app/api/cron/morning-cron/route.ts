@@ -3,9 +3,10 @@ import { savePriceCheckData } from "@/action/db_action"
 import { exportInvoices, fetchCSV } from "@/action/csv"
 import { NextRequest, NextResponse } from "next/server"
 import { transformInvoiceData } from "@/lib/invoice-action-utils"
+import { unstable_noStore as noStore } from 'next/cache';
 
 async function fetchAndSaveMonthlyData() {
-
+noStore();
   try {
     const path = (await exportInvoices()).filePath
     if (!path) {
