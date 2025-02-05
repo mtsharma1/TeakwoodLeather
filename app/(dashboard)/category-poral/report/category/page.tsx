@@ -1,10 +1,10 @@
 import { cache, Suspense } from "react"
-import { categoryPoralData } from "@/action/csv"
+import { categoryPortalData } from "@/action/csv"
 import AdvancedInventoryTable from "@/components/advanced-inventory-table"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import LoadingSkeleton from "@/components/loader/table-skelaton"
 
-const getCachedCategoryPoral = cache(async () => await categoryPoralData("category"))
+const getCachedCategoryPortal = cache(async () => await categoryPortalData("category"))
 
 export default async function CategoryPage() {
   return (
@@ -15,7 +15,7 @@ export default async function CategoryPage() {
         </CardHeader>
         <CardContent className="p-2 sm:p-4">
           <Suspense fallback={<LoadingSkeleton />}>
-            <PoralContent />
+            <PortalContent />
           </Suspense>
         </CardContent>
       </Card>
@@ -23,9 +23,9 @@ export default async function CategoryPage() {
   )
 }
 
-async function PoralContent() {
+async function PortalContent() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const data: any = await getCachedCategoryPoral()
+  const data: any = await getCachedCategoryPortal()
 
   return (
     <div className="space-y-4">

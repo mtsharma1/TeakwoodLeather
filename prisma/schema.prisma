@@ -43,6 +43,9 @@ model MonthDataItem {
   comment                 String @map("Comment")
   avgSellingPrice         String @map("Avg Selling Price")
   multiplePrice           String @map("Multiple Price")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model SupportItem {
@@ -53,6 +56,9 @@ model SupportItem {
   ratioSum       String  @map("Ratio Sum")
   ratio          String  @map("Ratio")
   size           String  @map("Size")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Utils {
@@ -113,14 +119,17 @@ model PriceCheckData {
   size                      String    @map("Size")
   sellerSkuCode             String    @map("Seller Sku Code")
   costPrice                 Float     @map("Cost Price")
-  businessType              String    @map("Business Type")
-  concateArticle            String    @map("Concate Article")
+  // businessType              String    @map("Business Type")
+  concateArticle            String    @map("Concate Article") @db.Text
   totalCost                 String    @map("Total Cost")
   totalSellingPrice         String    @map("Total Selling Price")
   status                    String    @map("Status")
   sellingPriceLt300         String    @map("Selling Price < 300")
   invoiceCount              String    @map("Invoice Count")
   discountPercentage        String    @map("Discount %")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Metrics {
@@ -131,6 +140,9 @@ model Metrics {
   total        Int
   invoiceTotal Float
   asp          Float
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ProcessedData {
@@ -139,4 +151,7 @@ model ProcessedData {
   yesterdayOrders Int
   todayOrders     Int
   total           Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

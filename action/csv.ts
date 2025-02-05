@@ -1,18 +1,19 @@
 "use server"
 
-import { revalidatePath, unstable_noStore } from "next/cache"
+import { revalidatePath } from "next/cache"
 import { parse } from "csv-parse/sync"
 import { analysis, calc_Count_Amt, orderCategory } from "@/lib/action-utils"
 import type { InvoiceData, MonthDataItem, SalesDataItem } from "@/types/order"
 import type { categorySizeMap } from "@/components/categories/data-table-filters"
-import { invoiceGradeAnalysis, transformInvoiceData } from "@/lib/invoice-action-utils"
+import { invoiceGradeAnalysis } from "@/lib/invoice-action-utils"
 import { roundToDecimals, safeNumber } from "@/lib/utils"
 import { cache } from "react"
-import { calculateCategoryMetrics, calculatePoralMetrics } from "@/lib/category-poral-action-utils"
+import { calculateCategoryMetrics, calculatePortalMetrics } from "@/lib/category-poral-action-utils"
 import type { SalesRecord } from "@/types/category-poral-monthly"
 import { format, getDaysInMonth } from "date-fns"
 import { createInvoiceJob, createMontlyReportJob, getJobStatus } from "@/lib/api"
 import prisma from "@/lib/prisma"
+import { convertPriceCheckData } from "./db_action"
 
 // Constants
 const CACHE_REVALIDATION_PATH = process.env.CACHE_REVALIDATION_PATH || "/analysis"
@@ -75,7 +76,7 @@ class DataCache<T> {
 
 // Initialize caches
 const invoiceCache = new DataCache<InvoiceData>()
-const invoiceAnalysisCache = new DataCache<InvoiceData>()
+// const invoiceAnalysisCache = new DataCache<InvoiceData>()
 const salesCache = new DataCache<SalesDataItem>()
 // const monthlyCache = new DataCache<MonthDataItem>()
 const monthlyAnalysisCache = new DataCache<MonthDataItem>()
@@ -259,7 +260,6 @@ export async function analysisData(key: string) {
 }
 
 export async function analysisDasboard() {
-    unstable_noStore()
     try {
         if (monthlyAnalysisCache.isEmpty()) {
             await fetchMonthlyData(0, 50)
@@ -287,7 +287,6 @@ export async function categoryData(key: keyof typeof categorySizeMap) {
 
 /**************Invoice Data (Price Checklist)**************/
 export async function fetchInvoiceData(startIndex: number, stopIndex: number): Promise<PaginatedResponse<InvoiceData>> {
-    unstable_noStore()
 
     try {
         if (invoiceCache.isEmpty()) {
@@ -314,12 +313,13 @@ export async function fetchInvoiceData(startIndex: number, stopIndex: number): P
 
 export async function priceCheckListData(type: string) {
     try {
-        if (invoiceCache.isEmpty()) {
-            await fetchInvoiceData(0, 50)
-        }
+        // if (invoiceCache.isEmpty()) {
+        //     await fetchInvoiceData(0, 50)
+        // }
 
-        const rawData = invoiceCache.getData()
-        const data = transformInvoiceData(rawData)
+        // const rawData = invoiceCache.getData()
+        // const data = transformInvoiceData(rawData)
+        const data = await convertPriceCheckData()
 
         switch (type) {
             case "overview":
@@ -345,36 +345,57 @@ export async function priceCheckListData(type: string) {
     }
 }
 
-/**************Category and Poral**************/
-export const categoryPoralData = cache(async (type: string) => {
-    if (invoiceCache.isEmpty()) {
-        await fetchInvoiceData(0, 50)
-    }
+/**************Category and Portal**************/
+export const categoryPortalData = cache(async (type: string) => {
+    // if (invoiceCache.isEmpty()) {
+    //     await fetchInvoiceData(0, 50)
+    // }
 
-    const rawData = invoiceCache.getData()
-    const transformedData = transformInvoiceData(rawData)
-    invoiceAnalysisCache.setData(transformedData)
+    // const rawData = invoiceCache.getData()
+    // const transformedData = transformInvoiceData(rawData)
+    // invoiceAnalysisCache.setData(transformedData)
 
-    const formatDate = (date: Date) => {
-        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`
-    }
+    const transformedData = await convertPriceCheckData()
 
-    // Get today's date
-    const today = new Date()
-    const todayString = formatDate(today)
 
-    // Get yesterday's date
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-    const yesterdayString = formatDate(yesterday)
+    const parseDate = (dateStr: string): Date => {
+        // Convert "DD-MM-YYYY HH:mm" to Date object
+        const [datePart, timePart] = dateStr.split(" ");
+        const [day, month, year] = datePart.split("-").map(Number);
+        const [hours, minutes] = timePart.split(":").map(Number);
 
-    const yesterdayData = transformedData.filter((item) => item["Invoice Created Date"].startsWith(yesterdayString))
-    const todayData = transformedData.filter((item) => item["Invoice Created Date"].startsWith(todayString))
+        return new Date(year, month - 1, day, hours, minutes);
+    };
+
+    // Function to filter invoices within a given time range
+    const filterInvoices = (start: Date, end: Date) => {
+        return transformedData.filter((item) => {
+            const invoiceDate = parseDate(item["Invoice Created Date"]);
+            return invoiceDate >= start && invoiceDate <= end;
+        });
+    };
+
+    // Get current date
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const todayDate = now.getDate();
+
+    // Auto-define start and end dates
+    const todayStart = new Date(year, month, todayDate, 0, 0, 0);  // 00:00:00 today
+    const todayEnd = new Date(year, month, todayDate, 11, 30, 0);  // 11:30:00 today
+
+    const yesterdayStart = new Date(year, month, todayDate - 1, 11, 30, 0);  // 11:30:00 yesterday
+    const yesterdayEnd = new Date(year, month, todayDate - 1, 23, 59, 59);   // 23:59:59 yesterday
+
+
+    const todayData = filterInvoices(todayStart, todayEnd);
+    const yesterdayData = filterInvoices(yesterdayStart, yesterdayEnd);
 
     if (type === "overview") return transformedData
     if (type === "yesterday") return yesterdayData
     if (type === "today") return todayData
-    if (type === "poral") return calculatePoralMetrics(yesterdayData, todayData)
+    if (type === "portal") return calculatePortalMetrics(yesterdayData, todayData)
     if (type === "category") return calculateCategoryMetrics(yesterdayData, todayData)
 })
 
@@ -415,7 +436,7 @@ export const calculateCategoryMonthlyReport = async (formData: FormData) => {
     }
 }
 
-export const calculatePoralMonthlyReport = async (formData: FormData) => {
+export const calculatePortalMonthlyReport = async (formData: FormData) => {
     try {
         const file = formData.get("file") as File
         if (!file) {

@@ -1,12 +1,12 @@
 import { cache, Suspense } from "react"
-import { categoryPoralData } from "@/action/csv"
+import { categoryPortalData } from "@/action/csv"
 import AdvancedInventoryTable from "@/components/advanced-inventory-table"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import LoadingSkeleton from "@/components/loader/table-skelaton"
 
-const getCachedCategoryPoral = cache(async (type: string) => await categoryPoralData(type))
+const getCachedCategoryPortal = cache(async (type: string) => await categoryPortalData(type))
 
-export default async function CategoryPoralPage({ params }: { params: { type: string } }) {
+export default async function CategoryPortalPage({ params }: { params: { type: string } }) {
   const key = params.type.replaceAll("-", "")
   return (
     <>
@@ -16,7 +16,7 @@ export default async function CategoryPoralPage({ params }: { params: { type: st
         </CardHeader>
         <CardContent className="p-2 sm:p-4">
           <Suspense fallback={<LoadingSkeleton />}>
-            <CategoryPoralContent type={key} />
+            <CategoryPortalContent type={key} />
           </Suspense>
         </CardContent>
       </Card>
@@ -24,9 +24,9 @@ export default async function CategoryPoralPage({ params }: { params: { type: st
   )
 }
 
-async function CategoryPoralContent({ type }: { type: string }) {
+async function CategoryPortalContent({ type }: { type: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const data: any = await getCachedCategoryPoral(type)
+  const data: any = await getCachedCategoryPortal(type)
 
   return (
     <div className="space-y-4">

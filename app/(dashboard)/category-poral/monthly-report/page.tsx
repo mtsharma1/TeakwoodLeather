@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import LoadingSkeleton from "@/components/loader/table-skelaton"
 import { CSVUploadForm } from "@/components/category-poral/upload-csv-form"
 
-export default async function CategoryPoralMonthlyReportPage() {
+export default async function CategoryPortalMonthlyReportPage() {
   return (
     <>
       <Card className="w-full overflow-hidden">

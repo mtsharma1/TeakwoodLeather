@@ -1,21 +1,21 @@
 import { cache, Suspense } from "react"
-import { categoryPoralData } from "@/action/csv"
+import { categoryPortalData } from "@/action/csv"
 import AdvancedInventoryTable from "@/components/advanced-inventory-table"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import LoadingSkeleton from "@/components/loader/table-skelaton"
 
-const getCachedCategoryPoral = cache(async () => await categoryPoralData("poral"))
+const getCachedCategoryPortal = cache(async () => await categoryPortalData("portal"))
 
-export default async function PoralPage() {
+export default async function PortalPage() {
   return (
     <>
       <Card className="w-full overflow-hidden">
         <CardHeader className="border-b">
-          <CardTitle className="text-xl md:text-2xl font-bold capitalize">Poral</CardTitle>
+          <CardTitle className="text-xl md:text-2xl font-bold capitalize">Portal</CardTitle>
         </CardHeader>
         <CardContent className="p-2 sm:p-4">
           <Suspense fallback={<LoadingSkeleton />}>
-            <PoralContent />
+            <PortalContent />
           </Suspense>
         </CardContent>
       </Card>
@@ -23,9 +23,9 @@ export default async function PoralPage() {
   )
 }
 
-async function PoralContent() {
+async function PortalContent() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const data: any = await getCachedCategoryPoral()
+  const data: any = await getCachedCategoryPortal()
 
   return (
     <div className="space-y-4">
@@ -38,7 +38,7 @@ async function PoralContent() {
         )}
       </div> */}
       <div className="relative w-full overflow-hidden">
-        <AdvancedInventoryTable data={data.metrics|| []} columnNames={Object.keys(data.metrics[0] || {})} filename={"poral"}/>
+        <AdvancedInventoryTable data={data.metrics|| []} columnNames={Object.keys(data.metrics[0] || {})} filename={"portal"}/>
       </div>
     </div>
   )

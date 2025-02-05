@@ -39,16 +39,16 @@ async function PriceCheckContent({ type }: { type: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2 p-4">
-        {data?.totalSale && (
+      {data?.totalSale && (
+        <div className="grid gap-4 sm:grid-cols-2 p-4">
           <div className="rounded-lg border p-3">
             <h2 className="text-sm font-medium text-muted-foreground">Total Sale</h2>
             <p className="text-2xl font-bold">{data.totalSale}</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
       <div className="relative w-full overflow-hidden">
-        <AdvancedInventoryTable data={data.rows || data || []} columnNames={data.cols || Object.keys(data[0]) || {}} filename={type}/>
+        <AdvancedInventoryTable data={data.rows || data || []} columnNames={data.cols || Object.keys(data?.[0] || {})} filename={type} />
       </div>
     </div>
   )

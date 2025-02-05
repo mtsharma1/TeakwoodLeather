@@ -1,21 +1,21 @@
-import type { MonthDataItem } from "@/types/order"
-import { saveMonthlyDataOptimally } from "@/action/db_action"
-import { exportMonthlyReport, fetchCSV } from "@/action/csv"
-import { transformData } from "@/lib/action-utils"
+import type { InvoiceData } from "@/types/order"
+import { savePriceCheckData } from "@/action/db_action"
+import { exportInvoices, fetchCSV } from "@/action/csv"
 import { NextRequest, NextResponse } from "next/server"
+import { transformInvoiceData } from "@/lib/invoice-action-utils"
 
 async function fetchAndSaveMonthlyData() {
 
   try {
-    const path = (await exportMonthlyReport()).filePath
+    const path = (await exportInvoices()).filePath
     if (!path) {
       throw new Error("Failed to get monthly report path")
     }
 
-    const rawData = await fetchCSV<MonthDataItem>(path)
-    const transformedData = transformData(rawData)
+    const rawData = await fetchCSV<InvoiceData>(path)
+    const transformedData = transformInvoiceData(rawData)
 
-    await saveMonthlyDataOptimally(transformedData)
+    await savePriceCheckData(transformedData)
 
   } catch (error) {
     console.error("Error in fetchAndSaveMonthlyData:", error)

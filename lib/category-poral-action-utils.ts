@@ -64,7 +64,7 @@ export const calculateCategoryMetrics = (
     return { metrics: skuMetrics, totals };
 };
 
-export const calculatePoralMetrics = (
+export const calculatePortalMetrics = (
     yesterdayOrders: PriceCheckInvoiceData[], 
     todayOrders: PriceCheckInvoiceData[]
 ): { metrics: ProcessedData[], totals: ProcessedData } => {

@@ -44,7 +44,7 @@ export function InventoryBarChart({ data = [] }: BarChartProps) {
     <Card className="h-full">
       <CardHeader>
         <CardTitle>Inventory Analysis</CardTitle>
-        <CardDescription>Inventory value by grade</CardDescription>
+        <CardDescription>Inventory count by grade</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
