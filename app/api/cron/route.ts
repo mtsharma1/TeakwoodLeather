@@ -25,12 +25,12 @@ async function fetchAndSaveMonthlyData() {
 export async function GET(request: NextRequest) {
   console.log('🔔 Cron triggered:', new Date().toISOString());
 
-  const isVercelCron = request.headers.get('x-vercel-cron') === '1';
+ // const isVercelCron = request.headers.get('x-vercel-cron') === '1';
 
-  if (!isVercelCron && !request.headers.get('authorization')?.startsWith('Bearer')) {
-    console.error('❌ Unauthorized access attempt');
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+//  if (!isVercelCron && !request.headers.get('authorization')?.startsWith('Bearer')) {
+ //   console.error('❌ Unauthorized access attempt');
+  //  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+//  }
 
   try {
     console.log('Cron job executed at', new Date().toISOString());
