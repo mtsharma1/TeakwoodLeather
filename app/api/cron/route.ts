@@ -3,9 +3,10 @@ import { saveMonthlyDataOptimally } from "@/action/db_action"
 import { exportMonthlyReport, fetchCSV } from "@/action/csv"
 import { transformData } from "@/lib/action-utils"
 import { NextResponse } from "next/server"
+import { unstable_noStore as noStore } from 'next/cache';
 
 async function fetchAndSaveMonthlyData() {
-
+noStore();
   try {
     const path = (await exportMonthlyReport()).filePath
     if (!path) {
