@@ -2,7 +2,7 @@ import type { MonthDataItem } from "@/types/order"
 import { saveMonthlyDataOptimally } from "@/action/db_action"
 import { exportMonthlyReport, fetchCSV } from "@/action/csv"
 import { transformData } from "@/lib/action-utils"
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 
 async function fetchAndSaveMonthlyData() {
 
