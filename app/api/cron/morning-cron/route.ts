@@ -1,7 +1,7 @@
 import type { InvoiceData } from "@/types/order"
 import { savePriceCheckData } from "@/action/db_action"
 import { exportInvoices, fetchCSV } from "@/action/csv"
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { transformInvoiceData } from "@/lib/invoice-action-utils"
 import { unstable_noStore as noStore } from 'next/cache';
 
@@ -23,15 +23,8 @@ noStore();
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   console.log('🔔 Cron triggered:', new Date().toISOString());
-
-  const isVercelCron = request.headers.get('x-vercel-cron') === '1';
-
-  if (!isVercelCron && !request.headers.get('authorization')?.startsWith('Bearer')) {
-    console.error('❌ Unauthorized access attempt');
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
 
   try {
     console.log('Cron job executed at', new Date().toISOString());
