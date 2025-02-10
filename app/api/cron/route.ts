@@ -6,7 +6,7 @@ import { NextResponse } from "next/server"
 import { unstable_noStore as noStore } from 'next/cache';
 
 async function fetchAndSaveMonthlyData() {
-noStore();
+  noStore();
   try {
     const path = (await exportMonthlyReport()).filePath
     if (!path) {
@@ -17,7 +17,7 @@ noStore();
     const transformedData = transformData(rawData)
 
     await saveMonthlyDataOptimally(transformedData)
-
+    console.log('✅ Monthly data processing completed:', new Date().toISOString());
   } catch (error) {
     console.error("Error in fetchAndSaveMonthlyData:", error)
   }
@@ -26,20 +26,19 @@ noStore();
 export async function GET() {
   console.log('🔔 Cron triggered:', new Date().toISOString());
 
- // const isVercelCron = request.headers.get('x-vercel-cron') === '1';
+  // Schedule the data processing in the background
+  (async () => {
+    try {
+      await fetchAndSaveMonthlyData();
+    } catch (error) {
+      console.error('Background process failed:', error);
+    }
+  })();
 
-//  if (!isVercelCron && !request.headers.get('authorization')?.startsWith('Bearer')) {
- //   console.error('❌ Unauthorized access attempt');
-  //  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-//  }
-
-  try {
-    console.log('Cron job executed at', new Date().toISOString());
-
-    await fetchAndSaveMonthlyData();
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Failed:', error);
-    return NextResponse.json({ success: false }, { status: 500 });
-  }
+  // Immediately return success response
+  return NextResponse.json({ 
+    success: true, 
+    message: 'Cron job scheduled successfully',
+    timestamp: new Date().toISOString()
+  });
 }
