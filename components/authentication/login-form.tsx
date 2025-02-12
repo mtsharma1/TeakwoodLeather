@@ -38,8 +38,8 @@ export function LoginForm({
           <form className="p-6 md:p-8" action={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
-                <h1 className="text-2xl font-bold">Welcome back</h1>
-                <p className="text-balance text-muted-foreground">
+                <h1 className="text-2xl font-bold">Welcome to Teakwood Leather</h1>
+                <p className="text-balance text-muted-foreground pt-2">
                   Login to your account
                 </p>
               </div>
@@ -50,7 +50,7 @@ export function LoginForm({
               )}
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
-                <Input
+                <Input className="bg-gray-200 text-black"
                   id="email"
                   name="email"
                   type="email"
@@ -68,7 +68,7 @@ export function LoginForm({
                     Forgot your password?
                   </a>
                 </div>
-                <Input id="password" name="password" type="password" required />
+                <Input id="password" className="bg-gray-200 text-black"name="password" type="password" required />
               </div>
               <SignInButton label="Login" />
               <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
