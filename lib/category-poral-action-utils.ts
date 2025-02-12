@@ -1,5 +1,5 @@
 import { Metrics, PriceCheckInvoiceData, ProcessedData } from "@/types/order"
-import { safeNumber } from "./utils"
+import { roundToDecimals, safeNumber } from "./utils"
 
 export const calculateCategoryMetrics = (
     yesterdayOrders: PriceCheckInvoiceData[],
@@ -37,7 +37,7 @@ export const calculateCategoryMetrics = (
             yesterday_Qty: yesterdayQty,
             today_Qty: todayQty,
             total,
-            invoice_Total: invoiceTotal,
+            invoice_Total: roundToDecimals(safeNumber(invoiceTotal)),
             asp,
         };
     });

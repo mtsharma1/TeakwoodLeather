@@ -57,12 +57,12 @@ const data = {
           items: [
             {
               title: "Over Stock",
-              url: "/monthly-report/analysis/overstock",
+              url: "/monthly-report/analysis/over-stock",
               icon: ArrowUpNarrowWide,
             },
             {
               title: "Under Stock",
-              url: "/monthly-report/analysis/understock",
+              url: "/monthly-report/analysis/under-stock",
               icon: ArrowDownWideNarrow,
             },
             {
@@ -107,7 +107,7 @@ const data = {
             {
               title: "Kids Shoes",
               url: "/monthly-report/category/kids-shoes",
-              icon: PiBeltThin,
+              icon: Footprints,
             },
             {
               title: "Leather Jackets",
@@ -152,7 +152,7 @@ const data3 = {
       isActive: false,
       items: [
         {
-          title: "Overview",
+          title: "Raw Data",
           url: "/category-poral/raw-data",
           icon: SquareKanban,
         },
