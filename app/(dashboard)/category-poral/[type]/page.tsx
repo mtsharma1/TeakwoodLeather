@@ -4,6 +4,8 @@ import AdvancedInventoryTable from "@/components/advanced-inventory-table"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import LoadingSkeleton from "@/components/loader/table-skelaton"
 
+export const dynamic = 'force-dynamic'
+
 const getCachedCategoryPortal = cache(async (type: string) => await categoryPortalData(type))
 
 export default async function CategoryPortalPage({ params }: { params: { type: string } }) {

@@ -6,6 +6,8 @@ import LoadingSkeleton from "@/components/loader/table-skelaton"
 
 // const getCachedAnalysisData = cache(async (type: string) => await analysisData(type))
 
+export const dynamic = 'force-dynamic'
+
 export default async function OverStock({ params }: { params: { type: string } }) {
   const key = params.type.replaceAll("-", "")
   return (

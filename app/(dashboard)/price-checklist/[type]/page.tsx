@@ -5,6 +5,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import LoadingSkeleton from "@/components/loader/table-skelaton"
 import AnimatedTabs from "@/components/animated-route-tabs"
 
+export const dynamic = 'force-dynamic'
+
 const getCachedPriceCheckList = cache(async (type: string) => await priceCheckListData(type || "price-checklist"))
 
 const tabs = [

@@ -3,6 +3,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import LoadingSkeleton from "@/components/loader/table-skelaton"
 import { CSVUploadForm } from "@/components/category-poral/upload-csv-form"
 
+export const dynamic = 'force-dynamic'
+
 export default async function CategoryPortalMonthlyReportPage() {
   return (
     <>
