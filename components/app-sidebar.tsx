@@ -25,11 +25,6 @@ import { RiDashboardLine } from "react-icons/ri";
 // This is sample data.
 const data = {
   groupLabel: "Monthly Order Report",
-  user: {
-    name: "Teackwood",
-    email: "Teackwood.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   teams: [
     {
       name: "Teackwood",
@@ -49,6 +44,11 @@ const data = {
       icon: MdOutlineInventory2,
       isActive: false,
       items: [
+        {
+          title: "Overview",
+          url: "/monthly-report/overview",
+          icon: RiDashboardLine,
+        },
         {
           title: "Analysis",
           url: "/monthly-report/analysis",
@@ -198,7 +198,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data3.navMain} groupLabel={data3.groupLabel} />
       </SidebarContent>
       <SidebarFooter className="bg-slate-800 text-white">
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

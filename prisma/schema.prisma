@@ -155,3 +155,17 @@ model ProcessedData {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model User {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+  name     String
+
+  // parentUserId  Int?
+  // User          User[] @relation("linkedAccount")
+  // linkedAccount User?  @relation(fields: [parentUserId], references: [id], name: "linkedAccount")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
