@@ -3,7 +3,6 @@
 import { unstable_noStore as noStore } from "next/cache"
 import { parse } from "csv-parse/sync"
 import { analysis, calc_Count_Amt, orderCategory } from "@/lib/action-utils"
-import type { MonthDataItem } from "@/types/order"
 import type { categorySizeMap } from "@/components/categories/data-table-filters"
 import { invoiceGradeAnalysis } from "@/lib/invoice-action-utils"
 import { roundToDecimals, safeNumber } from "@/lib/utils"
@@ -37,51 +36,51 @@ export async function pollJobStatus(jobCode: string, maxAttempts: number, delay:
     throw new Error("Export job timed out")
 }
 
-interface PaginatedResponse<T> {
-    columns: string[]
-    rows: T[]
-    hasMore: boolean
-    totalItems: number
-}
+// interface PaginatedResponse<T> {
+//     columns: string[]
+//     rows: T[]
+//     hasMore: boolean
+//     totalItems: number
+// }
 
-class DataCache<T> {
-    private data: T[] = []
-    private columns: string[] = []
-    private map: Map<string, T> = new Map()
+// class DataCache<T> {
+//     private data: T[] = []
+//     private columns: string[] = []
+//     private map: Map<string, T> = new Map()
 
-    isEmpty(): boolean {
-        return this.data.length === 0
-    }
+//     isEmpty(): boolean {
+//         return this.data.length === 0
+//     }
 
-    setData(data: T[], columns?: string[]) {
-        this.data = data
-        if (columns) this.columns = columns
-        this.map = new Map(data.map((item, index) => [index.toString(), item]))
-    }
+//     setData(data: T[], columns?: string[]) {
+//         this.data = data
+//         if (columns) this.columns = columns
+//         this.map = new Map(data.map((item, index) => [index.toString(), item]))
+//     }
 
-    getData(): T[] {
-        return this.data
-    }
+//     getData(): T[] {
+//         return this.data
+//     }
 
-    getColumns(): string[] {
-        return this.columns
-    }
+//     getColumns(): string[] {
+//         return this.columns
+//     }
 
-    slice(start: number, end: number): T[] {
-        return Array.from({ length: end - start }, (_, i) => this.map.get((i + start).toString())!).filter(Boolean)
-    }
+//     slice(start: number, end: number): T[] {
+//         return Array.from({ length: end - start }, (_, i) => this.map.get((i + start).toString())!).filter(Boolean)
+//     }
 
-    length(): number {
-        return this.data.length
-    }
-}
+//     length(): number {
+//         return this.data.length
+//     }
+// }
 
 // Initialize caches
 // const invoiceCache = new DataCache<InvoiceData>()
 // const invoiceAnalysisCache = new DataCache<InvoiceData>()
 // const salesCache = new DataCache<SalesDataItem>()
 // const monthlyCache = new DataCache<MonthDataItem>()
-const monthlyAnalysisCache = new DataCache<MonthDataItem>()
+// const monthlyAnalysisCache = new DataCache<MonthDataItem>()
 
 // Not in use: copied to /api/cron/morning-cron
 // export async function exportInvoices(): Promise<{
@@ -195,10 +194,7 @@ function processCSVData<T>(csvText: string): T[] {
 //     }
 // }
 
-export async function fetchMonthlyData(
-    startIndex: number,
-    stopIndex: number,
-): Promise<PaginatedResponse<MonthDataItem>> {
+export async function fetchMonthlyData() {
 
     try {
         // if (monthlyCache.isEmpty()) {
@@ -212,7 +208,7 @@ export async function fetchMonthlyData(
 
         // const transformedData = transformData(monthlyCache.getData())
         const monthlyData = await prisma.monthDataItem.findMany();
-        const formatData = monthlyData.map((x) => ({
+        return monthlyData.map((x) => ({
             "Sku Code": x.skuCode,
             "Parent SKU": x.parentSKU,
             "Size": x.size,
@@ -241,14 +237,13 @@ export async function fetchMonthlyData(
             "Avg Selling Price": safeNumber(x.avgSellingPrice),
             "Multiple Price": safeNumber(x.multiplePrice),
         }))
-        monthlyAnalysisCache.setData(formatData)
 
-        return {
-            columns: Object.keys(monthlyAnalysisCache.getData()[0] || {}),
-            rows: monthlyAnalysisCache.slice(startIndex, stopIndex),
-            hasMore: stopIndex < monthlyAnalysisCache.length(),
-            totalItems: monthlyAnalysisCache.length(),
-        }
+        // return {
+        //     columns: Object.keys(monthlyAnalysisCache.getData()[0] || {}),
+        //     rows: monthlyAnalysisCache.slice(startIndex, stopIndex),
+        //     hasMore: stopIndex < monthlyAnalysisCache.length(),
+        //     totalItems: monthlyAnalysisCache.length(),
+        // }
     } catch (error) {
         console.error("Error in fetchMonthlyData:", error)
         throw new Error("Failed to fetch monthly data")
@@ -257,11 +252,13 @@ export async function fetchMonthlyData(
 
 export async function analysisData(key: string) {
     try {
-        if (monthlyAnalysisCache.isEmpty()) {
-            await fetchMonthlyData(0, 50)
-        }
+        // if (monthlyAnalysisCache.isEmpty()) {
+        //     await fetchMonthlyData(0, 50)
+        // }
 
-        return analysis(monthlyAnalysisCache.getData(), key)
+        const data = (await fetchMonthlyData()) || []
+
+        return analysis(data, key)
     } catch (error) {
         console.error("Error in analysisData:", error)
         throw new Error("Failed to analyze data")
@@ -270,11 +267,8 @@ export async function analysisData(key: string) {
 
 export async function analysisDasboard() {
     try {
-        if (monthlyAnalysisCache.isEmpty()) {
-            await fetchMonthlyData(0, 50)
-        }
-
-        return calc_Count_Amt(monthlyAnalysisCache.getData())
+        const data = (await fetchMonthlyData()) || []
+        return calc_Count_Amt(data)
     } catch (error) {
         console.error("Error in analysisData:", error)
         throw new Error("Failed to analyze data")
@@ -283,11 +277,10 @@ export async function analysisDasboard() {
 
 export async function categoryData(key: keyof typeof categorySizeMap) {
     try {
-        if (monthlyAnalysisCache.isEmpty()) {
-            await fetchMonthlyData(0, 50)
-        }
+       
+        const data = (await fetchMonthlyData()) || []
 
-        return orderCategory(monthlyAnalysisCache.getData(), key)
+        return orderCategory(data, key)
     } catch (error) {
         console.error("Error in analysisData:", error)
         throw new Error("Failed to analyze data")

@@ -5,8 +5,6 @@ import LoadingSkeleton from "@/components/loader/table-skelaton";
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Suspense } from "react";
 
-export const dynamic = 'force-dynamic'
-
 export default async function Category({ params }: { params: { type: string } }) {
   const key = params.type.replaceAll("-", "") as keyof typeof categorySizeMap
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
