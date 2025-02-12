@@ -7,7 +7,7 @@ export const DashboardPage = () => {
   return (
     <div className="space-y-4">
       <Suspense fallback={<DashboardSkeleton />}>
-          <DashboardCards />
+        <DashboardCards />
         <DashboardGraphs />
       </Suspense>
     </div>

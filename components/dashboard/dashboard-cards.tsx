@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { analysisDasboard } from "@/action/csv"
 import { BarChart3, IndianRupee } from "lucide-react"
 
+export const dynamic = 'force-dynamic'
+
 export async function DashboardCards() {
   const { cards } = await analysisDasboard()
 

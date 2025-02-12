@@ -11,19 +11,21 @@ import { cache } from "react"
 import { calculateCategoryMetrics, calculatePortalMetrics } from "@/lib/category-poral-action-utils"
 import type { SalesRecord } from "@/types/category-poral-monthly"
 import { format, getDaysInMonth } from "date-fns"
-import { createInvoiceJob, createMontlyReportJob, getJobStatus } from "@/lib/api"
+import { createInvoiceJob, getJobStatus } from "@/lib/api"
 import prisma from "@/lib/prisma"
 import { convertPriceCheckData } from "./db_action"
 
 // Constants
 const CACHE_REVALIDATION_PATH = process.env.CACHE_REVALIDATION_PATH || "/analysis"
-const MAX_ATTEMPTS = Number.parseInt(process.env.MAX_ATTEMPTS || "10", 10)
-const DELAY = Number.parseInt(process.env.DELAY || "2000", 10)
+const MAX_ATTEMPTS = Number.parseInt(process.env.MAX_ATTEMPTS || "100", 100)
+const DELAY = Number.parseInt(process.env.DELAY || "2000", 2000)
 
-async function pollJobStatus(jobCode: string, maxAttempts: number, delay: number) {
+export async function pollJobStatus(jobCode: string, maxAttempts: number, delay: number) {
+    noStore()
     let attempts = 0
     while (attempts < maxAttempts) {
         const statusResponse = await getJobStatus(jobCode)
+        console.log(statusResponse, "statusResponse")
         if (statusResponse.status === "COMPLETE") {
             return { success: true, message: "Export completed successfully", filePath: statusResponse.filePath }
         } else if (statusResponse.status === "FAILED") {
@@ -112,32 +114,34 @@ export async function exportInvoices(): Promise<{
     }
 }
 
-export async function exportMonthlyReport(): Promise<{
-    success: boolean;
-    message: string;
-    filePath?: string;
-    error?: string;
-}> {
-    try {
-        const jobResponse = await createMontlyReportJob()
+// Not in use: copied to /api/cron
+// export async function exportMonthlyReport(): Promise<{
+//     success: boolean;
+//     message: string;
+//     filePath?: string;
+//     error?: string;
+// }> {
+//     try {
+//         noStore();
+//         const jobResponse = await createMontlyReportJob()
 
-        if (!jobResponse.successful) {
-            throw new Error(`Failed to create export job: ${JSON.stringify(jobResponse)}`)
-        }
+//         if (!jobResponse.successful) {
+//             throw new Error(`Failed to create export job: ${JSON.stringify(jobResponse)}`)
+//         }
 
-        const jobCode = jobResponse.jobCode
+//         const jobCode = jobResponse.jobCode
 
-        // Poll for job status
-        const result = await pollJobStatus(jobCode, MAX_ATTEMPTS, DELAY * 4) // Increased delay and attempts for monthly report
-        return result
-    } catch (error) {
-        return {
-            success: false,
-            message: error instanceof Error ? error.message : "An unknown error occurred",
-            error: error instanceof Error ? error.stack : String(error),
-        }
-    }
-}
+//         // Poll for job status
+//         const result = await pollJobStatus(jobCode, MAX_ATTEMPTS, DELAY * 4) // Increased delay and attempts for monthly report
+//         return result
+//     } catch (error) {
+//         return {
+//             success: false,
+//             message: error instanceof Error ? error.message : "An unknown error occurred",
+//             error: error instanceof Error ? error.stack : String(error),
+//         }
+//     }
+// }
 
 // Utility functions
 export async function fetchCSV<T>(url: string): Promise<T[]> {
@@ -260,6 +264,7 @@ export async function analysisData(key: string) {
 }
 
 export async function analysisDasboard() {
+    noStore()
     try {
         if (monthlyAnalysisCache.isEmpty()) {
             await fetchMonthlyData(0, 50)

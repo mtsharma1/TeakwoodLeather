@@ -5,6 +5,8 @@ import { MonthlyReportDonutPieChart } from "./stocks-donut-pie"
 import { analysisDasboard } from "@/action/csv"
 import { GraphSkeleton } from "../loader/monthly-report-graph-loading"
 
+export const dynamic = 'force-dynamic'
+
 export async function DashboardGraphs() {
     const data = await analysisDasboard()
 
