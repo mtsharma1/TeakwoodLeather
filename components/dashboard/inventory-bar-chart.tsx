@@ -20,9 +20,9 @@ import {
 
 type BarChartProps = {
   data?: {
-    inventoryValue: number
-    inventoryPercentage: number
-    grade: string
+    inventory_value: number;
+    inventory_percentage: number;
+    grade: string;
   }[]
 }
 
@@ -37,7 +37,7 @@ export function InventoryBarChart({ data = [] }: BarChartProps) {
   // Transform data for the chart
   const chartData = data?.map((item) => ({
     grade: item.grade,
-    inventoryValue: item.inventoryValue,
+    inventoryValue: item.inventory_value,
   }))
 
   return (
@@ -68,8 +68,8 @@ export function InventoryBarChart({ data = [] }: BarChartProps) {
         <div className="flex gap-2 font-medium leading-none">
           {data?.length > 0 && (
             <>
-              Inventory trending {data[0].inventoryPercentage > 0 ? "up" : "down"} by{" "}
-              {Math.abs(data[0].inventoryPercentage)}% <TrendingUp className="h-4 w-4" />
+              Inventory trending {data[0].inventory_percentage > 0 ? "up" : "down"} by{" "}
+              {Math.abs(data[0].inventory_percentage)}% <TrendingUp className="h-4 w-4" />
             </>
           )}
         </div>

@@ -485,7 +485,7 @@ const generateColumns = (
   const dynamicColumns =
     columnNames?.map((colName) => ({
       accessorKey: colName,
-      header: () => <span className="w-64 text-gray-800 font-semibold">{colName.toLocaleUpperCase()}</span>,
+      header: () => <span className="w-64 text-gray-800 font-semibold">{colName.toLocaleUpperCase().replaceAll("_", " ")}</span>,
       cell: ({ row }: { row: { getValue: (colName: string) => string } }) => {
         const value = row.getValue(colName)
         return (

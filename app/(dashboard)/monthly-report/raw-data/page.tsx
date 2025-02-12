@@ -10,7 +10,7 @@ export default async function OverviewMontlyReport() {
   return (
     <Card className="w-full overflow-hidden">
       <CardHeader className="border-b">
-        <CardTitle className="text-xl md:text-2xl font-bold capitalize">Overview</CardTitle>
+        <CardTitle className="text-xl md:text-2xl font-bold capitalize">Raw Data</CardTitle>
       </CardHeader>
       <CardContent className="p-2 sm:p-4">
         <Suspense fallback={<LoadingSkeleton />}>

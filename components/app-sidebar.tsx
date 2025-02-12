@@ -46,7 +46,7 @@ const data = {
       items: [
         {
           title: "Overview",
-          url: "/monthly-report/overview",
+          url: "/monthly-report/raw-data",
           icon: RiDashboardLine,
         },
         {
@@ -73,7 +73,7 @@ const data = {
             },
             {
               title: "Sales Grade & Inventory MIS",
-              url: "/monthly-report/analysis/sales-inventors-Summary",
+              url: "/monthly-report/analysis/sales-inventory-Summary",
               icon: LayoutGrid,
             },
             {
@@ -153,7 +153,7 @@ const data3 = {
       items: [
         {
           title: "Overview",
-          url: "/category-poral/overview",
+          url: "/category-poral/raw-data",
           icon: SquareKanban,
         },
         {

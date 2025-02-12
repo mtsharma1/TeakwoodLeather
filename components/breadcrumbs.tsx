@@ -18,7 +18,7 @@ export function Breadcrumbs() {
       <Breadcrumb>
          <BreadcrumbList>
             {paths.map((path, index) => {
-               const href = `/dashboard/${paths.slice(1, index).join("/")}`
+               const href = `/${paths.slice(1, index).join("/")}`
                const isLast = index === paths.length - 1
 
                return (

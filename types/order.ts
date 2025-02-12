@@ -58,16 +58,16 @@ export interface GradeResult {
 }
 
 export interface SalesGridSummary {
-    saleValue: number
-    salePercentage: number
-    inventoryValue: number
-    inventoryPercentage: number
+    sale_value: number
+    sale_percentage: number
+    inventory_value: number
+    inventory_percentage: number
 }
 
 export interface OrderSummaryItem {
-    totalSaleValue: number
-    totalQuantity: number
-    totalOrderValue: number
+    total_Sale_Value: number
+    total_Quantity: number
+    total_Order_Value: number
 }
 
 export type InvoiceData = {
@@ -137,17 +137,17 @@ export type PriceCheckInvoiceData = InvoiceData & PriceCheckData;
 
 export interface Metrics {
     skuName: string;
-    yesterdayQty: number;
-    todayQty: number;
+    yesterday_Qty: number;
+    today_Qty: number;
     total: number;
-    invoiceTotal: number;
+    invoice_Total: number;
     asp: number;
 }
 
 
 export interface ProcessedData {
     portal: string;
-    yesterdayOrders: number;
-    todayOrders: number;
+    yesterday_Orders: number;
+    today_Orders: number;
     total: number;
 }

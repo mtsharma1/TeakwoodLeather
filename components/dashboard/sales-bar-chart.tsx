@@ -20,9 +20,9 @@ import {
 
 type BarChartProps = {
   data?: {
-    saleValue: number
-    salePercentage: number
-    grade: string
+    sale_value: number;
+    sale_percentage: number;
+    grade: string;
   }[]
 }
 
@@ -37,7 +37,7 @@ export function SalesBarChart({ data = [] }: BarChartProps) {
   // Transform data for the chart
   const chartData = data?.map((item) => ({
     grade: item.grade,
-    saleValue: item.saleValue,
+    saleValue: item.sale_value,
   }))
 
   return (
@@ -68,8 +68,8 @@ export function SalesBarChart({ data = [] }: BarChartProps) {
         <div className="flex gap-2 font-medium leading-none">
           {data?.length > 0 && (
             <>
-              Sales trending {data[0].salePercentage > 0 ? "up" : "down"} by{" "}
-              {Math.abs(data[0].salePercentage)}% <TrendingUp className="h-4 w-4" />
+              Sales trending {data[0].sale_percentage > 0 ? "up" : "down"} by{" "}
+              {Math.abs(data[0].sale_percentage)}% <TrendingUp className="h-4 w-4" />
             </>
           )}
         </div>

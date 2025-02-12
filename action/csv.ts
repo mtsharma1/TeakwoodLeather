@@ -394,7 +394,7 @@ export const categoryPortalData = cache(async (type: string) => {
     const todayData = filterInvoices(todayStart, todayEnd);
     const yesterdayData = filterInvoices(yesterdayStart, yesterdayEnd);
 
-    if (type === "overview") return transformedData
+    if (type === "rawdata") return transformedData
     if (type === "yesterday") return yesterdayData
     if (type === "today") return todayData
     if (type === "portal") return calculatePortalMetrics(yesterdayData, todayData)

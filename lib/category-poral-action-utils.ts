@@ -2,7 +2,7 @@ import { Metrics, PriceCheckInvoiceData, ProcessedData } from "@/types/order"
 import { safeNumber } from "./utils"
 
 export const calculateCategoryMetrics = (
-    yesterdayOrders: PriceCheckInvoiceData[], 
+    yesterdayOrders: PriceCheckInvoiceData[],
     todayOrders: PriceCheckInvoiceData[]
 ): { metrics: Metrics[], totals: Metrics } => {
 
@@ -16,11 +16,11 @@ export const calculateCategoryMetrics = (
         const skuToday = todayOrders.filter((order) => order["SKU Name"] === skuName);
 
         const yesterdayQty = skuYesterday.reduce(
-            (sum, order) => sum + safeNumber(order.Quantity), 
+            (sum, order) => sum + safeNumber(order.Quantity),
             0
         );
         const todayQty = skuToday.reduce(
-            (sum, order) => sum + safeNumber(order.Quantity), 
+            (sum, order) => sum + safeNumber(order.Quantity),
             0
         );
         const total = yesterdayQty + todayQty;
@@ -34,10 +34,10 @@ export const calculateCategoryMetrics = (
 
         return {
             skuName,
-            yesterdayQty,
-            todayQty,
+            yesterday_Qty: yesterdayQty,
+            today_Qty: todayQty,
             total,
-            invoiceTotal,
+            invoice_Total: invoiceTotal,
             asp,
         };
     });
@@ -45,18 +45,18 @@ export const calculateCategoryMetrics = (
     const totals = skuMetrics.reduce(
         (acc: Metrics, curr: Metrics): Metrics => ({
             skuName: 'Total',
-            yesterdayQty: acc.yesterdayQty + curr.yesterdayQty,
-            todayQty: acc.todayQty + curr.todayQty,
+            yesterday_Qty: acc.yesterday_Qty + curr.yesterday_Qty,
+            today_Qty: acc.today_Qty + curr.today_Qty,
             total: acc.total + curr.total,
-            invoiceTotal: acc.invoiceTotal + curr.invoiceTotal,
-            asp: (acc.invoiceTotal + curr.invoiceTotal) / (acc.total + curr.total),
+            invoice_Total: acc.invoice_Total + curr.invoice_Total,
+            asp: (acc.invoice_Total + curr.invoice_Total) / (acc.total + curr.total),
         }),
         {
             skuName: 'Total',
-            yesterdayQty: 0,
-            todayQty: 0,
+            yesterday_Qty: 0,
+            today_Qty: 0,
             total: 0,
-            invoiceTotal: 0,
+            invoice_Total: 0,
             asp: 0,
         }
     );
@@ -65,7 +65,7 @@ export const calculateCategoryMetrics = (
 };
 
 export const calculatePortalMetrics = (
-    yesterdayOrders: PriceCheckInvoiceData[], 
+    yesterdayOrders: PriceCheckInvoiceData[],
     todayOrders: PriceCheckInvoiceData[]
 ): { metrics: ProcessedData[], totals: ProcessedData } => {
     // Get unique channels
@@ -88,8 +88,8 @@ export const calculatePortalMetrics = (
 
         return {
             portal: channel,
-            yesterdayOrders: yesterdayCount,
-            todayOrders: todayCount,
+            yesterday_Orders: yesterdayCount,
+            today_Orders: todayCount,
             total,
         };
     });
@@ -97,14 +97,14 @@ export const calculatePortalMetrics = (
     const totals = channelMetrics.reduce(
         (acc: ProcessedData, curr: ProcessedData): ProcessedData => ({
             portal: 'Total',
-            yesterdayOrders: acc.yesterdayOrders + curr.yesterdayOrders,
-            todayOrders: acc.todayOrders + curr.todayOrders,
+            yesterday_Orders: acc.yesterday_Orders + curr.yesterday_Orders,
+            today_Orders: acc.today_Orders + curr.today_Orders,
             total: acc.total + curr.total,
         }),
         {
             portal: 'Total',
-            yesterdayOrders: 0,
-            todayOrders: 0,
+            yesterday_Orders: 0,
+            today_Orders: 0,
             total: 0,
         }
     );

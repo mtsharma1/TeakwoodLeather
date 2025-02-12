@@ -183,7 +183,7 @@ export function analysis(analysisData: MonthDataItem[], key?: string) {
     }
 
     if (key === 'overview') return analysisData
-    if (key === 'salesinventorsSummary') return calcSalesGrid(analysisData)
+    if (key === 'salesinventorySummary') return calcSalesGrid(analysisData)
     if (key === 'ordersummary') return calcOrderSummary(analysisData)
     if (key === 'commonordersummary') return commonOrderSummary(analysisData)
 
@@ -321,10 +321,10 @@ function calcSalesGrid(analysisData: MonthDataItem[]) {
     const grades = ['A', 'B', 'C', 'D', 'A+', 'NEW'] as const
     const initialGradeSummary = Object.fromEntries(
         grades.map(grade => [grade, {
-            saleValue: 0,
-            salePercentage: 0,
-            inventoryValue: 0,
-            inventoryPercentage: 0
+            sale_value: 0,
+            sale_percentage: 0,
+            inventory_value: 0,
+            inventory_percentage: 0
         }])
     ) as Record<typeof grades[number], SalesGridSummary>
 
@@ -337,8 +337,8 @@ function calcSalesGrid(analysisData: MonthDataItem[]) {
         acc.totalInventory += inventoryAmount
 
         if (grade in acc.gradeWiseSales) {
-            acc.gradeWiseSales[grade].saleValue += saleAmount
-            acc.gradeWiseSales[grade].inventoryValue += inventoryAmount
+            acc.gradeWiseSales[grade].sale_value += saleAmount
+            acc.gradeWiseSales[grade].inventory_value += inventoryAmount
         }
 
         return acc
@@ -351,23 +351,23 @@ function calcSalesGrid(analysisData: MonthDataItem[]) {
     // Calculate percentages and round values
     Object.values(summary.gradeWiseSales).forEach(grade => {
         if (summary.total > 0) {
-            grade.salePercentage = roundToDecimals((grade.saleValue / summary.total) * 100)
+            grade.sale_percentage = roundToDecimals((grade.sale_value / summary.total) * 100)
         }
         if (summary.totalInventory > 0) {
-            grade.inventoryPercentage = roundToDecimals((grade.inventoryValue / summary.totalInventory) * 100)
+            grade.inventory_percentage = roundToDecimals((grade.inventory_value / summary.totalInventory) * 100)
         }
-        grade.saleValue = roundToDecimals(grade.saleValue)
-        grade.inventoryValue = roundToDecimals(grade.inventoryValue)
+        grade.sale_value = roundToDecimals(grade.sale_value)
+        grade.inventory_value = roundToDecimals(grade.inventory_value)
     })
 
     return {
-        totalSale: roundToDecimals(summary.total),
-        totalInventory: roundToDecimals(summary.totalInventory),
+        total_Sale: roundToDecimals(summary.total),
+        total_Inventory: roundToDecimals(summary.totalInventory),
         rows: Object.entries(summary.gradeWiseSales).map(([grade, data]) => ({
             grade,
             ...data
         })),
-        cols: ['grade', 'saleValue', 'salePercentage', 'inventoryValue', 'inventoryPercentage']
+        cols: ['grade', 'sale_value', 'sale_percentage', 'inventory_value', 'inventory_percentage']
     }
 }
 
@@ -376,16 +376,16 @@ function calcOrderSummary(analysisData: MonthDataItem[]) {
         const label = item["Category Name"]
         if (!acc[label]) {
             acc[label] = {
-                totalSaleValue: 0,
-                totalQuantity: 0,
-                totalOrderValue: 0
+                total_Sale_Value: 0,
+                total_Quantity: 0,
+                total_Order_Value: 0
             }
         }
 
         const entry = acc[label]
-        entry.totalSaleValue += safeNumber(item["Sale Amount"])
-        entry.totalQuantity += safeNumber(item["Sale Qty"])
-        entry.totalOrderValue += safeNumber(item["Total Amount"])
+        entry.total_Sale_Value += safeNumber(item["Sale Amount"])
+        entry.total_Quantity += safeNumber(item["Sale Qty"])
+        entry.total_Order_Value += safeNumber(item["Total Amount"])
 
         return acc
     }, {} as Record<string, OrderSummaryItem>)
@@ -393,11 +393,11 @@ function calcOrderSummary(analysisData: MonthDataItem[]) {
     return {
         rows: Object.entries(summary).map(([category, data]) => ({
             category,
-            totalSaleValue: roundToDecimals(data.totalSaleValue),
-            totalQuantity: roundToDecimals(data.totalQuantity),
-            totalOrderValue: roundToDecimals(data.totalOrderValue)
+            total_Sale_Value: roundToDecimals(data.total_Sale_Value),
+            total_Quantity: roundToDecimals(data.total_Quantity),
+            total_Order_Value: roundToDecimals(data.total_Order_Value)
         })),
-        cols: ['category', 'totalSaleValue', 'totalQuantity', 'totalOrderValue']
+        cols: ['category', 'total_Sale_Value', 'total_Quantity', 'total_Order_Value']
     }
 }
 
@@ -405,11 +405,11 @@ function commonOrderSummary(analysisData: MonthDataItem[]) {
     return analysisData.map(order => ({
         item: order['Sku Code'],
         category: order['Category Name'],
-        subCategory: order['Sub Category'],
-        orderQty: order['Order Qty'],
-        vendorName: order['Vendor Name'],
-        vendorPrice: order['Vendor Price'],
-        totalValue: calcCommonOrderTotalValue(order['Order Qty'], order['Vendor Price'])
+        sub_category: order['Sub Category'],
+        order_qty: order['Order Qty'],
+        vendor_name: order['Vendor Name'],
+        vendor_price: order['Vendor Price'],
+        total_value: calcCommonOrderTotalValue(order['Order Qty'], order['Vendor Price'])
     }))
 }
 
