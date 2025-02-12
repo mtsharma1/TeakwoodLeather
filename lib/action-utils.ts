@@ -182,6 +182,7 @@ export function analysis(analysisData: MonthDataItem[], key?: string) {
         return analysisData.filter(filters[key as keyof typeof filters])
     }
 
+    if (key === 'overview') return analysisData
     if (key === 'salesinventorsSummary') return calcSalesGrid(analysisData)
     if (key === 'ordersummary') return calcOrderSummary(analysisData)
     if (key === 'commonordersummary') return commonOrderSummary(analysisData)

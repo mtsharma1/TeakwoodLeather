@@ -4,25 +4,22 @@ import AdvancedInventoryTable from "@/components/advanced-inventory-table"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import LoadingSkeleton from "@/components/loader/table-skelaton"
 
-// const getCachedAnalysisData = cache(async (type: string) => await analysisData(type))
-
-export default async function OverStock({ params }: { params: { type: string } }) {
-  const key = params.type.replaceAll("-", "")
+export default async function OverviewMontlyReport() {
   return (
     <Card className="w-full overflow-hidden">
       <CardHeader className="border-b">
-        <CardTitle className="text-xl md:text-2xl font-bold capitalize">{params.type.replaceAll("-", " ")}</CardTitle>
+        <CardTitle className="text-xl md:text-2xl font-bold capitalize">Overview</CardTitle>
       </CardHeader>
       <CardContent className="p-2 sm:p-4">
         <Suspense fallback={<LoadingSkeleton />}>
-          <OverStockContent type={key} />
+          <OverviewMontlyReportContent type={'overview'} />
         </Suspense>
       </CardContent>
     </Card>
   )
 }
 
-async function OverStockContent({ type }: { type: string }) {
+async function OverviewMontlyReportContent({ type }: { type: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data: any = await analysisData(type)
 

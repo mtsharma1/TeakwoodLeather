@@ -232,6 +232,4 @@ export async function convertPriceCheckData() {
       "Invoice Count": x.invoiceCount,
       "Discount %": x.discountPercentage,
    })) || [];
-
-
 }

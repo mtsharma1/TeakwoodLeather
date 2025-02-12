@@ -1,17 +1,29 @@
 import type { InvoiceData } from "@/types/order"
 import { savePriceCheckData } from "@/action/db_action"
-import { exportInvoices, fetchCSV } from "@/action/csv"
+import { fetchCSV, pollJobStatus } from "@/action/csv"
 import { NextResponse } from "next/server"
 import { transformInvoiceData } from "@/lib/invoice-action-utils"
 import { unstable_noStore as noStore } from 'next/cache';
+import { createInvoiceJob } from "@/lib/api"
+import { format } from 'date-fns'
 
 async function fetchAndSaveInvoiceData() {
   noStore();
   try {
-    const path = (await exportInvoices()).filePath
-    if (!path) {
-      throw new Error("Failed to get Invoice report path")
+    const today = new Date()
+    const tomorrow = format(new Date().setDate(today.getDate() + 1), "yyyy-MM-dd")
+    const dayBeforeYesterday = format(new Date().setDate(today.getDate() - 1), "yyyy-MM-dd")
+
+    const jobResponse = await createInvoiceJob(dayBeforeYesterday, tomorrow)
+
+    if (!jobResponse.successful) {
+      throw new Error(`Failed to create export job: ${JSON.stringify(jobResponse)}`)
     }
+
+    const jobCode = jobResponse.jobCode
+
+    const result = await pollJobStatus(jobCode, 100, 2000 * 4);
+    const path = result.filePath
     const rawData = await fetchCSV<InvoiceData>(path)
     const transformedData = transformInvoiceData(rawData)
     await savePriceCheckData(transformedData)

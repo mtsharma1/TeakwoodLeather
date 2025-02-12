@@ -1,24 +1,24 @@
 "use server"
 
-import { revalidatePath, unstable_noStore as noStore } from "next/cache"
+import { unstable_noStore as noStore } from "next/cache"
 import { parse } from "csv-parse/sync"
 import { analysis, calc_Count_Amt, orderCategory } from "@/lib/action-utils"
-import type { InvoiceData, MonthDataItem, SalesDataItem } from "@/types/order"
+import type { MonthDataItem } from "@/types/order"
 import type { categorySizeMap } from "@/components/categories/data-table-filters"
 import { invoiceGradeAnalysis } from "@/lib/invoice-action-utils"
 import { roundToDecimals, safeNumber } from "@/lib/utils"
 import { cache } from "react"
 import { calculateCategoryMetrics, calculatePortalMetrics } from "@/lib/category-poral-action-utils"
 import type { SalesRecord } from "@/types/category-poral-monthly"
-import { format, getDaysInMonth } from "date-fns"
-import { createInvoiceJob, getJobStatus } from "@/lib/api"
+import { getDaysInMonth } from "date-fns"
+import { getJobStatus } from "@/lib/api"
 import prisma from "@/lib/prisma"
 import { convertPriceCheckData } from "./db_action"
 
 // Constants
-const CACHE_REVALIDATION_PATH = process.env.CACHE_REVALIDATION_PATH || "/analysis"
-const MAX_ATTEMPTS = Number.parseInt(process.env.MAX_ATTEMPTS || "100", 100)
-const DELAY = Number.parseInt(process.env.DELAY || "2000", 2000)
+// const CACHE_REVALIDATION_PATH = process.env.CACHE_REVALIDATION_PATH || "/analysis"
+// const MAX_ATTEMPTS = Number.parseInt(process.env.MAX_ATTEMPTS || "100", 100)
+// const DELAY = Number.parseInt(process.env.DELAY || "2000", 2000)
 
 export async function pollJobStatus(jobCode: string, maxAttempts: number, delay: number) {
     noStore()
@@ -77,42 +77,43 @@ class DataCache<T> {
 }
 
 // Initialize caches
-const invoiceCache = new DataCache<InvoiceData>()
+// const invoiceCache = new DataCache<InvoiceData>()
 // const invoiceAnalysisCache = new DataCache<InvoiceData>()
-const salesCache = new DataCache<SalesDataItem>()
+// const salesCache = new DataCache<SalesDataItem>()
 // const monthlyCache = new DataCache<MonthDataItem>()
 const monthlyAnalysisCache = new DataCache<MonthDataItem>()
 
-export async function exportInvoices(): Promise<{
-    success: boolean;
-    message: string;
-    filePath?: string;
-    error?: string;
-}> {
-    try {
-        const today = new Date()
-        const yesterday = format(new Date().setDate(today.getDate() - 1), "yyyy-MM-dd")
-        const dayBeforeYesterday = format(new Date().setDate(today.getDate() - 2), "yyyy-MM-dd")
+// Not in use: copied to /api/cron/morning-cron
+// export async function exportInvoices(): Promise<{
+//     success: boolean;
+//     message: string;
+//     filePath?: string;
+//     error?: string;
+// }> {
+//     try {
+//         const today = new Date()
+//         const yesterday = format(new Date().setDate(today.getDate() - 1), "yyyy-MM-dd")
+//         const dayBeforeYesterday = format(new Date().setDate(today.getDate() - 2), "yyyy-MM-dd")
 
-        const jobResponse = await createInvoiceJob(dayBeforeYesterday, yesterday)
+//         const jobResponse = await createInvoiceJob(dayBeforeYesterday, yesterday)
 
-        if (!jobResponse.successful) {
-            throw new Error(`Failed to create export job: ${JSON.stringify(jobResponse)}`)
-        }
+//         if (!jobResponse.successful) {
+//             throw new Error(`Failed to create export job: ${JSON.stringify(jobResponse)}`)
+//         }
 
-        const jobCode = jobResponse.jobCode
+//         const jobCode = jobResponse.jobCode
 
-        // Poll for job status
-        const result = await pollJobStatus(jobCode, MAX_ATTEMPTS, DELAY)
-        return result
-    } catch (error) {
-        return {
-            success: false,
-            message: error instanceof Error ? error.message : "An unknown error occurred",
-            error: error instanceof Error ? error.stack : String(error),
-        }
-    }
-}
+//         // Poll for job status
+//         const result = await pollJobStatus(jobCode, MAX_ATTEMPTS, DELAY)
+//         return result
+//     } catch (error) {
+//         return {
+//             success: false,
+//             message: error instanceof Error ? error.message : "An unknown error occurred",
+//             error: error instanceof Error ? error.stack : String(error),
+//         }
+//     }
+// }
 
 // Not in use: copied to /api/cron
 // export async function exportMonthlyReport(): Promise<{
@@ -144,6 +145,7 @@ export async function exportInvoices(): Promise<{
 // }
 
 // Utility functions
+
 export async function fetchCSV<T>(url: string): Promise<T[]> {
     const response = await fetch(url, {
         headers: { "Content-Type": "text/csv" },
@@ -165,30 +167,33 @@ function processCSVData<T>(csvText: string): T[] {
     }) as T[]
 }
 
-export async function fetchSalesData(startIndex: number, stopIndex: number): Promise<PaginatedResponse<SalesDataItem>> {
-    try {
-        if (salesCache.isEmpty()) {
-            const path = (await exportInvoices()).filePath
-            if (path) {
-                const result = await fetchCSV<SalesDataItem>(path)
-                salesCache.setData(result, Object.keys(result[0]))
-            }
-        }
+// export async function fetchSalesData(startIndex: number, stopIndex: number): Promise<PaginatedResponse<SalesDataItem>> {
+//     try {
+//         // if (salesCache.isEmpty()) {
+//         //     const path = (await exportInvoices()).filePath
+//         //     if (path) {
+//         //         const result = await fetchCSV<SalesDataItem>(path)
+//         //         salesCache.setData(result, Object.keys(result[0]))
+//         //     }
+//         // }
 
-        const rows = salesCache.slice(startIndex, stopIndex)
-        revalidatePath(CACHE_REVALIDATION_PATH)
+//         // const rows = salesCache.slice(startIndex, stopIndex)
+//         // revalidatePath(CACHE_REVALIDATION_PATH)
 
-        return {
-            columns: salesCache.getColumns(),
-            rows,
-            hasMore: stopIndex < salesCache.length(),
-            totalItems: salesCache.length(),
-        }
-    } catch (error) {
-        console.error("Error in fetchSalesData:", error)
-        throw new Error("Failed to fetch sales data")
-    }
-}
+//         const data = await convertPriceCheckData()
+//         invoiceAnalysisCache.setData(data)
+
+//         return {
+//             columns: invoiceAnalysisCache.getColumns(),
+//             rows: invoiceAnalysisCache.slice(startIndex, stopIndex),
+//             hasMore: stopIndex < invoiceAnalysisCache.length(),
+//             totalItems: invoiceAnalysisCache.length(),
+//         }
+//     } catch (error) {
+//         console.error("Error in fetchSalesData:", error)
+//         throw new Error("Failed to fetch sales data")
+//     }
+// }
 
 export async function fetchMonthlyData(
     startIndex: number,
@@ -264,7 +269,6 @@ export async function analysisData(key: string) {
 }
 
 export async function analysisDasboard() {
-    noStore()
     try {
         if (monthlyAnalysisCache.isEmpty()) {
             await fetchMonthlyData(0, 50)
@@ -291,30 +295,30 @@ export async function categoryData(key: keyof typeof categorySizeMap) {
 }
 
 /**************Invoice Data (Price Checklist)**************/
-export async function fetchInvoiceData(startIndex: number, stopIndex: number): Promise<PaginatedResponse<InvoiceData>> {
+// export async function fetchInvoiceData(startIndex: number, stopIndex: number): Promise<PaginatedResponse<InvoiceData>> {
 
-    try {
-        if (invoiceCache.isEmpty()) {
-            const path = (await exportInvoices()).filePath
-            if (path) {
-                const result = await fetchCSV<InvoiceData>(path)
-                invoiceCache.setData(result, Object.keys(result[0]))
-            }
-        }
+//     try {
+//         if (invoiceCache.isEmpty()) {
+//             const path = (await exportInvoices()).filePath
+//             if (path) {
+//                 const result = await fetchCSV<InvoiceData>(path)
+//                 invoiceCache.setData(result, Object.keys(result[0]))
+//             }
+//         }
 
-        const rows = invoiceCache.slice(startIndex, stopIndex)
+//         const rows = invoiceCache.slice(startIndex, stopIndex)
 
-        return {
-            columns: invoiceCache.getColumns(),
-            rows,
-            hasMore: stopIndex < invoiceCache.length(),
-            totalItems: invoiceCache.length(),
-        }
-    } catch (error) {
-        console.error("Error in fetchInvoiceData:", error)
-        throw new Error("Failed to fetchInvoiceData")
-    }
-}
+//         return {
+//             columns: invoiceCache.getColumns(),
+//             rows,
+//             hasMore: stopIndex < invoiceCache.length(),
+//             totalItems: invoiceCache.length(),
+//         }
+//     } catch (error) {
+//         console.error("Error in fetchInvoiceData:", error)
+//         throw new Error("Failed to fetchInvoiceData")
+//     }
+// }
 
 export async function priceCheckListData(type: string) {
     try {
@@ -363,19 +367,19 @@ export const categoryPortalData = cache(async (type: string) => {
     const transformedData = await convertPriceCheckData()
 
 
-    const parseDate = (dateStr: string): Date => {
-        // Convert "DD-MM-YYYY HH:mm" to Date object
-        const [datePart, timePart] = dateStr.split(" ");
-        const [day, month, year] = datePart.split("-").map(Number);
-        const [hours, minutes] = timePart.split(":").map(Number);
+    // const parseDate = (dateStr: string): Date => {
+    //     // Convert "DD-MM-YYYY HH:mm" to Date object
+    //     const [datePart, timePart] = dateStr.split(" ");
+    //     const [day, month, year] = datePart.split("-").map(Number);
+    //     const [hours, minutes] = timePart.split(":").map(Number);
 
-        return new Date(year, month - 1, day, hours, minutes);
-    };
+    //     return new Date(year, month - 1, day, hours, minutes);
+    // };
 
     // Function to filter invoices within a given time range
     const filterInvoices = (start: Date, end: Date) => {
         return transformedData.filter((item) => {
-            const invoiceDate = parseDate(item["Invoice Created Date"]);
+            const invoiceDate = new Date(item["Invoice Created Date"]);
             return invoiceDate >= start && invoiceDate <= end;
         });
     };
