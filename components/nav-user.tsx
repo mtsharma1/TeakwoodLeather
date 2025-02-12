@@ -1,9 +1,6 @@
-"use client"
+import { signOut } from "next-auth/react"
+import { ChevronsUpDown, LogOut, SettingsIcon } from "lucide-react"
 
-import { signOut, useSession } from "next-auth/react"
-import { ChevronsUpDown, LogOut } from "lucide-react"
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,16 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
+import UserAvatar from "./user-avatar"
 
 export function NavUser() {
-  const { data: session } = useSession()
   const { isMobile } = useSidebar()
 
-  const user = {
-    name: session?.user?.name || "Guest",
-    email: session?.user?.email || "",
-    avatar: session?.user?.image || "",
-  }
 
   return (
     <SidebarMenu>
@@ -31,38 +23,26 @@ export function NavUser() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="bg-slate-700 hover:bg-slate-700 hover:text-white"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} className="text-black" />
-                <AvatarFallback className="rounded-lg text-black">{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">Hello, {user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+              <div className="flex gap-2  text-left text-sm leading-tight">
+                <span className="truncate text-xs"><SettingsIcon size={18}/></span>
+                <span className="truncate font-semibold">Settings</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            className="w-[--radix-dropdown-menu-trigger-width] border-slate-800 bg-slate-800 min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
           >
-            <DropdownMenuLabel className="p-0 font-normal">
+            <DropdownMenuLabel className="p-0 font-normal  text-white bg-slate-800 border-slate-800">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} className="text-black" />
-                  <AvatarFallback className="rounded-lg text-black">{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Hello, {user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
-                </div>
+                <UserAvatar />
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
             {/* <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Sparkles className="mr-2 h-4 w-4" />
@@ -85,8 +65,11 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup> */}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut()}>
-              <LogOut className="mr-2 h-4 w-4" />
+            <DropdownMenuItem
+              className="bg-slate-800 hover:!bg-slate-700/90 hover:!text-red-400 text-red-400 font-bold cursor-pointer transition-colors"
+              onClick={() => signOut()}
+            >
+              <LogOut className="mr-2 h-4 w-4 text-red-400" />
               <span>Log out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
