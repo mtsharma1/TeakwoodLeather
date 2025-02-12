@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { parse } from "csv-parse/sync"
 import { analysis, calc_Count_Amt, orderCategory } from "@/lib/action-utils"
 import type { InvoiceData, MonthDataItem, SalesDataItem } from "@/types/order"
