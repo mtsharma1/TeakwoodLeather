@@ -12,7 +12,6 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { PiBeltThin } from "react-icons/pi";
 import { CgMoreVerticalAlt } from "react-icons/cg";
 import { GiBeltBuckles, GiSleevelessJacket } from "react-icons/gi";
 import { BiCategoryAlt } from "react-icons/bi";

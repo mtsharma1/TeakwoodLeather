@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ChevronDown, PinIcon, Search, X } from "lucide-react"
+import { ChevronDown, DownloadIcon, PinIcon, Search, X } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { enhancedMultiSelectFilter, getUniqueColumnValues } from "./data-table-filters"
@@ -26,7 +26,7 @@ import type { CategoryData } from "./categories-cols"
 import { ArrowUpDown } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "../ui/pagination"
-// import CsvDownloader from 'react-csv-downloader';
+import streamSaver from 'streamsaver';
 
 const getBgColor = (columnId: string, isHeader: boolean = false): string => {
   if (columnId.startsWith('salesSizes_') || columnId === 'Sales Sizes' || columnId === 'totalSaleQty') {
@@ -150,6 +150,71 @@ export default function CategoryDataTable({
     { title: "Order Qty", span: groupLength + 1, color: "text-medium bg-orange-100" },
   ]
 
+  // const formatCSVData = table.getCoreRowModel().rows.map(item=>({
+  //   x: item.
+  // }))
+  // console.log(formatCSVData[0])
+
+  const downloadCSV = async (selectedOnly: boolean = false) => {
+    // Setup WritableStream for streaming
+    // const stream = new WritableStream({
+    //   async write(chunk) {
+    //     await new Blob([chunk]).stream().pipeTo(streamWriter);
+    //   }
+    // });
+    
+    const fileStream = streamSaver.createWriteStream(`export_${new Date().toISOString().split('T')[0]}.csv`);
+    const streamWriter = fileStream.getWriter();
+    
+    try {
+      // Write headers
+      const columns = table.getAllFlatColumns();
+      const headers = columns.map(column => column.id).join(',') + '\n';
+      await streamWriter.write(new TextEncoder().encode(headers));
+      
+      // Process rows in chunks
+      const chunkSize = 1000;
+      const rows = selectedOnly 
+        ? table.getFilteredRowModel().rows.filter(row => row.getIsSelected())
+        : table.getFilteredRowModel().rows;
+      
+      for (let i = 0; i < rows.length; i += chunkSize) {
+        const chunk = rows.slice(i, i + chunkSize).map(row => {
+          return columns.map(column => {
+            const value = row.getValue(column.id);
+            
+            // Handle special formatting for currency values
+            if (['totalSaleAmount', 'avgSellingPrice', 'vendorPrice', 'totalPrice'].includes(column.id)) {
+              return value ? Number(value).toFixed(2) : '0';
+            }
+            
+            // Handle special formatting for size objects
+            if (column.id.startsWith('salesSizes_') || 
+                column.id.startsWith('availableInventorySize_') || 
+                column.id.startsWith('openPurchaseSize_') || 
+                column.id.startsWith('orderQtySize_')) {
+              return value || '0';
+            }
+            
+            // Handle grades
+            if (column.id === 'staticGrade' || column.id === 'monthGrade') {
+              return value || '';
+            }
+            
+            // Escape and quote strings containing commas
+            return typeof value === 'string' && value.includes(',') 
+              ? `"${value.replace(/"/g, '""')}"` 
+              : value ?? '';
+          }).join(',');
+        }).join('\n') + '\n';
+        
+        await streamWriter.write(new TextEncoder().encode(chunk));
+      }
+    } finally {
+      await streamWriter.close();
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -238,11 +303,11 @@ export default function CategoryDataTable({
               ))}
             </SelectContent>
           </Select>
-          {/* <CsvDownloader filename={filename} datas={data} columns={columnNames.map(x => ({ id: x, displayName: x }))}>
-            <Button size={'icon'}>
+          {/* <CsvDownloader filename={"filename"} datas={formatCSVData} columns={table.getAllFlatColumns().map(x => ({ id: x.id, displayName: x.id.toUpperCase() }))}> */}
+            <Button size={'icon'} onClick={()=>downloadCSV()}>
               <DownloadIcon size={18} />
             </Button>
-          </CsvDownloader> */}
+          {/* </CsvDownloader> */}
         </div>
       </div>
       {/* Col visibility */}

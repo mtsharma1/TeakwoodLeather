@@ -204,7 +204,8 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         "kidsshoes": ["LEATHER KID SHOES"],
         "leatherjackets": ["LEATHER JACKETS"],
         "leathermencasualbelt": ["LEATHER MEN CASUAL BELT"],
-        "othercategory": ["PU MEN SHOES", "LEATHER MEN SHOES", "LEATHER WOMEN SHOES", "PU WOMEN SHOES", "LEATHER KID SHOES", "LEATHER JACKETS", "LEATHER MEN CASUAL BELT"],
+        // "othercategory": ["PU MEN SHOES", "LEATHER MEN SHOES", "LEATHER WOMEN SHOES", "PU WOMEN SHOES", "LEATHER KID SHOES", "LEATHER JACKETS", "LEATHER MEN CASUAL BELT"],
+        "othercategory": ["SHOES", "LEATHER WOMEN SHOES", 'KIDS SHOE', 'LEATHER JACKETS', 'LEATHER MEN CASUAL BELT', 'LEATHER STRAP', 'LEATHER BELTS', 'BUCKLE'],
     }
 
     const categoryConfig = new Map(Object.entries(categoryDisplay));
@@ -240,14 +241,16 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         const size = item.Size;
         const subCategory = item['Sub Category'];
         const category = item['Category Name']
-
-        const isMatchingCriteria = isOtherCategory ? !currentCategory?.includes(subCategory) && !currentCategory?.includes(category) : ['leatherjackets', 'kidsshoes'].includes(key) ? currentCategory?.includes(category) : currentCategory?.includes(subCategory)
-
-        if (!isMatchingCriteria || !categorySizeMap[key].includes(size)) {
+        
+        const isMatchingCriteria = isOtherCategory ?  !currentCategory?.includes(category) : ['leatherjackets', 'kidsshoes'].includes(key) ? currentCategory?.includes(category) : currentCategory?.includes(subCategory)
+                
+        if (!isMatchingCriteria || (!isOtherCategory && !categorySizeMap[key].includes(size))) {
             return;
         }
 
-        const sku = item["Parent SKU"];
+        const colHeaderToRemoveDup = isOtherCategory ? "Sku Code" : "Parent SKU"
+
+        const sku = item[colHeaderToRemoveDup];
         let skuData = skuMap.get(sku);
 
         if (!skuData) {
