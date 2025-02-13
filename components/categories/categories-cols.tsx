@@ -595,36 +595,39 @@ export const Beltcolumns: ColumnDef<CategoryData>[] = [
 
 export const OtherColumns: ColumnDef<CategoryData>[] = [
     {
-        accessorKey: "sku",
-        header: "Sku Code",
-        cell: ({ row }) => <div className="font-medium">{row.getValue("sku")}</div>,
+        id: "skuCode",
+        accessorKey: "Sku Code",
+        header: "SKU Code",
+        cell: ({ row }) => <div className="font-medium">{row.getValue("skuCode")}</div>,
     },
     {
-        accessorKey: "category",
-        header: "Category Name",
+        id: "newSkuCode",
+        accessorKey: "New SKU Code",
+        header: "New SKU Code",
     },
     {
-        accessorKey: "subCategory",
+        id: "categoryName",
+        accessorKey: "Category Name",
+        header: "Category",
+    },
+    {
+        id: "subCategory",
+        accessorKey: "Sub Category",
         header: "Sub Category",
     },
-    ...createSizeColumns(categorySizeMap.othercategory, "salesSizes"),
     {
-        accessorKey: "totalSaleQty",
-        header: "TOTAL",
+        id: "size",
+        accessorKey: "Size",
+        header: "Size",
     },
     {
-        accessorKey: "totalSaleAmount",
-        header: "30 DAYS SALE AMOUNT",
-        cell: ({ row }) => {
-            const amount = parseFloat(row.getValue("totalSaleAmount"))
-            return new Intl.NumberFormat("en-IN", {
-                style: "currency",
-                currency: "INR",
-            }).format(amount)
-        },
+        id: "availableInventory",
+        accessorKey: "Available Inventory",
+        header: "Available Inventory",
     },
     {
-        accessorKey: "avgSellingPrice",
+        id: "avgSellingPrice",
+        accessorKey: "Avg Selling Price",
         header: "Avg Selling Price",
         cell: ({ row }) => {
             const amount = parseFloat(row.getValue("avgSellingPrice"))
@@ -635,73 +638,84 @@ export const OtherColumns: ColumnDef<CategoryData>[] = [
         },
     },
     {
-        accessorKey: "staticGrade",
+        id: "staticGrade",
+        accessorKey: "Static Grade",
         header: "Static Grade",
         cell: ({ row }) => {
             const grade: string = row.getValue("staticGrade")
             return (
-                <div className={`font-medium ${grade === 'A' ? 'text-green-600' :
+                <div className={`font-medium ${
+                    grade === 'A' ? 'text-green-600' :
                     grade === 'B' ? 'text-yellow-600' :
-                        'text-red-600'
-                    }`}>
+                    'text-red-600'
+                }`}>
                     {grade}
                 </div>
             )
         },
     },
     {
-        accessorKey: "monthGrade",
+        id: "monthGrade",
+        accessorKey: "Month Grade",
         header: "Month Grade",
         cell: ({ row }) => {
             const grade: string = row.getValue("monthGrade")
             return (
-                <div className={`font-medium ${grade === 'A' ? 'text-green-600' :
+                <div className={`font-medium ${
+                    grade === 'A' ? 'text-green-600' :
                     grade === 'B' ? 'text-yellow-600' :
-                        'text-red-600'
-                    }`}>
+                    'text-red-600'
+                }`}>
                     {grade}
                 </div>
             )
         },
     },
     {
-        accessorKey: "orderQty",
-        header: "ORDER QTY",
+        id: "orderQty",
+        accessorKey: "Order Qty",
+        header: "Order Qty",
     },
     {
-        accessorKey: "sets",
-        header: "SETS",
-    },
-    ...createSizeColumns(categorySizeMap.othercategory, "availableInventorySize"),
-    {
-        accessorKey: "availableInventorySizeTotal",
-        header: "Available Inventory Total",
-    },
-    ...createSizeColumns(categorySizeMap.othercategory, "openPurchaseSize"),
-    {
-        accessorKey: "openPurchaseSizeTotal",
-        header: "Total",
-    },
-    ...createSizeColumns(categorySizeMap.othercategory, "orderQtySize"),
-    {
-        accessorKey: "orderQtySizeTotal",
-        header: "Total",
+        id: "openPurchase",
+        accessorKey: "Open Purchase",
+        header: "Open Purchase",
     },
     {
-        accessorKey: "saleThrough",
+        id: "saleQty",
+        accessorKey: "Sale Qty",
+        header: "Sale Qty",
+    },
+    {
+        id: "saleAmount",
+        accessorKey: "Sale Amount",
+        header: "Sale Amount",
+        cell: ({ row }) => {
+            const amount = parseFloat(row.getValue("saleAmount"))
+            return new Intl.NumberFormat("en-IN", {
+                style: "currency",
+                currency: "INR",
+            }).format(amount)
+        },
+    },
+    {
+        id: "saleThrough",
+        accessorKey: "Sale Through",
         header: "Sale Through",
     },
     {
-        accessorKey: "vendorPrice",
-        header: "Vendor Price",
+        id: "doh",
+        accessorKey: "DOH",
+        header: "DOH",
     },
     {
-        accessorKey: "totalPrice",
-        header: "Total Price",
+        id: "roh",
+        accessorKey: "ROH",
+        header: "ROH",
     },
     {
-        accessorKey: "vendorName",
+        id: "vendorName",
+        accessorKey: "Vendor Name",
         header: "Vendor Name",
     },
 ]
-

@@ -5,12 +5,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
-import UserAvatar from "./user-avatar"
 
 export function NavUser() {
   const { isMobile } = useSidebar()
@@ -38,11 +35,11 @@ export function NavUser() {
             align="end"
             sideOffset={4}
           >
-            <DropdownMenuLabel className="p-0 font-normal  text-white bg-slate-800 border-slate-800">
+            {/* <DropdownMenuLabel className="p-0 font-normal  text-white bg-slate-800 border-slate-800">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <UserAvatar />
               </div>
-            </DropdownMenuLabel>
+            </DropdownMenuLabel> */}
             {/* <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Sparkles className="mr-2 h-4 w-4" />
@@ -64,7 +61,7 @@ export function NavUser() {
                 <span>Notifications</span>
               </DropdownMenuItem>
             </DropdownMenuGroup> */}
-            <DropdownMenuSeparator />
+            {/* <DropdownMenuSeparator /> */}
             <DropdownMenuItem
               className="bg-slate-800 hover:!bg-slate-700/90 hover:!text-red-400 text-red-400 font-bold cursor-pointer transition-colors"
               onClick={() => signOut()}

@@ -9,6 +9,7 @@ import { signInCred } from "@/action/auth"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import logoSvg from '../assets/logo.svg'
 
 export function LoginForm({
   className,
@@ -88,7 +89,7 @@ export function LoginForm({
             <Image
               height={400}
               width={400}
-              src="/logo.jpg"
+              src={logoSvg}
               alt="Image"
               className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
             />

@@ -1,7 +1,6 @@
+"use server"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useSession } from "next-auth/react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useEffect, useState } from "react"
 
 const UserAvatarSkeleton = () => {
    return (
@@ -15,39 +14,27 @@ const UserAvatarSkeleton = () => {
    )
 }
 
-export default function UserAvatar() {
-   const { data: session, status } = useSession()
-   const [userData, setUserData] = useState<{name?: string, email?: string, image?: string} | null>(null)
-   
-   useEffect(() => {
-     if (session?.user) {
-       setUserData({
-         name: session.user.name || undefined,
-         email: session.user.email || undefined,
-         image: session.user.image || undefined
-       })
-     }
-   }, [session])
+export default async function UserAvatar({ userData }: { userData: { name: string, email: string, image: string } }) {
 
    // Show skeleton while loading OR if we don't have user data yet
-   if (status === "loading" || !userData?.name) {
+   if (!userData?.name) {
       return <UserAvatarSkeleton />
    }
 
    const { name, email, image } = userData
 
    return (
-      <>
+      <div className="flex items-center gap-1">
+         <div className="grid flex-1 text-left text-sm leading-tight">
+            <span className="truncate font-semibold">Hello, {name}</span>
+            <span className="truncate text-xs">{email}</span>
+         </div>
          <Avatar className="h-8 w-8 rounded-lg">
             <AvatarImage src={image || ""} alt={name} className="text-black" />
             <AvatarFallback className="rounded-lg text-black">
                {name.slice(0, 2).toUpperCase()}
             </AvatarFallback>
          </Avatar>
-         <div className="grid flex-1 text-left text-sm leading-tight">
-            <span className="truncate font-semibold">Hello, {name}</span>
-            <span className="truncate text-xs">{email}</span>
-         </div>
-      </>
+      </div>
    )
 }

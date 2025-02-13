@@ -45,10 +45,12 @@ export default function CategoryDataTable({
   data = [],
   columns = [],
   groupLength,
+  filename
 }: {
   data: CategoryData[]
   columns: ColumnDef<CategoryData>[]
   groupLength: number
+  filename: string
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -162,52 +164,52 @@ export default function CategoryDataTable({
     //     await new Blob([chunk]).stream().pipeTo(streamWriter);
     //   }
     // });
-    
-    const fileStream = streamSaver.createWriteStream(`export_${new Date().toISOString().split('T')[0]}.csv`);
+
+    const fileStream = streamSaver.createWriteStream(`${filename}_${new Date().toISOString().split('T')[0]}.csv`);
     const streamWriter = fileStream.getWriter();
-    
+
     try {
       // Write headers
       const columns = table.getAllFlatColumns();
       const headers = columns.map(column => column.id).join(',') + '\n';
       await streamWriter.write(new TextEncoder().encode(headers));
-      
+
       // Process rows in chunks
       const chunkSize = 1000;
-      const rows = selectedOnly 
+      const rows = selectedOnly
         ? table.getFilteredRowModel().rows.filter(row => row.getIsSelected())
         : table.getFilteredRowModel().rows;
-      
+
       for (let i = 0; i < rows.length; i += chunkSize) {
         const chunk = rows.slice(i, i + chunkSize).map(row => {
           return columns.map(column => {
             const value = row.getValue(column.id);
-            
+
             // Handle special formatting for currency values
             if (['totalSaleAmount', 'avgSellingPrice', 'vendorPrice', 'totalPrice'].includes(column.id)) {
               return value ? Number(value).toFixed(2) : '0';
             }
-            
+
             // Handle special formatting for size objects
-            if (column.id.startsWith('salesSizes_') || 
-                column.id.startsWith('availableInventorySize_') || 
-                column.id.startsWith('openPurchaseSize_') || 
-                column.id.startsWith('orderQtySize_')) {
+            if (column.id.startsWith('salesSizes_') ||
+              column.id.startsWith('availableInventorySize_') ||
+              column.id.startsWith('openPurchaseSize_') ||
+              column.id.startsWith('orderQtySize_')) {
               return value || '0';
             }
-            
+
             // Handle grades
             if (column.id === 'staticGrade' || column.id === 'monthGrade') {
               return value || '';
             }
-            
+
             // Escape and quote strings containing commas
-            return typeof value === 'string' && value.includes(',') 
-              ? `"${value.replace(/"/g, '""')}"` 
+            return typeof value === 'string' && value.includes(',')
+              ? `"${value.replace(/"/g, '""')}"`
               : value ?? '';
           }).join(',');
         }).join('\n') + '\n';
-        
+
         await streamWriter.write(new TextEncoder().encode(chunk));
       }
     } finally {
@@ -304,9 +306,9 @@ export default function CategoryDataTable({
             </SelectContent>
           </Select>
           {/* <CsvDownloader filename={"filename"} datas={formatCSVData} columns={table.getAllFlatColumns().map(x => ({ id: x.id, displayName: x.id.toUpperCase() }))}> */}
-            <Button size={'icon'} onClick={()=>downloadCSV()}>
-              <DownloadIcon size={18} />
-            </Button>
+          <Button size={'icon'} onClick={() => downloadCSV()}>
+            <DownloadIcon size={18} />
+          </Button>
           {/* </CsvDownloader> */}
         </div>
       </div>
@@ -361,7 +363,7 @@ export default function CategoryDataTable({
         <div className="relative w-full overflow-auto">
           <Table className="min-w-[1200px]">
             <TableHeader>
-              <TableRow>
+             {filename !== 'othercategory' && <TableRow>
                 {groupedColumns.map((group, index) => (
                   <TableHead
                     key={index}
@@ -371,7 +373,7 @@ export default function CategoryDataTable({
                     {group.title}
                   </TableHead>
                 ))}
-              </TableRow>
+              </TableRow>}
               <TableRow>
                 {table.getFlatHeaders().map((header, index) => {
                   const isPinned = pinnedColumns.includes(header.column.id)

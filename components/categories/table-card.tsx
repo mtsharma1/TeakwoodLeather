@@ -32,6 +32,7 @@ export default function TableCard({ data }: { data: CategoryData[] }) {
           data={data}
           columns={columns.col}
           groupLength={columns.length}
+          filename={key}
         />
       )}
     </Suspense>

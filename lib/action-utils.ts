@@ -237,13 +237,17 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
 
     const isOtherCategory = key === "othercategory";
 
+    if (isOtherCategory && currentCategory) {
+        return filterDataForOtherCategoryOnly(analysisData, currentCategory)
+    }
+
     analysisData.forEach(item => {
         const size = item.Size;
         const subCategory = item['Sub Category'];
         const category = item['Category Name']
-        
-        const isMatchingCriteria = isOtherCategory ?  !currentCategory?.includes(category) : ['leatherjackets', 'kidsshoes'].includes(key) ? currentCategory?.includes(category) : currentCategory?.includes(subCategory)
-                
+
+        const isMatchingCriteria = isOtherCategory ? !currentCategory?.includes(category) : ['leatherjackets', 'kidsshoes'].includes(key) ? currentCategory?.includes(category) : currentCategory?.includes(subCategory)
+
         if (!isMatchingCriteria || (!isOtherCategory && !categorySizeMap[key].includes(size))) {
             return;
         }
@@ -317,6 +321,10 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
     const result = Array.from(skuMap.values());
 
     return result;
+}
+
+function filterDataForOtherCategoryOnly(analysisData: MonthDataItem[], key: string[]) {
+    return analysisData.filter(item => !key?.includes(item['Category Name']))
 }
 
 // Analysis helper functions

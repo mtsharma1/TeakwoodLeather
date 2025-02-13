@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "setup": "node -e \"require('fs').cpSync('public', '.next/standalone/public', { recursive: true }); require('fs').cpSync('.next/static', '.next/standalone/.next/static', { recursive: true });\"",
+    "standalone:bs": "npm run build && npm run setup && node .next/standalone/server.js",
+    "standalone:s": "node .next/standalone/server.js"
   },
   "dependencies": {
     "@mapbox/node-pre-gyp": "^2.0.0",
@@ -42,6 +45,7 @@
     "react-dom": "^18",
     "react-icons": "^5.4.0",
     "recharts": "^2.15.0",
+    "sharp": "^0.33.5",
     "streamsaver": "^2.0.6",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7"

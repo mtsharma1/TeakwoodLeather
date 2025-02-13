@@ -65,7 +65,7 @@ export function transformInvoiceData(INPUT: InvoiceData[]): PriceCheckInvoiceDat
 
         return {
             ...item,
-            "Concate Article": aggregated.skuCodes.join(", "),
+            "Concate Article": aggregated.skuCodes.join(" | "),
             "Total Cost": aggregated.totalCost.toString(),
             "Total Selling Price": aggregated.invoiceTotal.toString(),
             "Multiple Price": multiplePrice,
