@@ -75,21 +75,24 @@ export const calculatePortalMetrics = (
     ]);
 
     const channelMetrics = Array.from(channels).map((channel): ProcessedData => {
-        const yesterdayCount = yesterdayOrders.filter(
+        const yes_qty = yesterdayOrders.filter(
             (order) => order["Channel Name"] === channel
-        ).length;
+        );
+        const today_qty = todayOrders.filter(
+            (order) => order["Channel Name"] === channel
+        );
 
-        const todayCount = todayOrders.filter(
-            (order) => order["Channel Name"] === channel
-        ).length;
+
+        const total_yes_qty = yes_qty.reduce((acc, order) => acc + safeNumber(order.Quantity), 0)
+        const total_today_qty = today_qty.reduce((acc, order) => acc + safeNumber(order.Quantity), 0)
 
         // Calculate total orders
-        const total = yesterdayCount + todayCount;
+        const total = total_yes_qty + total_today_qty;
 
         return {
             portal: channel,
-            yesterday_Orders: yesterdayCount,
-            today_Orders: todayCount,
+            yesterday_Orders: total_yes_qty,
+            today_Orders: total_today_qty,
             total,
         };
     });

@@ -6,27 +6,31 @@ import { transformInvoiceData } from "@/lib/invoice-action-utils"
 import { unstable_noStore as noStore } from 'next/cache';
 import { createInvoiceJob } from "@/lib/api"
 import { format } from 'date-fns'
+import prisma from "@/lib/prisma"
 
 async function fetchAndSaveInvoiceData() {
   noStore();
   try {
-    const today = new Date()
-    const tomorrow = format(new Date().setDate(today.getDate() + 1), "yyyy-MM-dd")
-    const dayBeforeYesterday = format(new Date().setDate(today.getDate() - 1), "yyyy-MM-dd")
+    await prisma.priceCheckData.deleteMany()
+    // const today = new Date()
+    // const tomorrow = format(new Date().setDate(today.getDate() + 1), "yyyy-MM-dd")
+    // const dayBeforeYesterday = format(new Date().setDate(today.getDate() - 1), "yyyy-MM-dd")
 
-    const jobResponse = await createInvoiceJob(dayBeforeYesterday, tomorrow)
+    // const jobResponse = await createInvoiceJob(dayBeforeYesterday, tomorrow)
 
-    if (!jobResponse.successful) {
-      throw new Error(`Failed to create export job: ${JSON.stringify(jobResponse)}`)
-    }
+    // if (!jobResponse.successful) {
+    //   throw new Error(`Failed to create export job: ${JSON.stringify(jobResponse)}`)
+    // }
 
-    const jobCode = jobResponse.jobCode
+    // const jobCode = jobResponse.jobCode
 
-    const result = await pollJobStatus(jobCode, 100, 2000 * 4);
-    const path = result.filePath
+    // const result = await pollJobStatus(jobCode, 100, 2000 * 4);
+    // const path = result.filePath
+    const path = "https://teakwoodindia.unicommerce.com/open/redirection/export/aHR0cHM6Ly91bmljb21tZXJjZS1leHBvcnQtaW4uczMuYW1hem9uYXdzLmNvbS90ZWFrd29vZGluZGlhLzY3YWY3ZWRiYTFhODU2NGQzM2MyMGRhMy9FeHBvcnQtSW52b2ljZS10ZWFrd29vZGluZGlhXzE0MDIyMDI1MjMwNTI3LmNzdiMjIzY3YWY3ZWRiYTFhODU2NGQzM2MyMGRhMyMjIzE0XzAyXzIwMjU="
     const rawData = await fetchCSV<InvoiceData>(path)
     const transformedData = transformInvoiceData(rawData)
     await savePriceCheckData(transformedData)
+    console.log("Invoice generate")
   } catch (error) {
     console.error("Error in fetchAndSaveInvoiceData:", error)
   }

@@ -114,7 +114,7 @@ export async function savePriceCheckData(dataArray: PriceCheckInvoiceData[]) {
       invoiceNo: x["Invoice No"],
       shippingPackageCode: x["Shipping Package Code"],
       shippingPackageStatusCode: x["Shipping Package Status Code"],
-      invoiceCreatedDate: parseCustomDate(x["Invoice Created Date"]),
+      invoiceCreatedDate: x["Invoice Created Date"],
       channelInvoiceCreatedDate: parseCustomDate(x["Channel Invoice Created Date"]),
       eWayBillNo: x["EWayBill No"] !== "N/A" ? x["EWayBill No"] : null,
       eWayBillDate: parseCustomDate(x["EWayBill Date"]),
@@ -166,6 +166,7 @@ export async function savePriceCheckData(dataArray: PriceCheckInvoiceData[]) {
       sellingPriceLt300: x["Selling Price < 300"],
       invoiceCount: x["Invoice Count"],
       discountPercentage: x["Discount %"],
+      multiplePrice: x['Multiple Price']?.toString() || "",
    }));
 
    await prisma.priceCheckData.createMany({ data: formattedData });
@@ -231,5 +232,6 @@ export async function convertPriceCheckData() {
       "Selling Price < 300": x.sellingPriceLt300,
       "Invoice Count": x.invoiceCount,
       "Discount %": x.discountPercentage,
+      "Multiple Price": x.multiplePrice,
    })) || [];
 }

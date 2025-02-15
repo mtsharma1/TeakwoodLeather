@@ -75,7 +75,7 @@ model PriceCheckData {
   invoiceNo                 String    @map("Invoice No")
   shippingPackageCode       String    @map("Shipping Package Code")
   shippingPackageStatusCode String    @map("Shipping Package Status Code")
-  invoiceCreatedDate        DateTime  @map("Invoice Created Date")
+  invoiceCreatedDate        String    @map("Invoice Created Date")
   channelInvoiceCreatedDate DateTime  @map("Channel Invoice Created Date")
   eWayBillNo                String?   @map("EWayBill No")
   eWayBillDate              DateTime? @map("EWayBill Date")
@@ -127,6 +127,7 @@ model PriceCheckData {
   sellingPriceLt300         String    @map("Selling Price < 300")
   invoiceCount              String    @map("Invoice Count")
   discountPercentage        String    @map("Discount %")
+  multiplePrice             String    @map("Multiple Price")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

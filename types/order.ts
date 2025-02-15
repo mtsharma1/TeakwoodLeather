@@ -131,6 +131,7 @@ export type PriceCheckData = {
     "Selling Price < 300": string;
     "Invoice Count": string; // Count of Articals
     "Discount %": string;
+    "Multiple Price": string;
 };
 
 export type PriceCheckInvoiceData = InvoiceData & PriceCheckData;

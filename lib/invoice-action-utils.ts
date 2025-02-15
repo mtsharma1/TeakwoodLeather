@@ -26,7 +26,7 @@ export function transformInvoiceData(INPUT: InvoiceData[]): PriceCheckInvoiceDat
 
     const calculateMultiplePrice = (totalCost: number, invoiceTotal: number): number => {
         if (totalCost === 0) return 0;
-        return roundToDecimals(safeNumber((invoiceTotal / totalCost)));
+        return roundToDecimals(safeNumber((invoiceTotal / totalCost)), 3);
     };
 
     const aggregatedData = new Map<string, { skuCodes: string[]; totalCost: number; invoiceTotal: number }>();
@@ -35,7 +35,7 @@ export function transformInvoiceData(INPUT: InvoiceData[]): PriceCheckInvoiceDat
 
     return INPUT.map((item) => {
         const skuCodes = item["SKU Code"];
-        const invoiceTotal = roundToDecimals(safeNumber(item["Invoice Total"]));
+        const invoiceTotal = safeNumber(item["Invoice Total"]);
         const costPrice = roundToDecimals(safeNumber(item["Cost Price"]));
         const invoiceNo = item["Invoice No"];
 
@@ -80,13 +80,13 @@ export function transformInvoiceData(INPUT: InvoiceData[]): PriceCheckInvoiceDat
 
 export function invoiceGradeAnalysis(analysisData: PriceCheckInvoiceData[]) {
     const grades = ['A', 'B', 'C', 'D', 'A+', 'NEW'] as const;
-    
+
     const initialGradeSummary = Object.fromEntries(
         grades.map(grade => [grade, { saleValue: 0, salePercentage: 0 }])
     ) as Record<typeof grades[number], { saleValue: number; salePercentage: number }>;
 
     const summary = analysisData.reduce((acc, item) => {
-        const saleAmount = safeNumber(item['Total Selling Price']);
+        const saleAmount = safeNumber(item['Invoice Total']);
         const grade = (item['Grade'] || 'NEW') as keyof typeof initialGradeSummary;
 
         acc.totalSale += saleAmount;
@@ -102,8 +102,8 @@ export function invoiceGradeAnalysis(analysisData: PriceCheckInvoiceData[]) {
     });
 
     Object.values(summary.gradeWiseSales).forEach(grade => {
-        grade.salePercentage = summary.totalSale > 0 
-            ? roundToDecimals((grade.saleValue / summary.totalSale) * 100) 
+        grade.salePercentage = summary.totalSale > 0
+            ? roundToDecimals((grade.saleValue / summary.totalSale) * 100)
             : 0;
         grade.saleValue = roundToDecimals(grade.saleValue);
     });
@@ -449,3 +449,11 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "status": "STOP"
     }
 ];
+
+/*********HELPER*********/
+export const filterInvoices = (transformedData: PriceCheckInvoiceData[], start: Date, end: Date) => {
+    return transformedData.filter((item) => {
+        const invoiceDate = new Date(item["Invoice Created Date"]);
+        return invoiceDate >= start && invoiceDate <= end;
+    });
+};

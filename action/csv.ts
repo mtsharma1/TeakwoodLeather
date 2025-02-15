@@ -4,7 +4,7 @@ import { unstable_noStore as noStore } from "next/cache"
 import { parse } from "csv-parse/sync"
 import { analysis, calc_Count_Amt, orderCategory } from "@/lib/action-utils"
 import type { categorySizeMap } from "@/components/categories/data-table-filters"
-import { invoiceGradeAnalysis } from "@/lib/invoice-action-utils"
+import { filterInvoices, invoiceGradeAnalysis } from "@/lib/invoice-action-utils"
 import { roundToDecimals, safeNumber } from "@/lib/utils"
 import { cache } from "react"
 import { calculateCategoryMetrics, calculatePortalMetrics } from "@/lib/category-poral-action-utils"
@@ -277,7 +277,6 @@ export async function analysisDasboard() {
 
 export async function categoryData(key: keyof typeof categorySizeMap) {
     try {
-       
         const data = (await fetchMonthlyData()) || []
 
         return orderCategory(data, key)
@@ -321,22 +320,33 @@ export async function priceCheckListData(type: string) {
 
         // const rawData = invoiceCache.getData()
         // const data = transformInvoiceData(rawData)
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const todayDate = now.getDate();
+
+        const yesterdayStart = new Date(year, month, todayDate - 2, 0, 0, 0);  // 11:30:00 yesterday
+        const yesterdayEnd = new Date(year, month, todayDate - 2, 23, 59, 59);   // 23:59:59 yesterday
+
         const data = await convertPriceCheckData()
+
+
+        const yesterdayData = filterInvoices(data, yesterdayStart, yesterdayEnd);
 
         switch (type) {
             case "overview":
-                return data
+                return yesterdayData
 
             case "analysis":
-                return invoiceGradeAnalysis(data)
+                return invoiceGradeAnalysis(yesterdayData)
 
             case "stop":
-                return data.filter(({ Status }) => Status?.toUpperCase() === "STOP")
+                return yesterdayData.filter(({ Status }) => Status?.toUpperCase() === "STOP")
 
             case "under300":
-                return data.filter(({ "Invoice Total": total }) => safeNumber(total) < 300)
+                return yesterdayData.filter(({ "Invoice Total": total }) => safeNumber(total) < 300)
             case "check":
-                return data.filter(({ "Invoice Total": total }) => safeNumber(total) < 300)
+                return yesterdayData.filter(({ "Invoice Total": total }) => safeNumber(total) < 300)
 
             default:
                 throw new Error("Invalid request type")
@@ -370,12 +380,6 @@ export const categoryPortalData = cache(async (type: string) => {
     // };
 
     // Function to filter invoices within a given time range
-    const filterInvoices = (start: Date, end: Date) => {
-        return transformedData.filter((item) => {
-            const invoiceDate = new Date(item["Invoice Created Date"]);
-            return invoiceDate >= start && invoiceDate <= end;
-        });
-    };
 
     // Get current date
     const now = new Date();
@@ -384,15 +388,22 @@ export const categoryPortalData = cache(async (type: string) => {
     const todayDate = now.getDate();
 
     // Auto-define start and end dates
-    const todayStart = new Date(year, month, todayDate, 0, 0, 0);  // 00:00:00 today
-    const todayEnd = new Date(year, month, todayDate, 11, 30, 0);  // 11:30:00 today
+    const todayStart = new Date(year, month, todayDate - 1, 0, 0, 0);  // 00:00:00 today
+    const todayEnd = new Date(year, month, todayDate - 1, 23, 59, 59);  // 11:30:00 today
 
-    const yesterdayStart = new Date(year, month, todayDate - 1, 0, 0, 0);  // 11:30:00 yesterday
-    const yesterdayEnd = new Date(year, month, todayDate - 1, 23, 59, 59);   // 23:59:59 yesterday
+    const yesterdayStart = new Date(year, month, todayDate - 2, 0, 0, 0);  // 11:30:00 yesterday
+    const yesterdayEnd = new Date(year, month, todayDate - 2, 23, 59, 59);   // 23:59:59 yesterday
 
 
-    const todayData = filterInvoices(todayStart, todayEnd);
-    const yesterdayData = filterInvoices(yesterdayStart, yesterdayEnd);
+    // const todayStart = new Date(year, month, todayDate, 0, 0, 0);  // 00:00:00 today
+    // const todayEnd = new Date(year, month, todayDate, 11, 30, 0);  // 11:30:00 today
+
+    // const yesterdayStart = new Date(year, month, todayDate - 1, 11, 30, 0);  // 11:30:00 yesterday
+    // const yesterdayEnd = new Date(year, month, todayDate - 1, 23, 59, 59);   // 23:59:59 yesterday
+
+
+    const todayData = filterInvoices(transformedData, todayStart, todayEnd);
+    const yesterdayData = filterInvoices(transformedData, yesterdayStart, yesterdayEnd);
 
     if (type === "rawdata") return transformedData
     if (type === "yesterday") return yesterdayData
