@@ -85,6 +85,11 @@ const data = {
               url: "/monthly-report/analysis/order-summary",
               icon: BookText,
             },
+            {
+              title: "New Grade",
+              url: "/monthly-report/analysis/new-grade",
+              icon: LayoutGrid,
+            },
           ],
         },
         {

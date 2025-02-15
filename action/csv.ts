@@ -325,8 +325,8 @@ export async function priceCheckListData(type: string) {
         const month = now.getMonth();
         const todayDate = now.getDate();
 
-        const yesterdayStart = new Date(year, month, todayDate - 2, 0, 0, 0);  // 11:30:00 yesterday
-        const yesterdayEnd = new Date(year, month, todayDate - 2, 23, 59, 59);   // 23:59:59 yesterday
+        const yesterdayStart = new Date(year, month, todayDate - 1, 0, 0, 0);  // 11:30:00 yesterday
+        const yesterdayEnd = new Date(year, month, todayDate - 1, 23, 59, 59);   // 23:59:59 yesterday
 
         const data = await convertPriceCheckData()
 
@@ -344,9 +344,9 @@ export async function priceCheckListData(type: string) {
                 return yesterdayData.filter(({ Status }) => Status?.toUpperCase() === "STOP")
 
             case "under300":
-                return yesterdayData.filter(({ "Invoice Total": total }) => safeNumber(total) < 300)
+                return yesterdayData.filter((item) => safeNumber(item['Total Selling Price']) < 300)
             case "check":
-                return yesterdayData.filter(({ "Invoice Total": total }) => safeNumber(total) < 300)
+                return yesterdayData.filter((item) => safeNumber(item['Total Selling Price']) > 300)
 
             default:
                 throw new Error("Invalid request type")
@@ -359,27 +359,7 @@ export async function priceCheckListData(type: string) {
 
 /**************Category and Portal**************/
 export const categoryPortalData = cache(async (type: string) => {
-    // if (invoiceCache.isEmpty()) {
-    //     await fetchInvoiceData(0, 50)
-    // }
-
-    // const rawData = invoiceCache.getData()
-    // const transformedData = transformInvoiceData(rawData)
-    // invoiceAnalysisCache.setData(transformedData)
-
     const transformedData = await convertPriceCheckData()
-
-
-    // const parseDate = (dateStr: string): Date => {
-    //     // Convert "DD-MM-YYYY HH:mm" to Date object
-    //     const [datePart, timePart] = dateStr.split(" ");
-    //     const [day, month, year] = datePart.split("-").map(Number);
-    //     const [hours, minutes] = timePart.split(":").map(Number);
-
-    //     return new Date(year, month - 1, day, hours, minutes);
-    // };
-
-    // Function to filter invoices within a given time range
 
     // Get current date
     const now = new Date();
@@ -387,19 +367,11 @@ export const categoryPortalData = cache(async (type: string) => {
     const month = now.getMonth();
     const todayDate = now.getDate();
 
-    // Auto-define start and end dates
-    const todayStart = new Date(year, month, todayDate - 1, 0, 0, 0);  // 00:00:00 today
-    const todayEnd = new Date(year, month, todayDate - 1, 23, 59, 59);  // 11:30:00 today
+    const todayStart = new Date(year, month, todayDate, 0, 0, 0);  // 00:00:00 today
+    const todayEnd = new Date(year, month, todayDate, 11, 30, 0);  // 11:30:00 today
 
-    const yesterdayStart = new Date(year, month, todayDate - 2, 0, 0, 0);  // 11:30:00 yesterday
-    const yesterdayEnd = new Date(year, month, todayDate - 2, 23, 59, 59);   // 23:59:59 yesterday
-
-
-    // const todayStart = new Date(year, month, todayDate, 0, 0, 0);  // 00:00:00 today
-    // const todayEnd = new Date(year, month, todayDate, 11, 30, 0);  // 11:30:00 today
-
-    // const yesterdayStart = new Date(year, month, todayDate - 1, 11, 30, 0);  // 11:30:00 yesterday
-    // const yesterdayEnd = new Date(year, month, todayDate - 1, 23, 59, 59);   // 23:59:59 yesterday
+    const yesterdayStart = new Date(year, month, todayDate - 1, 0, 0, 0);  // 11:30:00 yesterday
+    const yesterdayEnd = new Date(year, month, todayDate - 1, 23, 59, 59);   // 23:59:59 yesterday
 
 
     const todayData = filterInvoices(transformedData, todayStart, todayEnd);

@@ -9,7 +9,6 @@ export function transformInvoiceData(INPUT: InvoiceData[]): PriceCheckInvoiceDat
     ): string => {
         const channelRules = invoiceSupportData.filter((rule) => rule.channel === channelName);
 
-
         for (const rule of channelRules) {
             const threshold = rule[grade];
             if (
@@ -29,35 +28,32 @@ export function transformInvoiceData(INPUT: InvoiceData[]): PriceCheckInvoiceDat
         return roundToDecimals(safeNumber((invoiceTotal / totalCost)), 3);
     };
 
-    const aggregatedData = new Map<string, { skuCodes: string[]; totalCost: number; invoiceTotal: number }>();
+    const aggregatedData = new Map<string, { invoiceNo: string[]; totalCost: number; invoiceTotal: number }>();
     const uniqueInvoices = new Set<string>();
 
-
-    return INPUT.map((item) => {
-        const skuCodes = item["SKU Code"];
-        const invoiceTotal = safeNumber(item["Invoice Total"]);
-        const costPrice = roundToDecimals(safeNumber(item["Cost Price"]));
+    for (const item of INPUT) {
         const invoiceNo = item["Invoice No"];
+        const costPrice = roundToDecimals(safeNumber(item["Cost Price"]));
+        const invoiceTotal = safeNumber(item["Invoice Total"]);
 
-        uniqueInvoices.add(invoiceNo);
-
-        if (!aggregatedData.has(skuCodes)) {
-            aggregatedData.set(skuCodes, {
-                skuCodes: [],
-                totalCost: 0,
-                invoiceTotal: 0,
-            });
+        if (!aggregatedData.has(invoiceNo)) {
+            aggregatedData.set(invoiceNo, { invoiceNo: [], totalCost: 0, invoiceTotal: 0 })
         }
-        const aggregated = aggregatedData.get(skuCodes)!;
-        aggregated.skuCodes.push(item["SKU Code"]);
+
+        const aggregated = aggregatedData.get(invoiceNo)!;
+        aggregated.invoiceNo.push(invoiceNo);
         aggregated.totalCost += costPrice;
         aggregated.invoiceTotal += invoiceTotal;
+    }
+
+    return INPUT.map((item) => {
+        const invoiceTotal = safeNumber(item["Invoice Total"]);
+        const invoiceNo = item["Invoice No"];
+        const aggregated = aggregatedData.get(invoiceNo)!;
 
         const multiplePrice = calculateMultiplePrice(aggregated.totalCost, aggregated.invoiceTotal);
-
         const status = calculateStatus(multiplePrice, item["Channel Name"], item["Grade"]);
-
-        const sellingPriceBelow300 = invoiceTotal < 300 ? "True" : "False";
+        const sellingPriceBelow300 = aggregated.invoiceTotal < 300 ? "True" : "False";
 
         const discountPercentage = item["MRP"]
             ? Math.round(((item["MRP"] - invoiceTotal) / item["MRP"]) * 100)
@@ -65,10 +61,10 @@ export function transformInvoiceData(INPUT: InvoiceData[]): PriceCheckInvoiceDat
 
         return {
             ...item,
-            "Concate Article": aggregated.skuCodes.join(" | "),
+            "Concate Article": aggregated.invoiceNo.join(" | "),
             "Total Cost": aggregated.totalCost.toString(),
             "Total Selling Price": aggregated.invoiceTotal.toString(),
-            "Multiple Price": multiplePrice,
+            "Multiple Price": multiplePrice.toString(),
             "Status": status,
             "Selling Price < 300": sellingPriceBelow300,
             "Discount %": `${discountPercentage}%`,
@@ -76,6 +72,7 @@ export function transformInvoiceData(INPUT: InvoiceData[]): PriceCheckInvoiceDat
             //   "Business Type": item["Business Type"] || "",
         };
     });
+
 }
 
 export function invoiceGradeAnalysis(analysisData: PriceCheckInvoiceData[]) {
@@ -133,7 +130,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "STOP"
@@ -143,7 +140,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "OKAY"
@@ -153,7 +150,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "STOP"
@@ -163,7 +160,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "OKAY"
@@ -173,7 +170,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "STOP"
@@ -183,7 +180,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "OKAY"
@@ -193,7 +190,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "STOP"
@@ -203,7 +200,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "OKAY"
@@ -213,7 +210,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "STOP"
@@ -223,7 +220,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "OKAY"
@@ -233,7 +230,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "STOP"
@@ -243,7 +240,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "OKAY"
@@ -253,7 +250,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "STOP"
@@ -263,7 +260,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "OKAY"
@@ -273,7 +270,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "STOP"
@@ -283,7 +280,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "OKAY"
@@ -293,7 +290,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "STOP"
@@ -303,7 +300,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "OKAY"
@@ -313,7 +310,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "STOP"
@@ -323,7 +320,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "OKAY"
@@ -333,7 +330,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "STOP"
@@ -343,7 +340,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 3.5,
         "B": 3.5,
-        "New": 3.5,
+        "NEW": 3.5,
         "C": 2.65,
         "D": 1.75,
         "status": "OKAY"
@@ -353,7 +350,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 1.96,
         "B": 1.96,
-        "New": 1.96,
+        "NEW": 1.96,
         "C": 1.47,
         "D": 0.98,
         "status": "OKAY"
@@ -363,7 +360,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 1.96,
         "B": 1.96,
-        "New": 1.96,
+        "NEW": 1.96,
         "C": 1.47,
         "D": 0.98,
         "status": "STOP"
@@ -373,7 +370,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 1.96,
         "B": 1.96,
-        "New": 1.96,
+        "NEW": 1.96,
         "C": 1.47,
         "D": 0.98,
         "status": "OKAY"
@@ -383,7 +380,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 1.96,
         "B": 1.96,
-        "New": 1.96,
+        "NEW": 1.96,
         "C": 1.47,
         "D": 0.98,
         "status": "STOP"
@@ -393,7 +390,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 1.96,
         "B": 1.96,
-        "New": 1.96,
+        "NEW": 1.96,
         "C": 1.47,
         "D": 0.98,
         "status": "OKAY"
@@ -403,7 +400,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 1.96,
         "B": 1.96,
-        "New": 1.96,
+        "NEW": 1.96,
         "C": 1.47,
         "D": 0.98,
         "status": "STOP"
@@ -413,7 +410,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 1.96,
         "B": 1.96,
-        "New": 1.96,
+        "NEW": 1.96,
         "C": 1.47,
         "D": 0.98,
         "status": "OKAY"
@@ -423,7 +420,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 1.96,
         "B": 1.96,
-        "New": 1.96,
+        "NEW": 1.96,
         "C": 1.47,
         "D": 0.98,
         "status": "STOP"
@@ -433,7 +430,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": ">=",
         "A": 1.96,
         "B": 1.96,
-        "New": 1.96,
+        "NEW": 1.96,
         "C": 1.47,
         "D": 0.98,
         "status": "OKAY"
@@ -443,7 +440,7 @@ const invoiceSupportData: InvoiceSupportRule[] = [
         "condition": "<",
         "A": 1.96,
         "B": 1.96,
-        "New": 1.96,
+        "NEW": 1.96,
         "C": 1.47,
         "D": 0.98,
         "status": "STOP"

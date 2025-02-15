@@ -84,7 +84,7 @@ export function transformData(
                 ? compareGrades(item["Month Grade"], item["Static Grade"])
                 : "",
             "Avg Selling Price": roundToDecimals(avgSellingPrice),
-            "Multiple Price": vendorPrice ? roundToDecimals(avgSellingPrice / vendorPrice) : 0
+            "Multiple Price": vendorPrice ? safeNumber(avgSellingPrice / vendorPrice) : 0
         }
     })
 }
@@ -175,7 +175,8 @@ export function analysis(analysisData: MonthDataItem[], key?: string) {
     const filters = {
         overstock: (item: MonthDataItem) => item.DOH > DOH_THRESHOLDS.OVERSTOCK,
         understock: (item: MonthDataItem) => item.DOH < DOH_THRESHOLDS.UNDERSTOCK,
-        underprice2: (item: MonthDataItem) => item['Multiple Price'] < MULTIPLE_SELLING_PRICE
+        underprice2: (item: MonthDataItem) => item['Multiple Price'] < MULTIPLE_SELLING_PRICE,
+        newgrade: (item: MonthDataItem) => item['Static Grade'] === "NEW"
     }
 
     if (key && key in filters) {
@@ -414,7 +415,7 @@ function calcOrderSummary(analysisData: MonthDataItem[]) {
 
 function commonOrderSummary(analysisData: MonthDataItem[]) {
     return analysisData.map(order => ({
-        item: order['Sku Code'],
+        item: order['Parent SKU'],
         category: order['Category Name'],
         sub_category: order['Sub Category'],
         order_qty: order['Order Qty'],
