@@ -246,9 +246,9 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         const subCategory = item['Sub Category'];
         const category = item['Category Name']
 
-        const isMatchingCriteria = isOtherCategory ? !currentCategory?.includes(category) : ['leatherjackets', 'kidsshoes'].includes(key) ? currentCategory?.includes(category) : currentCategory?.includes(subCategory)
+        const isMatchingCriteria = ['leatherjackets', 'kidsshoes'].includes(key) ? currentCategory?.includes(category) : currentCategory?.includes(subCategory)
 
-        if (!isMatchingCriteria || (!isOtherCategory && !categorySizeMap[key].includes(size))) {
+        if (!isMatchingCriteria) {
             return;
         }
 
