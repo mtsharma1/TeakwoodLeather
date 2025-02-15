@@ -8,7 +8,6 @@ import { SignInButton } from "./sign-In-btn"
 import { signInCred } from "@/action/auth"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import logoSvg from '../assets/logo.svg'
 
 export function LoginForm({
@@ -60,7 +59,7 @@ export function LoginForm({
                 />
               </div>
               <div className="grid gap-2">
-                <div className="flex items-center">
+                {/* <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
                   <a
                     href="#"
@@ -68,11 +67,11 @@ export function LoginForm({
                   >
                     Forgot your password?
                   </a>
-                </div>
+                </div> */}
                 <Input id="password" className="bg-gray-200 text-black"name="password" type="password" required />
               </div>
               <SignInButton label="Login" />
-              <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
+              {/* <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
                 <span className="relative z-10 bg-background px-2 text-muted-foreground">
                   Or continue with
                 </span>
@@ -82,7 +81,7 @@ export function LoginForm({
                 <Link href="/signup" className="underline underline-offset-4">
                   Sign up
                 </Link>
-              </div>
+              </div> */}
             </div>
           </form>
           <div className="relative hidden bg-muted md:block">
@@ -97,8 +96,7 @@ export function LoginForm({
         </CardContent>
       </Card>
       <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+      <a href="http://www.teakwoodleathers.com/" target="_black" referrerPolicy="no-referrer">Teakwood Leather & Travel Private Limited, @ Established since 1989</a>
       </div>
     </div>
   )
