@@ -1,5 +1,6 @@
 import { PriceCheckInvoiceData, InvoiceData } from "@/types/order";
 import { roundToDecimals, safeNumber } from "./utils";
+import { grades } from "./helper";
 
 export function transformInvoiceData(INPUT: InvoiceData[]): PriceCheckInvoiceData[] {
     const calculateStatus = (
@@ -76,8 +77,6 @@ export function transformInvoiceData(INPUT: InvoiceData[]): PriceCheckInvoiceDat
 }
 
 export function invoiceGradeAnalysis(analysisData: PriceCheckInvoiceData[]) {
-    const grades = ['A', 'B', 'C', 'D', 'A+', 'NEW'] as const;
-
     const initialGradeSummary = Object.fromEntries(
         grades.map(grade => [grade, { saleValue: 0, salePercentage: 0 }])
     ) as Record<typeof grades[number], { saleValue: number; salePercentage: number }>;

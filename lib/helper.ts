@@ -7,7 +7,8 @@ const GRADE_THRESHOLDS = {
     B: 10
 } as const
 
-export type MonthGradeTypes = "A" | "B" | "C" | "D" | "New"
+export type MonthGradeTypes = "A" | "B" | "C" | "D" | "NEW"
+export const grades: Array<MonthGradeTypes> = ['A', 'B', 'C', 'D', 'NEW'];
 
 export const compareGrades = (monthGrade: string, staticGrade: string): string => {
     const monthNum = Number(monthGrade)
@@ -47,7 +48,7 @@ export const UTILS = {
         "B": 3,
         "C": 2,
         "D": 1,
-        "New": 0
+        "NEW": 0
     }
 }
 

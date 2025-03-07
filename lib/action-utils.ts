@@ -1,5 +1,5 @@
-import { InputItem, OrderSummaryItem, MonthDataItem, SalesDataItem, SalesGridSummary } from "@/types/order"
-import { calcMonthGrade, calcStaticGrade, compareGrades, getSupportData, MonthGradeTypes, MULTIPLE_SELLING_PRICE } from "./helper"
+import { InputItem, OrderSummaryItem, MonthDataItem, SalesDataItem } from "@/types/order"
+import { calcMonthGrade, calcStaticGrade, compareGrades, getSupportData, grades, MonthGradeTypes, MULTIPLE_SELLING_PRICE } from "./helper"
 import { categorySizeMap } from "@/components/categories/data-table-filters"
 import { roundToDecimals, safeNumber } from "./utils"
 
@@ -116,10 +116,17 @@ export function processSalesData(data: SalesDataItem[]): Map<string, {
     }, new Map())
 }
 
+const mergeSalesAndInventory = (
+    sales: ReturnType<typeof calcSalesGrid>["rows"],
+    inventory: ReturnType<typeof calcInventoryMIS>["rows"]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+) => Object.values([...sales, ...inventory].reduce((acc: Record<string, any>, item) =>
+    (acc[item.grade] = { ...acc[item.grade], ...item }, acc), {}));
+
 export function calc_Count_Amt(data: MonthDataItem[]) {
     return {
         graphs: {
-            bar: calcSalesGrid(data).rows
+            bar: mergeSalesAndInventory(calcSalesGrid(data).rows, calcInventoryMIS(data).rows)
         },
         cards: data.reduce(
             (summary, item) => {
@@ -150,12 +157,12 @@ export function calc_Count_Amt(data: MonthDataItem[]) {
                 }
 
                 // Common Order Summary
-                summary['Common Order Summary'].count += safeNumber(item["Order Qty"]);
-                summary['Common Order Summary'].totalValue += roundToDecimals(calcCommonOrderTotalValue(item['Order Qty'], item['Vendor Price']));
+                // summary['Common Order Summary'].count += safeNumber(item["Order Qty"]);
+                // summary['Common Order Summary'].totalValue += roundToDecimals(calcCommonOrderTotalValue(item['Order Qty'], item['Vendor Price']));
 
-                // Order Summary Sheet
-                summary['Order Summary Sheet'].count += safeNumber(item["Sale Qty"]);
-                summary['Order Summary Sheet'].totalValue += roundToDecimals(safeNumber(item["Total Amount"]))
+                // // Order Summary Sheet
+                // summary['Order Summary Sheet'].count += safeNumber(item["Sale Qty"]);
+                // summary['Order Summary Sheet'].totalValue += roundToDecimals(safeNumber(item["Total Amount"]))
 
                 return summary;
             },
@@ -164,8 +171,8 @@ export function calc_Count_Amt(data: MonthDataItem[]) {
                 'Under Stock': { count: 0, totalValue: 0 },
                 'Under Price 2': { count: 0, totalValue: 0 },
                 'New Grade': { count: 0, totalValue: 0 },
-                'Common Order Summary': { count: 0, totalValue: 0 },
-                'Order Summary Sheet': { count: 0, totalValue: 0 },
+                // 'Common Order Summary': { count: 0, totalValue: 0 },
+                // 'Order Summary Sheet': { count: 0, totalValue: 0 },
             }
         )
     };
@@ -174,7 +181,7 @@ export function calc_Count_Amt(data: MonthDataItem[]) {
 export function analysis(analysisData: MonthDataItem[], key?: string) {
     const filters = {
         overstock: (item: MonthDataItem) => item.DOH > DOH_THRESHOLDS.OVERSTOCK,
-        understock: (item: MonthDataItem) => item.DOH < DOH_THRESHOLDS.UNDERSTOCK,
+        understock: (item: MonthDataItem) => item.DOH < DOH_THRESHOLDS.UNDERSTOCK && ['A', 'B'].includes(item["Static Grade"]),
         underprice2: (item: MonthDataItem) => item['Multiple Price'] < MULTIPLE_SELLING_PRICE,
         newgrade: (item: MonthDataItem) => item['Static Grade'] === "NEW"
     }
@@ -184,7 +191,8 @@ export function analysis(analysisData: MonthDataItem[], key?: string) {
     }
 
     if (key === 'overview') return analysisData
-    if (key === 'salesinventorySummary') return calcSalesGrid(analysisData)
+    if (key === 'salesSummary') return calcSalesGrid(analysisData)
+    if (key === 'inventorymis') return calcInventoryMIS(analysisData)
     if (key === 'ordersummary') return calcOrderSummary(analysisData)
     if (key === 'commonordersummary') return commonOrderSummary(analysisData)
 
@@ -330,56 +338,85 @@ function filterDataForOtherCategoryOnly(analysisData: MonthDataItem[], key: stri
 
 // Analysis helper functions
 function calcSalesGrid(analysisData: MonthDataItem[]) {
-    const grades = ['A', 'B', 'C', 'D', 'A+', 'NEW'] as const
     const initialGradeSummary = Object.fromEntries(
         grades.map(grade => [grade, {
             sale_value: 0,
             sale_percentage: 0,
-            inventory_value: 0,
-            inventory_percentage: 0
         }])
-    ) as Record<typeof grades[number], SalesGridSummary>
+    )
 
     const summary = analysisData.reduce((acc, item) => {
         const saleAmount = safeNumber(item['Sale Amount'])
-        const inventoryAmount = safeNumber(item['Available Inventory'])
         const grade = (item['Static Grade'] || 'NEW') as keyof typeof initialGradeSummary
 
         acc.total += saleAmount
-        acc.totalInventory += inventoryAmount
 
         if (grade in acc.gradeWiseSales) {
             acc.gradeWiseSales[grade].sale_value += saleAmount
-            acc.gradeWiseSales[grade].inventory_value += inventoryAmount
         }
 
         return acc
     }, {
         total: 0,
+        gradeWiseSales: initialGradeSummary
+    })
+
+    Object.values(summary.gradeWiseSales).forEach(grade => {
+        if (summary.total > 0) {
+            grade.sale_percentage = roundToDecimals((grade.sale_value / summary.total) * 100)
+        }
+        grade.sale_value = roundToDecimals(grade.sale_value)
+    })
+
+    return {
+        total_Sale: roundToDecimals(summary.total),
+        rows: Object.entries(summary.gradeWiseSales).map(([grade, data]) => ({
+            grade,
+            ...data
+        })),
+        cols: ['grade', 'sale_value', 'sale_percentage']
+    }
+}
+
+function calcInventoryMIS(analysisData: MonthDataItem[]) {
+    const initialGradeSummary = Object.fromEntries(
+        grades.map(grade => [grade, {
+            inventory_value: 0,
+            inventory_percentage: 0
+        }])
+    )
+
+    const summary = analysisData.reduce((acc, item) => {
+        const inventoryAmount = safeNumber(item['Available Inventory'])
+        const grade = (item['Static Grade'] || 'NEW') as keyof typeof initialGradeSummary
+
+        acc.totalInventory += inventoryAmount
+
+        if (grade in acc.gradeWiseSales) {
+            acc.gradeWiseSales[grade].inventory_value += inventoryAmount
+        }
+
+        return acc
+    }, {
         totalInventory: 0,
         gradeWiseSales: initialGradeSummary
     })
 
     // Calculate percentages and round values
     Object.values(summary.gradeWiseSales).forEach(grade => {
-        if (summary.total > 0) {
-            grade.sale_percentage = roundToDecimals((grade.sale_value / summary.total) * 100)
-        }
         if (summary.totalInventory > 0) {
             grade.inventory_percentage = roundToDecimals((grade.inventory_value / summary.totalInventory) * 100)
         }
-        grade.sale_value = roundToDecimals(grade.sale_value)
         grade.inventory_value = roundToDecimals(grade.inventory_value)
     })
 
     return {
-        total_Sale: roundToDecimals(summary.total),
         total_Inventory: roundToDecimals(summary.totalInventory),
         rows: Object.entries(summary.gradeWiseSales).map(([grade, data]) => ({
             grade,
             ...data
         })),
-        cols: ['grade', 'sale_value', 'sale_percentage', 'inventory_value', 'inventory_percentage']
+        cols: ['grade', 'inventory_value', 'inventory_percentage']
     }
 }
 

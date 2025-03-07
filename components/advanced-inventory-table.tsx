@@ -17,10 +17,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ChevronDown, Search, X, DownloadIcon, ArrowUpDownIcon, PinIcon } from "lucide-react"
+import { ChevronDown, Search, X, ArrowUpDownIcon, PinIcon } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import CsvDownloader from "react-csv-downloader"
+// import CsvDownloader from "react-csv-downloader"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Pagination,
@@ -31,6 +31,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { ExcelDownloader } from "./excel-downloader"
 
 const multiSelectFilter = (row: { getValue: (colName: string) => string }, columnId: string, filterValue: string[]) => {
   if (!filterValue.length) return true
@@ -235,11 +236,15 @@ export default function AdvancedInventoryTable({
               ))}
             </SelectContent>
           </Select>
-          <CsvDownloader filename={filename} datas={data} columns={columnNames.map((x) => ({ id: x, displayName: x }))}>
+          <ExcelDownloader
+            data={data}
+            filename={filename}
+          />
+          {/* <CsvDownloader filename={filename} datas={data} columns={columnNames.map((x) => ({ id: x, displayName: x }))}>
             <Button size="icon">
               <DownloadIcon size={18} />
             </Button>
-          </CsvDownloader>
+          </CsvDownloader> */}
         </div>
       </div>
 

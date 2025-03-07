@@ -60,8 +60,8 @@ export interface GradeResult {
 export interface SalesGridSummary {
     sale_value: number
     sale_percentage: number
-    inventory_value: number
-    inventory_percentage: number
+    // inventory_value: number
+    // inventory_percentage: number
 }
 
 export interface OrderSummaryItem {

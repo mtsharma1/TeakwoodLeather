@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "cron:build": "next build && tsc --project tsconfig.server.json",
+    "cron:start": "cross-env NODE_ENV=production node dist/server.js",
     "setup": "node -e \"require('fs').cpSync('public', '.next/standalone/public', { recursive: true }); require('fs').cpSync('.next/static', '.next/standalone/.next/static', { recursive: true });\"",
     "standalone:bs": "npm run build && npm run setup && node .next/standalone/server.js",
     "standalone:s": "node .next/standalone/server.js"
@@ -35,10 +37,12 @@
     "clsx": "^2.1.1",
     "csv-parse": "^5.6.0",
     "date-fns": "^2.28.0",
+    "express": "^4.21.2",
     "lucide-react": "^0.471.1",
     "next": "^14.2.24",
     "next-auth": "^5.0.0-beta.25",
     "next-themes": "^0.4.4",
+    "node-cron": "^3.0.3",
     "react": "^18",
     "react-csv-downloader": "^3.3.0",
     "react-day-picker": "8.10.1",
@@ -48,11 +52,14 @@
     "sharp": "^0.33.5",
     "streamsaver": "^2.0.6",
     "tailwind-merge": "^2.6.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/express": "^5.0.0",
     "@types/node": "^20",
+    "@types/node-cron": "^3.0.11",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/streamsaver": "^2.0.5",

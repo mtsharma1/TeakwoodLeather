@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from "react"
-import { ArrowDownWideNarrow, ArrowUpNarrowWide, BookText, Boxes, BringToFront, Calendar, CalendarMinus, ChartNoAxesCombined, CircleDollarSign, Footprints, GalleryHorizontal, LayoutGrid, MoveDown, Package, SquareActivity, SquareKanban } from "lucide-react"
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, BookText, Boxes, BringToFront, Calendar, CalendarMinus, ChartNoAxesCombined, CircleDollarSign, Footprints, GalleryHorizontal, LayoutGrid, MoveDown, Package, SquareKanban } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
@@ -23,7 +23,7 @@ import { RiDashboardLine } from "react-icons/ri";
 
 // This is sample data.
 const data = {
-  groupLabel: "Monthly Order Report",
+  groupLabel: "Category wise Report",
   teams: [
     {
       name: "Teackwood",
@@ -71,8 +71,13 @@ const data = {
               subIcon: MoveDown
             },
             {
-              title: "Sales Grade & Inventory MIS",
-              url: "/monthly-report/analysis/sales-inventory-Summary",
+              title: "Sales Grade",
+              url: "/monthly-report/analysis/sales-Summary",
+              icon: LayoutGrid,
+            },
+            {
+              title: "Inventory MIS",
+              url: "/monthly-report/analysis/inventory-mis",
               icon: LayoutGrid,
             },
             {
@@ -180,11 +185,11 @@ const data3 = {
           url: "/category-poral/report/category",
           icon: Boxes,
         },
-        {
-          title: "Monthly Report",
-          url: "/category-poral/monthly-report",
-          icon: SquareActivity,
-        },
+        // {
+        //   title: "Monthly Report",
+        //   url: "/category-poral/monthly-report",
+        //   icon: SquareActivity,
+        // },
       ]
     }
   ],

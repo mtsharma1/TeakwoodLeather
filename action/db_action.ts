@@ -174,19 +174,29 @@ export async function savePriceCheckData(dataArray: PriceCheckInvoiceData[]) {
 
 
 export async function convertPriceCheckData() {
-   const priceCheckData = await prisma.priceCheckData.findMany();
+   const priceCheckData = await prisma.priceCheckData.findMany({
+      orderBy: [
+         {
+            multiplePrice: 'desc',
+         },
+      ]
+   });
    return priceCheckData.map((x) => ({
+      "Invoice Created Date": x.invoiceCreatedDate.toString(),
+      "SKU Code": x.skuCode,
+      "Total Selling Price": x.totalSellingPrice,
+      "Multiple Price": x.multiplePrice,
+      "Cost Price": x.costPrice,
+      "Channel Name": x.channelName,
       "Order No": x.orderNo,
       "Invoice No": x.invoiceNo,
       "Shipping Package Code": x.shippingPackageCode,
       "Shipping Package Status Code": x.shippingPackageStatusCode,
-      "Invoice Created Date": x.invoiceCreatedDate.toString(),
       "Channel Invoice Created Date": x.channelInvoiceCreatedDate.toString(),
       "EWayBill No": x.eWayBillNo || "N/A",
       "EWayBill Date": x.eWayBillDate?.toString() || "N/A",
       "EWayBill Valid Till": x.eWayBillValidTill?.toString() || "N/A",
       "Customer Name": x.customerName,
-      "SKU Code": x.skuCode,
       "SKU Name": x.skuName,
       "Quantity": x.quantity,
       "Invoice Tax": safeNumber(x.invoiceTax),
@@ -213,7 +223,6 @@ export async function convertPriceCheckData() {
       "Shipping Charge": x.shippingCharge,
       "COD Charge": x.codCharge,
       "TCS Amount": x.tcsAmount,
-      "Channel Name": x.channelName,
       "Uniware Invoice Code": x.uniwareInvoiceCode,
       "Adjustment In Selling Price": x.adjustmentInSellingPrice,
       "Adjustment In Discount": x.adjustmentInDiscount,
@@ -223,15 +232,12 @@ export async function convertPriceCheckData() {
       "Brand": x.brand,
       "Size": x.size,
       "Seller Sku Code": x.sellerSkuCode,
-      "Cost Price": x.costPrice,
       "Business Type": "", // will update soon
       "Concate Article": x.concateArticle,
       "Total Cost": x.totalCost,
-      "Total Selling Price": x.totalSellingPrice,
       "Status": x.status,
       "Selling Price < 300": x.sellingPriceLt300,
       "Invoice Count": x.invoiceCount,
       "Discount %": x.discountPercentage,
-      "Multiple Price": x.multiplePrice,
    })) || [];
 }

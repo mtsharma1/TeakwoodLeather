@@ -207,29 +207,35 @@ export async function fetchMonthlyData() {
         // }
 
         // const transformedData = transformData(monthlyCache.getData())
-        const monthlyData = await prisma.monthDataItem.findMany();
+        const monthlyData = await prisma.monthDataItem.findMany({
+            orderBy: [
+                {
+                    multiplePrice: 'desc',
+                }
+            ]
+        });
         return monthlyData.map((x) => ({
             "Sku Code": x.skuCode,
+            "Sale Qty": safeNumber(x.saleQty),
+            "Required Qty": x.requiredQty,
+            "Order Qty": x.orderQty,
+            "ROH": safeNumber(x.roh),
+            "DOH": safeNumber(x.doh),
             "Parent SKU": x.parentSKU,
             "Size": x.size,
             "Category Name": x.categoryName,
             "Sub Category": x.subCategory,
-            "Sale Qty": safeNumber(x.saleQty),
             "Sale Amount": safeNumber(x.saleAmount),
             "Vendor Name": x.vendorName,
             "Static Grade": x.staticGrade,
             "Month Grade": x.monthGrade,
             "Available Inventory": x.availableInventory,
             "Open Purchase": x.openPurchase,
-            "Required Qty": x.requiredQty,
-            "Order Qty": x.orderQty,
             "Sale Through": x.saleThrough,
             "Vendor Price": x.vendorPrice,
             "Total Amount": x.totalAmount,
             "Sku Code ID ": x.skuCodeID,
             "Days of positive inventory": x.daysOfPositiveInventory,
-            "ROH": safeNumber(x.roh),
-            "DOH": safeNumber(x.doh),
             "New SKU Code": x.newSkuCode,
             "Static Grade_N": safeNumber(x.staticGradeN),
             "Month Grade_N": safeNumber(x.monthGradeN),

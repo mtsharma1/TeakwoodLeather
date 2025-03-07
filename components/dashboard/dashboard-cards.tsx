@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { analysisDasboard } from "@/action/csv"
 import { BarChart3, IndianRupee } from "lucide-react"
+import Link from "next/link"
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +11,9 @@ export async function DashboardCards() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {Object.entries(cards).map(([label, data]) => (
-        <AnalysisCard key={label} label={label} count={data.count} amount={data.totalValue} />
+        <Link key={label} href={`/monthly-report/analysis/${label.toLocaleLowerCase().replaceAll(" ", "-")}`}>
+          <AnalysisCard label={label} count={data.count} amount={data.totalValue} />
+        </Link>
       ))}
     </div>
   )

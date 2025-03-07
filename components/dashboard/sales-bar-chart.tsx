@@ -1,7 +1,7 @@
 "use client"
 
 import { TrendingUp } from "lucide-react"
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, Text } from "recharts"
 
 import {
   Card,
@@ -33,11 +33,44 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+// Custom label component for the bars
+const CustomBarLabel = ({ x, y, width, index, data }: {
+  x?: number;
+  y?: number;
+  width?: number;
+  index?: number;
+  data?: {
+    grade: string;
+    saleValue: number;
+    percentage: number;
+  }[];
+}) => {
+  if (x === undefined || y === undefined || width === undefined || index === undefined || !data) {
+    return null;
+  }
+
+  const percentage = data[index]?.percentage;
+
+  return (
+    <Text
+      x={x + width / 2}
+      y={y - 10}
+      fill="#666"
+      textAnchor="middle"
+      dominantBaseline="middle"
+      fontSize={12}
+    >
+      {`${percentage}%`}
+    </Text>
+  );
+};
+
 export function SalesBarChart({ data = [] }: BarChartProps) {
   // Transform data for the chart
   const chartData = data?.map((item) => ({
     grade: item.grade,
     saleValue: item.sale_value,
+    percentage: Math.abs(item.sale_percentage),
   }))
 
   return (
@@ -48,7 +81,7 @@ export function SalesBarChart({ data = [] }: BarChartProps) {
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
-          <BarChart accessibilityLayer data={chartData}>
+          <BarChart accessibilityLayer data={chartData} margin={{ top: 20 }}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="grade"
@@ -60,7 +93,12 @@ export function SalesBarChart({ data = [] }: BarChartProps) {
               cursor={false}
               content={<ChartTooltipContent indicator="dashed" />}
             />
-            <Bar dataKey="saleValue" fill="var(--color-saleValue)" radius={4} />
+            <Bar
+              dataKey="saleValue"
+              fill="var(--color-saleValue)"
+              radius={4}
+              label={(props) => <CustomBarLabel {...props} data={chartData} />}
+            />
           </BarChart>
         </ChartContainer>
       </CardContent>

@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import * as XLSX from 'xlsx';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -27,4 +28,26 @@ export const formatLargeCurrency = (value: number) => {
       maximumFractionDigits: 2,
     }).format(value);
   }
+};
+
+
+export const downloadExcel = (data: unknown[], filename: string) => {
+  const worksheet = XLSX.utils.json_to_sheet(data);
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+
+  const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${filename}.xlsx`;
+  
+  document.body.appendChild(link);
+  link.click();
+  
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
 };
