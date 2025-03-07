@@ -3,7 +3,7 @@
 import * as React from "react"
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, BookText, Boxes, BringToFront, Calendar, CalendarMinus, ChartNoAxesCombined, CircleDollarSign, Footprints, GalleryHorizontal, LayoutGrid, MoveDown, Package, SquareKanban } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
+// import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
@@ -23,10 +23,10 @@ import { RiDashboardLine } from "react-icons/ri";
 
 // This is sample data.
 const data = {
-  groupLabel: "Category wise Report",
+  groupLabel: "Monthly Order Report",
   teams: [
     {
-      name: "Teackwood",
+      name: "Teakwood",
       logo: Package,
       plan: "Enterprise",
     },
@@ -207,7 +207,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data3.navMain} groupLabel={data3.groupLabel} />
       </SidebarContent>
       <SidebarFooter className="bg-slate-800 text-white">
-        <NavUser />
+        {/* <NavUser /> */}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

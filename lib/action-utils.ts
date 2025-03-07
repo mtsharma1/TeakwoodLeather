@@ -214,7 +214,7 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         "leatherjackets": ["LEATHER JACKETS"],
         "leathermencasualbelt": ["LEATHER MEN CASUAL BELT"],
         // "othercategory": ["PU MEN SHOES", "LEATHER MEN SHOES", "LEATHER WOMEN SHOES", "PU WOMEN SHOES", "LEATHER KID SHOES", "LEATHER JACKETS", "LEATHER MEN CASUAL BELT"],
-        "othercategory": ["SHOES", "LEATHER WOMEN SHOES", 'KIDS SHOE', 'LEATHER JACKETS', 'LEATHER MEN CASUAL BELT', 'LEATHER STRAP', 'LEATHER BELTS', 'BUCKLE'],
+        "othercategory": ["SHOES", "LEATHER WOMEN SHOES", 'LEATHER SHOES', 'PU SHOES', 'LEATHER MEN SHOES', 'KIDS SHOE', 'LEATHER JACKETS', 'LEATHER MEN CASUAL BELT', 'LEATHER STRAP', 'LEATHER BELTS', 'BUCKLE'],
     }
 
     const categoryConfig = new Map(Object.entries(categoryDisplay));
@@ -387,13 +387,15 @@ function calcInventoryMIS(analysisData: MonthDataItem[]) {
     )
 
     const summary = analysisData.reduce((acc, item) => {
-        const inventoryAmount = safeNumber(item['Available Inventory'])
+        const availableInventory = safeNumber(item['Available Inventory'])
+        const vendorPrice = safeNumber(item['Vendor Price'])
         const grade = (item['Static Grade'] || 'NEW') as keyof typeof initialGradeSummary
 
-        acc.totalInventory += inventoryAmount
+        const inventoryValue = availableInventory * vendorPrice
+        acc.totalInventory += inventoryValue
 
         if (grade in acc.gradeWiseSales) {
-            acc.gradeWiseSales[grade].inventory_value += inventoryAmount
+            acc.gradeWiseSales[grade].inventory_value += inventoryValue
         }
 
         return acc

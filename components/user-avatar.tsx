@@ -1,5 +1,5 @@
 "use server"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const UserAvatarSkeleton = () => {
@@ -21,11 +21,11 @@ export default async function UserAvatar({ userData }: { userData: { name: strin
       return <UserAvatarSkeleton />
    }
 
-   const { name, email, image } = userData
+   // const { name, email, image } = userData
 
    return (
       <div className="flex items-center gap-1">
-         <div className="grid flex-1 text-left text-sm leading-tight">
+         {/* <div className="grid flex-1 text-left text-sm leading-tight">
             <span className="truncate font-semibold">Hello, {name}</span>
             <span className="truncate text-xs">{email}</span>
          </div>
@@ -34,7 +34,7 @@ export default async function UserAvatar({ userData }: { userData: { name: strin
             <AvatarFallback className="rounded-lg text-black">
                {name.slice(0, 2).toUpperCase()}
             </AvatarFallback>
-         </Avatar>
+         </Avatar> */}
       </div>
    )
 }

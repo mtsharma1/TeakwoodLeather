@@ -44,6 +44,8 @@ model MonthDataItem {
   avgSellingPrice         String @map("Avg Selling Price")
   multiplePrice           String @map("Multiple Price")
 
+  remarks String? // As per client requirement
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

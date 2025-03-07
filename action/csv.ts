@@ -215,6 +215,7 @@ export async function fetchMonthlyData() {
             ]
         });
         return monthlyData.map((x) => ({
+            "id": x.id,
             "Sku Code": x.skuCode,
             "Sale Qty": safeNumber(x.saleQty),
             "Required Qty": x.requiredQty,
@@ -242,6 +243,7 @@ export async function fetchMonthlyData() {
             "Comment": x.comment,
             "Avg Selling Price": safeNumber(x.avgSellingPrice),
             "Multiple Price": safeNumber(x.multiplePrice),
+            "Remarks": `${x?.remarks ?? ""}`,
         }))
 
         // return {

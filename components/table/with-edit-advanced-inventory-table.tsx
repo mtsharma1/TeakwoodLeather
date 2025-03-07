@@ -17,10 +17,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ChevronDown, Search, X,  ArrowUpDownIcon, PinIcon } from "lucide-react"
+import { ChevronDown, Search, X, ArrowUpDownIcon, PinIcon } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-// import CsvDownloader from "react-csv-downloader"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Pagination,
@@ -31,7 +30,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import { ExcelDownloader } from "./excel-downloader"
+import { ExcelDownloader } from "../excel-downloader"
+import { EditableRow } from "./editable-row"
 
 const multiSelectFilter = (row: { getValue: (colName: string) => string }, columnId: string, filterValue: string[]) => {
   if (!filterValue.length) return true
@@ -44,7 +44,7 @@ export default function AdvancedInventoryTable({
   columnNames = [],
   filename,
 }: {
-  data: { [key: string]: string }[]
+  data: { [key: string]: string | number }[]
   columnNames?: string[]
   filename: string
 }) {
@@ -58,10 +58,17 @@ export default function AdvancedInventoryTable({
   const [pageSize, setPageSize] = React.useState(20)
   const [pinnedColumns, setPinnedColumns] = React.useState<string[]>([])
 
+  const dataWithIds = React.useMemo(() =>
+    data.map((item, index) => ({
+      ...item,
+      id: (item.id ?? index).toString(),
+    })),
+    [data])
+
   const columns = React.useMemo(() => generateColumns(columnNames), [columnNames])
 
   const table = useReactTable({
-    data,
+    data: dataWithIds,
     columns,
     state: {
       sorting,
@@ -188,7 +195,7 @@ export default function AdvancedInventoryTable({
                                   className="max-w-sm mb-2"
                                 />
                                 {Array.from(
-                                  new Set(data.map((item) => String(item[column.id as keyof typeof item]))),
+                                  new Set(dataWithIds.map((item) => String(item[column.id as keyof typeof item]))),
                                 ).map((value) => (
                                   <div key={value} className="flex items-center space-x-2">
                                     <Checkbox
@@ -237,15 +244,9 @@ export default function AdvancedInventoryTable({
             </SelectContent>
           </Select>
           <ExcelDownloader
-            data={data}
+            data={dataWithIds}
             filename={filename}
-            // columnNames={columnNames}
           />
-          {/* <CsvDownloader filename={filename} datas={data} columns={columnNames.map((x) => ({ id: x, displayName: x }))}>
-            <Button size="icon">
-              <DownloadIcon size={18} />
-            </Button>
-          </CsvDownloader> */}
         </div>
       </div>
 
@@ -279,7 +280,7 @@ export default function AdvancedInventoryTable({
                           key={header.id}
                           colSpan={header.colSpan}
                           className={`
-                        ${index === 0 && isPinned ? "sticky top-0 left-0 bg-blue-50  shadow-lg" : ""}
+                            ${index === 0 && isPinned ? "sticky top-0 left-0 bg-blue-50 shadow-lg" : ""}
                             min-w-[150px]
                             text-ellipsis
                             text-nowrap
@@ -316,6 +317,10 @@ export default function AdvancedInventoryTable({
                         </TableHead>
                       )
                     })}
+                    {/* Add header for edit column */}
+                    {/* <TableHead className="w-[100px] text-ellipsis text-nowrap whitespace-nowrap">
+                      Actions
+                    </TableHead> */}
                   </TableRow>
                 ))}
               </TableHeader>
@@ -325,37 +330,23 @@ export default function AdvancedInventoryTable({
                     const firstColumnId = table.getHeaderGroups()[0].headers[0].column.id
                     const isPinned = pinnedColumns.includes(firstColumnId)
 
+                    // Get column IDs in the current order
+                    const orderedColumnIds = table.getVisibleLeafColumns().map(col => col.id)
+
+                    // Pass the row data to EditableRow component
                     return (
-                      <TableRow
+                      <EditableRow
                         key={row.id}
-                        data-state={row.getIsSelected() && "selected"}
-                        className={`
-                          ${rowIndex % 2 === 0 ? "bg-gray-50" : ""}
-                          ${row.getIsSelected() ? "bg-blue-100" : ""}
-                        `}
-                      >
-                        {row.getVisibleCells().map((cell, cellIndex) => (
-                          <TableCell
-                            key={cell.id}
-                            className={`
-                              min-w-[150px]
-                              truncate
-                              overflow-hidden
-                              px-4
-                        ${cellIndex === 0 && isPinned ? "sticky left-0 -z-50 bg-blue-50 shadow-lg" : ""}
-                            `}
-                          >
-                            <div className="overflow-hidden text-ellipsis whitespace-nowrap">
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </div>
-                          </TableCell>
-                        ))}
-                      </TableRow>
+                        row={row.original}
+                        columns={orderedColumnIds}
+                        isPinned={isPinned}
+                        rowIndex={rowIndex}
+                      />
                     )
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                    <TableCell colSpan={columns.length + 1} className="h-24 text-center">
                       No results.
                     </TableCell>
                   </TableRow>
