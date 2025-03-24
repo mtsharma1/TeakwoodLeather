@@ -65,9 +65,9 @@ export interface SalesGridSummary {
 }
 
 export interface OrderSummaryItem {
-    total_Sale_Value: number
-    total_Quantity: number
-    total_Order_Value: number
+    Sale_Quantity: number
+    Order_Quantity: number
+    Order_Value: number
 }
 
 export type InvoiceData = {

@@ -152,7 +152,7 @@ const data2 = {
 }
 
 const data3 = {
-  groupLabel: "Category Portal",
+  groupLabel: "Daily Sales Report",
   navMain: [
     {
       title: "Category and Portal",

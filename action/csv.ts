@@ -210,7 +210,7 @@ export async function fetchMonthlyData() {
         const monthlyData = await prisma.monthDataItem.findMany({
             orderBy: [
                 {
-                    multiplePrice: 'desc',
+                    saleQty: 'desc',
                 }
             ]
         });
@@ -218,10 +218,10 @@ export async function fetchMonthlyData() {
             "id": x.id,
             "Sku Code": x.skuCode,
             "Sale Qty": safeNumber(x.saleQty),
+            "DOH": safeNumber(x.doh),
+            "ROH": safeNumber(x.roh),
             "Required Qty": x.requiredQty,
             "Order Qty": x.orderQty,
-            "ROH": safeNumber(x.roh),
-            "DOH": safeNumber(x.doh),
             "Parent SKU": x.parentSKU,
             "Size": x.size,
             "Category Name": x.categoryName,

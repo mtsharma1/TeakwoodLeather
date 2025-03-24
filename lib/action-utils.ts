@@ -186,20 +186,26 @@ export function analysis(analysisData: MonthDataItem[], key?: string) {
         newgrade: (item: MonthDataItem) => item['Static Grade'] === "NEW"
     }
 
+    const sortBySaleQtyDesc = (a: MonthDataItem, b: MonthDataItem) => {
+        const bSaleQty = safeNumber(b["Sale Qty"]);
+        const aSaleQty = safeNumber(a["Sale Qty"]);
+        return bSaleQty - aSaleQty;
+    };
+
     if (key && key in filters) {
-        return analysisData.filter(filters[key as keyof typeof filters])
+        return analysisData.filter(filters[key as keyof typeof filters]).sort(sortBySaleQtyDesc);
     }
 
-    if (key === 'overview') return analysisData
-    if (key === 'salesSummary') return calcSalesGrid(analysisData)
-    if (key === 'inventorymis') return calcInventoryMIS(analysisData)
-    if (key === 'ordersummary') return calcOrderSummary(analysisData)
-    if (key === 'commonordersummary') return commonOrderSummary(analysisData)
+    if (key === 'overview') return analysisData.sort(sortBySaleQtyDesc);
+    if (key === 'salesSummary') return calcSalesGrid(analysisData);
+    if (key === 'inventorymis') return calcInventoryMIS(analysisData);
+    if (key === 'ordersummary') return calcOrderSummary(analysisData);
+    if (key === 'commonordersummary') return commonOrderSummary(analysisData);
 
     return {
-        overStock: analysisData.filter(filters.overstock),
-        underStock: analysisData.filter(filters.understock),
-        underPrice2: analysisData.filter(filters.underprice2),
+        overStock: analysisData.filter(filters.overstock).sort(sortBySaleQtyDesc),
+        underStock: analysisData.filter(filters.understock).sort(sortBySaleQtyDesc),
+        underPrice2: analysisData.filter(filters.underprice2).sort(sortBySaleQtyDesc),
         salesInventorySummary: calcSalesGrid(analysisData),
         orderSummary: calcOrderSummary(analysisData)
     }
@@ -427,16 +433,16 @@ function calcOrderSummary(analysisData: MonthDataItem[]) {
         const label = item["Category Name"]
         if (!acc[label]) {
             acc[label] = {
-                total_Sale_Value: 0,
-                total_Quantity: 0,
-                total_Order_Value: 0
+                Sale_Quantity: 0,
+                Order_Quantity: 0,
+                Order_Value: 0
             }
         }
 
         const entry = acc[label]
-        entry.total_Sale_Value += safeNumber(item["Sale Amount"])
-        entry.total_Quantity += safeNumber(item["Sale Qty"])
-        entry.total_Order_Value += safeNumber(item["Total Amount"])
+        entry.Sale_Quantity += safeNumber(item["Sale Qty"])
+        entry.Order_Quantity += safeNumber(item["Order Qty"])
+        entry.Order_Value += safeNumber(item["Sale Amount"])
 
         return acc
     }, {} as Record<string, OrderSummaryItem>)
@@ -444,11 +450,11 @@ function calcOrderSummary(analysisData: MonthDataItem[]) {
     return {
         rows: Object.entries(summary).map(([category, data]) => ({
             category,
-            total_Sale_Value: roundToDecimals(data.total_Sale_Value),
-            total_Quantity: roundToDecimals(data.total_Quantity),
-            total_Order_Value: roundToDecimals(data.total_Order_Value)
+            Sale_Quantity: roundToDecimals(data.Sale_Quantity),
+            Order_Quantity: roundToDecimals(data.Order_Quantity),
+            Order_Value: roundToDecimals(data.Order_Value)
         })),
-        cols: ['category', 'total_Sale_Value', 'total_Quantity', 'total_Order_Value']
+        cols: ['category', 'Sale_Quantity', 'Order_Quantity', 'Order_Value']
     }
 }
 
