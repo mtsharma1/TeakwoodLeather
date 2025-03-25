@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from "react"
-import { ArrowDownWideNarrow, ArrowUpNarrowWide, BookText, Boxes, BringToFront, Calendar, CalendarMinus, ChartNoAxesCombined, CircleDollarSign, Footprints, GalleryHorizontal, LayoutGrid, MoveDown, Package, SquareKanban } from "lucide-react"
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, BookText, Boxes, BringToFront, Calendar, CalendarMinus, ChartNoAxesCombined, CircleDollarSign, Footprints, GalleryHorizontal, LayoutGrid, MoveDown, Package, SquareActivity, SquareKanban } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 // import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
@@ -185,11 +185,11 @@ const data3 = {
           url: "/category-poral/report/category",
           icon: Boxes,
         },
-        // {
-        //   title: "Monthly Report",
-        //   url: "/category-poral/monthly-report",
-        //   icon: SquareActivity,
-        // },
+        {
+          title: "Monthly Report",
+          url: "/category-poral/monthly-report",
+          icon: SquareActivity,
+        },
       ]
     }
   ],
@@ -202,7 +202,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent className="bg-slate-800 scrollbar-none text-white">
-        <NavMain items={data.navMain} groupLabel={data.groupLabel}/>
+        <NavMain items={data.navMain} groupLabel={data.groupLabel} />
         <NavMain items={data2.navMain} groupLabel={data2.groupLabel} />
         <NavMain items={data3.navMain} groupLabel={data3.groupLabel} />
       </SidebarContent>

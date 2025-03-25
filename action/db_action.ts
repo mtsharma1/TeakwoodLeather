@@ -182,6 +182,7 @@ export async function convertPriceCheckData() {
       ]
    });
    return priceCheckData.map((x) => ({
+      "id": x.id,
       "Invoice Created Date": x.invoiceCreatedDate.toString(),
       "SKU Code": x.skuCode,
       "Total Selling Price": x.totalSellingPrice,
@@ -239,5 +240,6 @@ export async function convertPriceCheckData() {
       "Selling Price < 300": x.sellingPriceLt300,
       "Invoice Count": x.invoiceCount,
       "Discount %": x.discountPercentage,
+      "Remarks": `${x?.remarks ?? ""}`,
    })) || [];
 }

@@ -1,9 +1,9 @@
 import { cache, Suspense } from "react"
 import { priceCheckListData } from "@/action/csv"
-import AdvancedInventoryTable from "@/components/advanced-inventory-table"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import LoadingSkeleton from "@/components/loader/table-skelaton"
 import AnimatedTabs from "@/components/animated-route-tabs"
+import AdvancedInventoryTable from "@/components/table/with-edit-advanced-inventory-table"
 
 export const dynamic = 'force-dynamic'
 

@@ -11,7 +11,7 @@ export async function DashboardGraphs() {
     const data = await analysisDasboard()
 
     return (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-4">
             <Suspense fallback={<GraphSkeleton />}>
                 <SalesBarChart data={data.graphs.bar} />
             </Suspense>

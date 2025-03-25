@@ -145,16 +145,16 @@ export function calc_Count_Amt(data: MonthDataItem[]) {
                 }
 
                 // Under Price 2
-                if (item['Multiple Price'] < MULTIPLE_SELLING_PRICE) {
-                    summary['Under Price 2'].count++;
-                    summary['Under Price 2'].totalValue += value;
-                }
+                // if (item['Multiple Price'] < MULTIPLE_SELLING_PRICE) {
+                //     summary['Under Price 2'].count++;
+                //     summary['Under Price 2'].totalValue += value;
+                // }
 
-                // New Grade
-                if (item["Static Grade"].toLowerCase() === 'new') {
-                    summary['New Grade'].count++;
-                    summary['New Grade'].totalValue += value;
-                }
+                // // New Grade
+                // if (item["Static Grade"].toLowerCase() === 'new') {
+                //     summary['New Grade'].count++;
+                //     summary['New Grade'].totalValue += value;
+                // }
 
                 // Common Order Summary
                 // summary['Common Order Summary'].count += safeNumber(item["Order Qty"]);
@@ -169,8 +169,8 @@ export function calc_Count_Amt(data: MonthDataItem[]) {
             {
                 'Over Stock': { count: 0, totalValue: 0 },
                 'Under Stock': { count: 0, totalValue: 0 },
-                'Under Price 2': { count: 0, totalValue: 0 },
-                'New Grade': { count: 0, totalValue: 0 },
+                // 'Under Price 2': { count: 0, totalValue: 0 },
+                // 'New Grade': { count: 0, totalValue: 0 },
                 // 'Common Order Summary': { count: 0, totalValue: 0 },
                 // 'Order Summary Sheet': { count: 0, totalValue: 0 },
             }

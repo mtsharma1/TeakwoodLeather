@@ -1,8 +1,8 @@
 import { Suspense } from "react"
 import { analysisData } from "@/action/csv"
-import AdvancedInventoryTable from "@/components/advanced-inventory-table"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import LoadingSkeleton from "@/components/loader/table-skelaton"
+import AdvancedInventoryTable from "@/components/table/with-edit-advanced-inventory-table"
 
 // const getCachedAnalysisData = cache(async (type: string) => await analysisData(type))
 

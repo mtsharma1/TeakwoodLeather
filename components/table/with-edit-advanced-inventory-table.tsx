@@ -318,9 +318,9 @@ export default function AdvancedInventoryTable({
                       )
                     })}
                     {/* Add header for edit column */}
-                    {/* <TableHead className="w-[100px] text-ellipsis text-nowrap whitespace-nowrap">
+                    <TableHead className="w-[100px] text-ellipsis text-nowrap whitespace-nowrap">
                       Actions
-                    </TableHead> */}
+                    </TableHead>
                   </TableRow>
                 ))}
               </TableHeader>

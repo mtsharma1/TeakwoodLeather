@@ -8,7 +8,7 @@ import { Prisma } from "@prisma/client"
 // Create a Zod schema that automatically matches your Prisma model
 // We create a partial schema since we're doing updates (all fields optional except id)
 const MonthDataItemSchema = z.object({
-  id: z.number(),
+  id: z.string(),
 }).merge(
   z.object(
     Object.fromEntries(
@@ -47,16 +47,25 @@ export async function updateMonthDataItem(
 
     const { id, ...updateData } = validatedData;
 
-    const updatedItem = await prisma.monthDataItem.update({
-      where: { id: Number(id) },
-      data: updateData,
-    });
+    if(path === '/monthly-report/analysis/under-stock') {
+      await prisma.monthDataItem.update({
+        where: { id: Number(id) },
+        data: updateData,
+      });
+    }
+    if(path === '/price-checklist/stop') {
+      await prisma.priceCheckData.update({
+        where: { id: Number(id) },
+        data: updateData,
+      });
+    }
+
 
     revalidatePath(path);
 
-    return { success: true, data: updatedItem };
+    return { success: true };
   } catch (error) {
-    console.error("Failed to update month data item:", error);
+    console.error("Failed to update month data item:", JSON.stringify(error));
 
     if (error instanceof z.ZodError) {
       return { success: false, error: "Validation error", details: error.errors };

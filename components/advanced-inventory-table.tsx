@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ChevronDown, Search, X,  ArrowUpDownIcon, PinIcon } from "lucide-react"
+import { ChevronDown, Search, X, ArrowUpDownIcon, PinIcon } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 // import CsvDownloader from "react-csv-downloader"
@@ -43,10 +43,14 @@ export default function AdvancedInventoryTable({
   data = [],
   columnNames = [],
   filename,
+  pageSizeParam = 20,
+  showTools = true,
 }: {
   data: { [key: string]: string }[]
   columnNames?: string[]
   filename: string
+  pageSizeParam?: number
+  showTools?: boolean
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -55,7 +59,7 @@ export default function AdvancedInventoryTable({
   const [globalFilter, setGlobalFilter] = React.useState("")
   const [activeFilters, setActiveFilters] = React.useState<Record<string, string[]>>({})
   const [columnOrder, setColumnOrder] = React.useState<string[]>([])
-  const [pageSize, setPageSize] = React.useState(20)
+  const [pageSize, setPageSize] = React.useState(pageSizeParam)
   const [pinnedColumns, setPinnedColumns] = React.useState<string[]>([])
 
   const columns = React.useMemo(() => generateColumns(columnNames), [columnNames])
@@ -144,7 +148,7 @@ export default function AdvancedInventoryTable({
 
   return (
     <div className="space-y-4">
-      <div className="lg:flex items-center justify-between">
+      {showTools && <div className="lg:flex items-center justify-between">
         <div className="flex items-center space-x-2 p-1">
           <Input
             placeholder="Filter all columns..."
@@ -239,7 +243,7 @@ export default function AdvancedInventoryTable({
           <ExcelDownloader
             data={data}
             filename={filename}
-            // columnNames={columnNames}
+          // columnNames={columnNames}
           />
           {/* <CsvDownloader filename={filename} datas={data} columns={columnNames.map((x) => ({ id: x, displayName: x }))}>
             <Button size="icon">
@@ -247,7 +251,7 @@ export default function AdvancedInventoryTable({
             </Button>
           </CsvDownloader> */}
         </div>
-      </div>
+      </div>}
 
       {Object.entries(activeFilters).map(([columnId, filters]) =>
         filters.map((filter) => (
@@ -366,7 +370,7 @@ export default function AdvancedInventoryTable({
         </div>
       </div>
 
-      <Pagination>
+      {showTools && <Pagination>
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
@@ -478,7 +482,7 @@ export default function AdvancedInventoryTable({
             />
           </PaginationItem>
         </PaginationContent>
-      </Pagination>
+      </Pagination>}
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { useState, useOptimistic, useTransition, useRef, useEffect } from "react
 import { TableCell, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Check, X } from "lucide-react"
+import { Check, Pencil, X } from "lucide-react"
 import { toast } from "sonner"
 import { usePathname } from "next/navigation"
 import { UpdateMonthDataInput, updateMonthDataItem } from "@/action/user_action"
@@ -39,14 +39,14 @@ export function EditableRow({ row, columns, isPinned, rowIndex }: EditableRowPro
     }
   }, [editing])
 
-  // const handleEdit = () => {
-  //   setEditing(true)
-  //   const initialValues: Record<string, string> = {}
-  //   columns.forEach(col => {
-  //     initialValues[col] = optimisticRow[col]?.toString() || ""
-  //   })
-  //   setEditedValues(initialValues)
-  // }
+  const handleEdit = () => {
+    setEditing(true)
+    const initialValues: Record<string, string> = {}
+    columns.forEach(col => {
+      initialValues[col] = optimisticRow[col]?.toString() || ""
+    })
+    setEditedValues(initialValues)
+  }
 
   const handleCancel = () => {
     setEditing(false)
@@ -101,6 +101,7 @@ export function EditableRow({ row, columns, isPinned, rowIndex }: EditableRowPro
     >
       {columns.map((column, cellIndex) => {
         const isFirst = cellIndex === 0
+        const isLastColumn = column === columns[columns.length - 1]
 
         return (
           <TableCell
@@ -114,7 +115,7 @@ export function EditableRow({ row, columns, isPinned, rowIndex }: EditableRowPro
               ${editing ? "py-1" : ""}
             `}
           >
-            {editing ? (
+            {editing && isLastColumn ? (
               <Input
                 ref={cellIndex === 0 ? initialFocusRef : null}
                 value={editedValues[column] || ""}
@@ -131,45 +132,46 @@ export function EditableRow({ row, columns, isPinned, rowIndex }: EditableRowPro
       })}
 
       {/* Floating Edit Button */}
-      <div className={`
-        absolute right-4 top-1/2 -translate-y-1/2
-        transition-opacity duration-200
-        bg-white shadow-md rounded-lg
-        ${editing ? 'opacity-100' : ''}
-      `}>
-        {editing ? (
-          <div className="flex items-center space-x-1 p-1">
+      <TableCell className="relative">
+        <div className={`
+          absolute right-4 top-1/2 -translate-y-1/2
+          transition-opacity duration-200
+          bg-white shadow-md rounded-lg
+          opacity-100 hover:opacity-100
+        `}>
+          {editing ? (
+            <div className="flex items-center space-x-1 p-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSave}
+                disabled={isPending}
+                className="h-8 w-8 hover:bg-green-100"
+              >
+                <Check className="h-4 w-4 text-green-600" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCancel}
+                disabled={isPending}
+                className="h-8 w-8 hover:bg-red-100"
+              >
+                <X className="h-4 w-4 text-red-600" />
+              </Button>
+            </div>
+          ) : (
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleSave}
-              disabled={isPending}
-              className="h-8 w-8 hover:bg-green-100"
+              onClick={handleEdit}
+              className="h-8 w-8 hover:bg-blue-100"
             >
-              <Check className="h-4 w-4 text-green-600" />
+              <Pencil className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleCancel}
-              disabled={isPending}
-              className="h-8 w-8 hover:bg-red-100"
-            >
-              <X className="h-4 w-4 text-red-600" />
-            </Button>
-          </div>
-        ) : (
-          <></>
-          // <Button
-          //   variant="ghost"
-          //   size="icon"
-          //   onClick={handleEdit}
-          //   className="h-8 w-8 hover:bg-blue-100"
-          // >
-          //   <Pencil className="h-4 w-4" />
-          // </Button>
-        )}
-      </div>
+          )}
+        </div>
+      </TableCell>
     </TableRow>
   )
 }
