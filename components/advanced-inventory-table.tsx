@@ -32,6 +32,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { ExcelDownloader } from "./excel-downloader"
+import { cn } from "@/lib/utils"
 
 const multiSelectFilter = (row: { getValue: (colName: string) => string }, columnId: string, filterValue: string[]) => {
   if (!filterValue.length) return true
@@ -62,7 +63,7 @@ export default function AdvancedInventoryTable({
   const [pageSize, setPageSize] = React.useState(pageSizeParam)
   const [pinnedColumns, setPinnedColumns] = React.useState<string[]>([])
 
-  const columns = React.useMemo(() => generateColumns(columnNames), [columnNames])
+  const columns = React.useMemo(() => generateColumns(columnNames, showTools), [columnNames, showTools])
 
   const table = useReactTable({
     data,
@@ -489,6 +490,7 @@ export default function AdvancedInventoryTable({
 
 const generateColumns = (
   columnNames: string[],
+  showTools: boolean,
 ): ColumnDef<{
   [key: string]: string | number
 }>[] => {
@@ -496,7 +498,7 @@ const generateColumns = (
     columnNames
       .filter((colName) => colName.toLowerCase() !== "id").map((colName) => ({
         accessorKey: colName,
-        header: () => <span className="w-64 text-gray-800 font-semibold">{colName.toLocaleUpperCase().replaceAll("_", " ")}</span>,
+        header: () => <span className={cn(`text-gray-800 font-semibold`, showTools && "w-64")}>{colName.toLocaleUpperCase().replaceAll("_", " ")}</span>,
         cell: ({ row }: { row: { getValue: (colName: string) => string | number } }) => {
           const value = row.getValue(colName)
           return (

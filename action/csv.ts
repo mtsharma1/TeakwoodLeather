@@ -13,6 +13,7 @@ import { getDaysInMonth } from "date-fns"
 import { getJobStatus } from "@/lib/api"
 import prisma from "@/lib/prisma"
 import { convertPriceCheckData } from "./db_action"
+import { FILENAME } from "@prisma/client"
 
 // Constants
 // const CACHE_REVALIDATION_PATH = process.env.CACHE_REVALIDATION_PATH || "/analysis"
@@ -416,12 +417,22 @@ export const calculateCategoryMonthlyReport = async (formData: FormData) => {
         const daysInCurrentMonth = getDaysInMonth(new Date())
 
         const result = Array.from(productMap, ([productName, quantity]) => ({
-            productName,
+            name: productName,
             quantity,
-            monthAvg: roundToDecimals(safeNumber((quantity / daysInCurrentMonth) * 100)).toString(),
+            monthAvg: roundToDecimals(safeNumber((quantity / daysInCurrentMonth))).toString(),
+            reportfileName: FILENAME.CATEGORY
         }))
 
-        result.sort((a, b) => a.productName.localeCompare(b.productName))
+        await prisma.tallyReportT.deleteMany({
+            where: {
+                reportfileName: FILENAME.CATEGORY
+            }
+        })
+        await prisma.tallyReportT.createMany({
+            data: result
+        })
+
+        result.sort((a, b) => a.name.localeCompare(b.name))
 
         return result
     } catch {
@@ -453,15 +464,27 @@ export const calculatePortalMonthlyReport = async (formData: FormData) => {
         const daysInCurrentMonth = getDaysInMonth(new Date())
 
         const result = Array.from(productMap, ([productName, quantity]) => ({
-            productName,
+            name: productName,
             quantity,
-            monthAvg: roundToDecimals(safeNumber((quantity / daysInCurrentMonth) * 100)).toString(),
+            monthAvg: roundToDecimals(safeNumber((quantity / daysInCurrentMonth))).toString(),
+            reportfileName: FILENAME.PORTAL
         }))
 
-        result.sort((a, b) => a.productName.localeCompare(b.productName))
+        await prisma.tallyReportT.deleteMany({
+            where: {
+                reportfileName: FILENAME.PORTAL
+            }
+        })
+        await prisma.tallyReportT.createMany({
+            data: result
+        })
+
+        result.sort((a, b) => a.name.localeCompare(b.name))
 
         return result
-    } catch {
+    } catch (e) {
+        console.log(e);
+
         return null
     }
 }

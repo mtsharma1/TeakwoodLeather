@@ -149,6 +149,8 @@ export default function AdvancedInventoryTable({
     table.setColumnOrder(newColumnOrder)
   }, [pinnedColumns, table])
 
+  const isEditing = ['stop', "understock"].includes(filename)
+
   return (
     <div className="space-y-4">
       <div className="lg:flex items-center justify-between">
@@ -318,9 +320,9 @@ export default function AdvancedInventoryTable({
                       )
                     })}
                     {/* Add header for edit column */}
-                    <TableHead className="w-[100px] text-ellipsis text-nowrap whitespace-nowrap">
+                  {isEditing &&  <TableHead className="w-[100px] text-ellipsis text-nowrap whitespace-nowrap">
                       Actions
-                    </TableHead>
+                    </TableHead>}
                   </TableRow>
                 ))}
               </TableHeader>
@@ -341,6 +343,7 @@ export default function AdvancedInventoryTable({
                         columns={orderedColumnIds}
                         isPinned={isPinned}
                         rowIndex={rowIndex}
+                        isEditing={isEditing}
                       />
                     )
                   })

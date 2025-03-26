@@ -17,10 +17,11 @@ interface EditableRowProps {
   row: MonthDataItemRow
   columns: string[]
   isPinned: boolean
+  isEditing: boolean
   rowIndex: number
 }
 
-export function EditableRow({ row, columns, isPinned, rowIndex }: EditableRowProps) {
+export function EditableRow({ row, columns, isPinned, rowIndex, isEditing }: EditableRowProps) {
   const [editing, setEditing] = useState(false)
   const [isPending, startTransition] = useTransition()
   const pathname = usePathname()
@@ -132,7 +133,7 @@ export function EditableRow({ row, columns, isPinned, rowIndex }: EditableRowPro
       })}
 
       {/* Floating Edit Button */}
-      <TableCell className="relative">
+     {isEditing && <TableCell className="relative">
         <div className={`
           absolute right-4 top-1/2 -translate-y-1/2
           transition-opacity duration-200
@@ -161,17 +162,17 @@ export function EditableRow({ row, columns, isPinned, rowIndex }: EditableRowPro
               </Button>
             </div>
           ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleEdit}
-              className="h-8 w-8 hover:bg-blue-100"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleEdit}
+            className="h-8 w-8 hover:bg-blue-100"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
           )}
         </div>
-      </TableCell>
+      </TableCell>}
     </TableRow>
   )
 }

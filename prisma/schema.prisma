@@ -137,6 +137,25 @@ model PriceCheckData {
   updatedAt DateTime @updatedAt
 }
 
+enum FILENAME {
+  CATEGORY
+  PORTAL
+}
+
+model TallyReportT {
+  id       Int    @id @default(autoincrement())
+  name     String
+  quantity Int
+  monthAvg String
+
+  reportfileName FILENAME
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, reportfileName])
+}
+
 model Metrics {
   id           Int    @id @default(autoincrement())
   skuName      String

@@ -1,15 +1,24 @@
 import { Metrics, PriceCheckInvoiceData, ProcessedData } from "@/types/order"
 import { roundToDecimals, safeNumber } from "./utils"
+import prisma from "./prisma";
+import { FILENAME } from "@prisma/client";
 
-export const calculateCategoryMetrics = (
+export const calculateCategoryMetrics = async (
     yesterdayOrders: PriceCheckInvoiceData[],
     todayOrders: PriceCheckInvoiceData[]
-): { metrics: Metrics[], totals: Metrics } => {
+): Promise<{ metrics: Metrics[], totals: Metrics }> => {
 
     const uniqueSkus = new Set([
         ...yesterdayOrders.map((order) => order["SKU Name"]),
         ...todayOrders.map((order) => order["SKU Name"])
     ]);
+
+
+    const categoryTallyReport = await prisma.tallyReportT.findMany({
+        where: {
+            reportfileName: FILENAME.CATEGORY
+        }
+    })
 
     const skuMetrics = Array.from(uniqueSkus).map((skuName): Metrics => {
         const skuYesterday = yesterdayOrders.filter((order) => order["SKU Name"] === skuName);
@@ -61,18 +70,30 @@ export const calculateCategoryMetrics = (
         }
     );
 
-    return { metrics: skuMetrics, totals };
+    const withPercentage = skuMetrics.map((metric) => ({
+        ...metric,
+        percentage: roundToDecimals((metric.total / totals.total) * 100),
+        monthly_avg_sale: categoryTallyReport.find((report) => report.name === metric.skuName)?.monthAvg || 0
+    }))
+
+    return Promise.resolve({ metrics: withPercentage, totals });
 };
 
-export const calculatePortalMetrics = (
+export const calculatePortalMetrics = async (
     yesterdayOrders: PriceCheckInvoiceData[],
     todayOrders: PriceCheckInvoiceData[]
-): { metrics: ProcessedData[], totals: ProcessedData } => {
+): Promise<{ metrics: ProcessedData[], totals: ProcessedData }> => {
     // Get unique channels
     const channels = new Set([
         ...yesterdayOrders.map((order) => order["Channel Name"]),
         ...todayOrders.map((order) => order["Channel Name"])
     ]);
+
+    const portalTallyReport = await prisma.tallyReportT.findMany({
+        where: {
+            reportfileName: FILENAME.PORTAL
+        }
+    })
 
     const channelMetrics = Array.from(channels).map((channel): ProcessedData => {
         const yes_qty = yesterdayOrders.filter(
@@ -112,5 +133,12 @@ export const calculatePortalMetrics = (
         }
     );
 
-    return { metrics: channelMetrics, totals };
+    const withPercentage = channelMetrics.map((channel) => ({
+        ...channel,
+        percentage: roundToDecimals((channel.total / totals.total) * 100),
+        monthly_avg_sale: portalTallyReport.find((report) => report.name === channel.portal)?.monthAvg || 0
+    }))
+
+
+    return Promise.resolve({ metrics: withPercentage, totals });
 };

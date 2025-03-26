@@ -1,14 +1,14 @@
 "use client"
 
-import { useState } from "react"
+// import { useState } from "react"
 import { useFormStatus } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { calculateCategoryMonthlyReport, calculatePortalMonthlyReport } from "@/action/csv"
-import { ProductQuantity } from "@/types/category-poral-monthly"
-import AdvancedInventoryTable from "../advanced-inventory-table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
+// import { ProductQuantity } from "@/types/category-poral-monthly"
+// import AdvancedInventoryTable from "../advanced-inventory-table"
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
 
 function SubmitButton() {
    const { pending } = useFormStatus()
@@ -20,14 +20,14 @@ function SubmitButton() {
 }
 
 export function CSVUploadForm() {
-   const [categoryReport, setCategoryReport] = useState<ProductQuantity[] | null>(null)
-   const [portalReport, setPortalReport] = useState<ProductQuantity[] | null>(null)
+   // const [categoryReport, setCategoryReport] = useState<ProductQuantity[] | null>(null)
+   // const [portalReport, setPortalReport] = useState<ProductQuantity[] | null>(null)
 
    async function handleSubmit(formData: FormData) {
-      const cat_report = await calculateCategoryMonthlyReport(formData)
-      const portal_report = await calculatePortalMonthlyReport(formData)
-      setPortalReport(portal_report)
-      setCategoryReport(cat_report)
+      await calculateCategoryMonthlyReport(formData)
+      await calculatePortalMonthlyReport(formData)
+      // setPortalReport(portal_report)
+      // setCategoryReport(cat_report)
    }
 
    return (
@@ -41,7 +41,7 @@ export function CSVUploadForm() {
                <SubmitButton />
             </form>
          </div>
-         <Tabs defaultValue="category_monthly_report" className="w-ful mt-6">
+         {/* <Tabs defaultValue="category_monthly_report" className="w-ful mt-6">
             <TabsList className="grid w-full grid-cols-2">
                <TabsTrigger value="category_monthly_report">Category</TabsTrigger>
                <TabsTrigger value="portal_monthly_report">Portal</TabsTrigger>
@@ -64,7 +64,7 @@ export function CSVUploadForm() {
                   />
                </div> : <>No data found!</>}
             </TabsContent>
-         </Tabs>
+         </Tabs> */}
       </>
    )
 }
