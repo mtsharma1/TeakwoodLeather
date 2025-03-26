@@ -26,3 +26,24 @@ export const MONTHLY_REPORT_API_BODY = {
    ],
    "frequency": "ONETIME"
 }
+
+export const CHANNEL_REPORT_API_BODY = {
+   "exportJobTypeName": "Channel Item Type Report",
+   "exportColums": [
+      "channelName",
+      "productName",
+      "channelProductId",
+      "sellerSkuCode",
+      "uniwareSkuCode",
+      "blockedInventory",
+      "disabled",
+      "sellingPrice",
+      "mrp",
+      "currencyCode",
+      "statusCode",
+      "nextInventoryUpdate",
+      "lastInventoryUpdate"
+   ],
+   "exportFilters": [],
+   "frequency": "ONETIME"
+}
