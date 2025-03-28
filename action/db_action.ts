@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma"
 import { safeNumber } from "@/lib/utils"
-import { MonthDataItem, PriceCheckInvoiceData } from "@/types/order"
+import { MonthDataItem, PriceCheckInvoiceData, ProductData } from "@/types/order"
 import { isValid, parse, parseISO } from "date-fns"
 
 // export async function saveMonthlyDataWithChunking(transformedData: MonthDataItem[], chunkSize = 1000) {
@@ -25,6 +25,50 @@ import { isValid, parse, parseISO } from "date-fns"
 //    }
 // }
 
+export async function saveProductsOptimally(rawData: ProductData[]) {
+   try {
+      const data = rawData.map(x => ({
+         product_code: x['Product Code']?.toString() || "",
+         name: x['Name'],
+         color: x['Color'],
+         size: x['Size'],
+         brand: x['Brand'],
+         tags: x['Tags'] || "",
+         image_urls: JSON.stringify([
+            x['Image Url'],
+            x['Image Url 1'],
+            x['Image Url 2'],
+            x['Image Url 3'],
+            x['Image Url 4'],
+            x['Image Url 5'],
+            x['Image Url 6'],
+            x['URL 7'],
+            x['URL 8'],
+         ].filter(url => url && url !== "-")), // Convert to JSON string
+         product_page_url: x['Product Page Url'] || "",
+         category_name: x['Category Name'],
+         type: x['Type'],
+         sku_type: x['Sku Type'],
+         month_grade: x['Month Grade'] || "",
+         parent_sku: x['Parent SKU'],
+         product_title: x['Product Title'] || "",
+         vendor_name: x['Vendor Name'],
+      }));
+      
+      await prisma.productWithImage.deleteMany();
+
+      const result = await prisma.productWithImage.createMany({
+         data,
+         skipDuplicates: true, // Avoid duplicate records
+      });
+
+      console.log(`Inserted ${result.count} records`);
+      return result;
+   } catch (error) {
+      console.error("Bulk insert error:", error);
+      throw error;
+   }
+}
 export async function saveMonthlyDataOptimally(transformedData: MonthDataItem[]) {
    try {
       const data = transformedData.map(x => ({

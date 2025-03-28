@@ -47,13 +47,13 @@ export async function updateMonthDataItem(
 
     const { id, ...updateData } = validatedData;
 
-    if(path === '/monthly-report/analysis/under-stock') {
+    if (path === '/monthly-report/analysis/under-stock') {
       await prisma.monthDataItem.update({
         where: { id: Number(id) },
         data: updateData,
       });
     }
-    if(path === '/price-checklist/stop') {
+    if (path === '/price-checklist/stop') {
       await prisma.priceCheckData.update({
         where: { id: Number(id) },
         data: updateData,
@@ -73,4 +73,17 @@ export async function updateMonthDataItem(
 
     return { success: false, error: "Failed to update item" };
   }
+}
+
+
+export async function getProductImageBySKU(sku: string) {
+  return await prisma.productWithImage.findUnique({
+    where: {
+      product_code: sku
+    },
+    select: {
+      image_urls: true
+    }
+  })
+
 }

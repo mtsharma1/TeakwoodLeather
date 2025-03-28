@@ -152,3 +152,29 @@ export interface ProcessedData {
     today_Orders: number;
     total: number;
 }
+
+export type ProductData = {
+    'Product Code': string;
+    'Name': string;
+    'Color': string;
+    'Size': string;
+    'Brand': string;
+    'Tags'?: string;
+    'Image Url': string;
+    'Product Page Url'?: string;
+    'Category Name': string;
+    'Type': string;
+    'Sku Type': string;
+    'Month Grade'?: string;
+    'Parent SKU': string;
+    'Product Title'?: string;
+    'Image Url 1'?: string;
+    'Image Url 2'?: string;
+    'Image Url 3'?: string;
+    'Image Url 4'?: string;
+    'Image Url 5'?: string;
+    'Image Url 6'?: string;
+    'URL 7'?: string;
+    'URL 8'?: string;
+    'Vendor Name': string;
+};

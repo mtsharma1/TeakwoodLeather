@@ -1,4 +1,4 @@
-import { CHANNEL_REPORT_API_BODY, MONTHLY_REPORT_API_BODY } from "./api-utils"
+import { CHANNEL_REPORT_API_BODY, ITEM_MASTER_DROPBOX_API_BODY, MONTHLY_REPORT_API_BODY } from "./api-utils"
 
 const BASE_URL = "https://teakwoodindia.unicommerce.com"
 
@@ -118,11 +118,17 @@ async function createChannelItemReportJob() {
    return fetchWithAuth(url, { method: "POST", body: JSON.stringify(body) })
 }
 
+async function createItemMasterDropboxJob() {
+   const url = `${BASE_URL}/services/rest/v1/export/job/create`
+   const body = ITEM_MASTER_DROPBOX_API_BODY
+   return fetchWithAuth(url, { method: "POST", body: JSON.stringify(body) })
+}
+
 async function getJobStatus(jobCode: string) {
    const url = `${BASE_URL}/services/rest/v1/export/job/status?_=${Date.now()}`
    const body = { jobCode }
    return fetchWithAuth(url, { method: "POST", body: JSON.stringify(body) })
 }
 
-export { createInvoiceJob, createMontlyReportJob, getJobStatus, getAccessToken, createChannelItemReportJob }
+export { createInvoiceJob, createMontlyReportJob, getJobStatus, getAccessToken, createChannelItemReportJob, createItemMasterDropboxJob }
 

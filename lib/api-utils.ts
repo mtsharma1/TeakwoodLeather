@@ -47,3 +47,33 @@ export const CHANNEL_REPORT_API_BODY = {
    "exportFilters": [],
    "frequency": "ONETIME"
 }
+export const ITEM_MASTER_DROPBOX_API_BODY = {
+   "exportJobTypeName": "Item Master",
+   "exportColums": [
+      "skuCode",
+      "itemName",
+      "color",
+      "size",
+      "brand",
+      "tags",
+      "imageUrl",
+      "productPageUrl",
+      "category",
+      "type",
+      "skuType",
+      "itemType_month_Grade",
+      "itemType_ParentSku",
+      "itemType_product_Title",
+      "itemType_url1",
+      "itemType_url2",
+      "itemType_url3",
+      "itemType_url4",
+      "itemType_url5",
+      "itemType_url6",
+      "itemType_url7",
+      "itemType_url8",
+      "itemType_vendor_Name",
+   ],
+   "exportFilters": [],
+   "frequency": "ONETIME"
+}

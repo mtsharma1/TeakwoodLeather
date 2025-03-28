@@ -180,6 +180,29 @@ model ProcessedData {
   updatedAt DateTime @updatedAt
 }
 
+model ProductWithImage {
+  id               String  @id @default(uuid())
+  product_code     String  @unique @map("Product Code")
+  name             String  @map("Name")
+  color            String  @map("Color")
+  size             String  @map("Size")
+  brand            String  @map("Brand")
+  tags             String? @map("Tags")
+  image_urls       Json    @map("Image Urls")
+  product_page_url String? @map("Product Page Url")
+  category_name    String  @map("Category Name")
+  type             String  @map("Type")
+  sku_type         String  @map("Sku Type")
+  month_grade      String? @map("Month Grade")
+  parent_sku       String? @map("Parent SKU")
+  product_title    String? @map("Product Title")
+  vendor_name      String  @map("Vendor Name")
+
+  @@index([category_name])
+  @@index([brand])
+  @@index([color, size])
+}
+
 model User {
   id       Int    @id @default(autoincrement())
   email    String @unique
