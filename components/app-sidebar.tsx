@@ -186,11 +186,23 @@ const data3 = {
           icon: Boxes,
         },
         {
-          title: "Monthly Report",
+          title: "Export Tally GST Report",
           url: "/category-poral/monthly-report",
           icon: SquareActivity,
         },
       ]
+    }
+  ],
+}
+
+const data4 = {
+  groupLabel: "Channel Item Report",
+  navMain: [
+    {
+      title: "Channel Report",
+      url: "/channel-report",
+      icon: TbCategory,
+      isActive: false,
     }
   ],
 }
@@ -205,6 +217,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} groupLabel={data.groupLabel} />
         <NavMain items={data2.navMain} groupLabel={data2.groupLabel} />
         <NavMain items={data3.navMain} groupLabel={data3.groupLabel} />
+        <NavMain items={data4.navMain} groupLabel={data4.groupLabel} />
       </SidebarContent>
       <SidebarFooter className="bg-slate-800 text-white">
         {/* <NavUser /> */}

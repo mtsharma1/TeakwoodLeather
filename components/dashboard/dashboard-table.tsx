@@ -18,7 +18,7 @@ export async function DashboardTable() {
       <div className="grid gap-6 md:grid-cols-2">
          <Card className="w-full overflow-hidden">
             <CardHeader className="border-b">
-               <CardTitle className="text-xl md:text-2xl font-bold capitalize">Stop</CardTitle>
+               <CardTitle className="text-xl md:text-2xl font-bold capitalize">Price Checklist and Daily Basis</CardTitle>
             </CardHeader>
             <CardContent className="p-2 sm:p-4">
                <Suspense fallback={<LoadingSkeleton />}>

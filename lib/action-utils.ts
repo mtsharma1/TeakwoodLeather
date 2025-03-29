@@ -248,6 +248,8 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         vendorPrice: number,
         vendorName: string,
         totalPrice: number,
+        
+        xtendedSku: Record<string, string>,
     }>();
 
     const isOtherCategory = key === "othercategory";
@@ -293,6 +295,8 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
                 vendorPrice: 0,
                 vendorName: "",
                 totalPrice: 0,
+
+                xtendedSku: {}
             };
             skuMap.set(sku, skuData);
         }
@@ -312,11 +316,11 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         // Inventory data
         skuData.availableInventorySize[size] = (skuData.availableInventorySize[size] || 0) + availableInventory;
         skuData.availableInventorySizeTotal += availableInventory;
-
+        
         // Purchase data
         skuData.openPurchaseSize[size] = (skuData.openPurchaseSize[size] || 0) + openPurchase;
         skuData.openPurchaseSizeTotal += openPurchase;
-
+        
         // Order data
         skuData.orderQtySize[size] = (skuData.orderQtySize[size] || 0) + orderQty;
         skuData.orderQtySizeTotal += orderQty;
@@ -331,6 +335,10 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         skuData.vendorPrice = vendorPrice;
         skuData.vendorName = item['Vendor Name'];
         skuData.totalPrice = skuData.vendorPrice * skuData.orderQtySizeTotal;
+
+        // Extended for data (SKU Code + Size)
+        skuData.xtendedSku[size] = skuData.sku + "_" + size;
+
     });
 
     const result = Array.from(skuMap.values());

@@ -69,6 +69,7 @@ export async function saveProductsOptimally(rawData: ProductData[]) {
       throw error;
    }
 }
+
 export async function saveMonthlyDataOptimally(transformedData: MonthDataItem[]) {
    try {
       const data = transformedData.map(x => ({
@@ -215,7 +216,6 @@ export async function savePriceCheckData(dataArray: PriceCheckInvoiceData[]) {
 
    await prisma.priceCheckData.createMany({ data: formattedData });
 }
-
 
 export async function convertPriceCheckData() {
    const priceCheckData = await prisma.priceCheckData.findMany({

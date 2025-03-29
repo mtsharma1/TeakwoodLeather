@@ -14,7 +14,6 @@ import { getJobStatus } from "@/lib/api"
 import prisma from "@/lib/prisma"
 import { convertPriceCheckData } from "./db_action"
 import { FILENAME } from "@prisma/client"
-import { ChannelCounts, PivotTableData } from "@/types/channel-report"
 
 // Constants
 // const CACHE_REVALIDATION_PATH = process.env.CACHE_REVALIDATION_PATH || "/analysis"
@@ -45,40 +44,39 @@ export async function pollJobStatus(jobCode: string, maxAttempts: number, delay:
 //     totalItems: number
 // }
 
-class DataCache<T> {
-    private data: T[] = []
-    private columns: string[] = []
-    private map: Map<string, T> = new Map()
+// class DataCache<T> {
+//     private data: T[] = []
+//     private columns: string[] = []
+//     private map: Map<string, T> = new Map()
 
-    isEmpty(): boolean {
-        return this.data.length === 0
-    }
+//     isEmpty(): boolean {
+//         return this.data.length === 0
+//     }
 
-    setData(data: T[], columns?: string[]) {
-        this.data = data
-        if (columns) this.columns = columns
-        this.map = new Map(data.map((item, index) => [index.toString(), item]))
-    }
+//     setData(data: T[], columns?: string[]) {
+//         this.data = data
+//         if (columns) this.columns = columns
+//         this.map = new Map(data.map((item, index) => [index.toString(), item]))
+//     }
 
-    getData(): T[] {
-        return this.data
-    }
+//     getData(): T[] {
+//         return this.data
+//     }
 
-    getColumns(): string[] {
-        return this.columns
-    }
+//     getColumns(): string[] {
+//         return this.columns
+//     }
 
-    slice(start: number, end: number): T[] {
-        return Array.from({ length: end - start }, (_, i) => this.map.get((i + start).toString())!).filter(Boolean)
-    }
+//     slice(start: number, end: number): T[] {
+//         return Array.from({ length: end - start }, (_, i) => this.map.get((i + start).toString())!).filter(Boolean)
+//     }
 
-    length(): number {
-        return this.data.length
-    }
-}
+//     length(): number {
+//         return this.data.length
+//     }
+// }
 
 // Initialize caches
-const analyzeChannelItemTypeReportCache = new DataCache<ChannelCounts>()
 // const invoiceAnalysisCache = new DataCache<InvoiceData>()
 // const salesCache = new DataCache<SalesDataItem>()
 // const monthlyCache = new DataCache<MonthDataItem>()
@@ -492,32 +490,7 @@ export const calculatePortalMonthlyReport = async (formData: FormData) => {
 }
 
 /**************Channel-itme-type-report**************/
-export async function analyzeChannelItemTypeReport(data: PivotTableData[]): Promise<ChannelCounts> {
-    const result: ChannelCounts = {};
+export async function getChannelItemTypeReport() {
 
-    if (analyzeChannelItemTypeReportCache.isEmpty()) {
-        analyzeChannelItemTypeReportCache.setData([result]);
-    }
-
-    if (analyzeChannelItemTypeReportCache.getData().length) {
-        return analyzeChannelItemTypeReportCache.getData()[0]
-    }
-
-    if (!data) return result;
-
-    data.forEach(item => {
-        if (!result[item.channelName]) {
-            result[item.channelName] = {};
-        }
-
-        if (!result[item.channelName][item.uniformSkuCode]) {
-            result[item.channelName][item.uniformSkuCode] = item.count;
-        } else {
-            result[item.channelName][item.uniformSkuCode] += item.count;
-        }
-    });
-
-    analyzeChannelItemTypeReportCache.setData([result]);
-
-    return result;
+    return await prisma.channelItemReport.findMany()
 }
