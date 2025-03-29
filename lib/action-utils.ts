@@ -229,6 +229,7 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
     const skuMap = new Map<string, {
         sku: string,
         category: string,
+        roh: string,
         subCategory: string,
         salesSizes: Record<string, number>,
         totalSaleQty: number,
@@ -277,6 +278,7 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         if (!skuData) {
             skuData = {
                 sku,
+                roh: "",
                 category,
                 subCategory,
                 salesSizes: {},
@@ -307,6 +309,10 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         const openPurchase = safeNumber(item['Open Purchase']);
         const orderQty = safeNumber(item['Order Qty']);
         const vendorPrice = safeNumber(item['Vendor Price']);
+        const roh = item.ROH;
+
+        // ROH
+        skuData.roh = roundToDecimals(roh).toString();
 
         // Sales data
         skuData.salesSizes[size] = (skuData.salesSizes[size] || 0) + saleQty;
