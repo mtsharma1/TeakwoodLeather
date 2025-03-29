@@ -143,6 +143,10 @@ export const MensShoescolumns: ColumnDef<CategoryData>[] = [
         accessorKey: "vendorName",
         header: "Vendor Name",
     },
+    {
+        accessorKey: "roh",
+        header: "ROH",
+    },
     ...createSizeColumns(categorySizeMap.mensshoes, "xtendedSku"),
 ]
 
