@@ -379,7 +379,7 @@ export const categoryPortalData = cache(async (type: string) => {
     const todayStart = new Date(year, month, todayDate, 0, 0, 0);  // 00:00:00 today
     const todayEnd = new Date(year, month, todayDate, 11, 30, 0);  // 11:30:00 today
 
-    const yesterdayStart = new Date(year, month, todayDate - 1, 0, 0, 0);  // 11:30:00 yesterday
+    const yesterdayStart = new Date(year, month, todayDate - 1, 11, 30, 0);  // 11:30:00 yesterday
     const yesterdayEnd = new Date(year, month, todayDate - 1, 23, 59, 59);   // 23:59:59 yesterday
 
 

@@ -250,7 +250,7 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         vendorName: string,
         totalPrice: number,
         
-        xtendedSku: Record<string, string>,
+        sku_: Record<string, string>,
     }>();
 
     const isOtherCategory = key === "othercategory";
@@ -298,7 +298,7 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
                 vendorName: "",
                 totalPrice: 0,
 
-                xtendedSku: {}
+                sku_: {}
             };
             skuMap.set(sku, skuData);
         }
@@ -343,7 +343,7 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         skuData.totalPrice = skuData.vendorPrice * skuData.orderQtySizeTotal;
 
         // Extended for data (SKU Code + Size)
-        skuData.xtendedSku[size] = skuData.sku + "_" + size;
+        skuData.sku_[size] = skuData.sku + size;
 
     });
 
