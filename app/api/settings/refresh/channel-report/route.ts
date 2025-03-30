@@ -1,6 +1,5 @@
 import { fetchCSV, pollJobStatus } from "@/action/csv"
 import { NextResponse } from "next/server"
-import { unstable_noStore as noStore } from 'next/cache';
 import { createChannelItemReportJob } from "@/lib/api"
 import prisma from "@/lib/prisma";
 import { channelItemReport } from "@prisma/client";
@@ -70,11 +69,9 @@ const generateOutputJson = (outputData: OutputData) => {
   });
 };
 
-async function fetchAndChannlReportData() {
-  noStore();
+async function fetchAndChannelReportData() {
   try {
     const jobResponse = await createChannelItemReportJob()
-    console.log(jobResponse, "jobResponse")
 
     if (!jobResponse.successful) {
       throw new Error(`Failed to create export job: ${JSON.stringify(jobResponse)}`)
@@ -94,26 +91,40 @@ async function fetchAndChannlReportData() {
       skipDuplicates: true,
     })
 
-    console.log('Save Channel Report data processing completed:', new Date().toISOString());
+    return { success: true, filePath: path }
   } catch (error) {
-    console.error("Error in ChannlReport:", error)
+    console.error("Error in ChannelReport:", error)
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
   }
 }
 
 export async function GET() {
-  console.log('🔔 Cron triggered:', new Date().toISOString());
 
-  (async () => {
-    try {
-      await fetchAndChannlReportData();
-    } catch (error) {
-      console.error('Background process failed: [ChannlReport]', error);
+  try {
+    const result = await fetchAndChannelReportData();
+    
+    if (!result.success) {
+      return NextResponse.json({
+        success: false,
+        message: 'Failed to process channel report data',
+        error: result.error,
+        timestamp: new Date().toISOString()
+      }, { status: 500 });
     }
-  })();
-
-  return NextResponse.json({
-    success: true,
-    message: 'Cron job scheduled successfully',
-    timestamp: new Date().toISOString()
-  });
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Channel report data processed successfully',
+      filePath: result.filePath,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Cron job failed:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Cron job execution failed',
+      error: error instanceof Error ? error.message : String(error),
+      timestamp: new Date().toISOString()
+    }, { status: 500 });
+  }
 }
