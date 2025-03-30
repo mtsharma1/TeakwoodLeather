@@ -213,7 +213,7 @@ export async function fetchMonthlyData() {
                     saleQty: 'desc',
                 }
             ],
-            take: 100,
+            // take: 100,
         });
         return monthlyData.map((x) => ({
             "id": x.id,
@@ -334,7 +334,7 @@ export async function priceCheckListData(type: string) {
         const month = now.getMonth();
         const todayDate = now.getDate();
 
-        const yesterdayStart = new Date(year, month, todayDate - 1, 0, 0, 0);  // 11:30:00 yesterday
+        const yesterdayStart = new Date(year, month, todayDate - 1, 11, 30, 1);  // 11:30:00 yesterday
         const yesterdayEnd = new Date(year, month, todayDate - 1, 23, 59, 59);   // 23:59:59 yesterday
 
         const data = await convertPriceCheckData()
