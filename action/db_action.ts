@@ -62,7 +62,6 @@ export async function saveProductsOptimally(rawData: ProductData[]) {
          skipDuplicates: true, // Avoid duplicate records
       });
 
-      console.log(`Inserted ${result.count} records`);
       return result;
    } catch (error) {
       console.error("Bulk insert error:", error);
@@ -108,7 +107,6 @@ export async function saveMonthlyDataOptimally(transformedData: MonthDataItem[])
          data,
       })
 
-      console.log(`Inserted ${result.count} records`)
       return result
    } catch (error) {
       console.error("Bulk insert error:", error)

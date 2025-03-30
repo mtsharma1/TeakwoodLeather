@@ -25,7 +25,6 @@ export async function pollJobStatus(jobCode: string, maxAttempts: number, delay:
     let attempts = 0
     while (attempts < maxAttempts) {
         const statusResponse = await getJobStatus(jobCode)
-        console.log(statusResponse, "statusResponse")
         if (statusResponse.status === "COMPLETE") {
             return { success: true, message: "Export completed successfully", filePath: statusResponse.filePath }
         } else if (statusResponse.status === "FAILED") {
