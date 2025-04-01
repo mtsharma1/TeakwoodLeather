@@ -102,7 +102,7 @@ export function InventoryBarChart({ data = [] }: BarChartProps) {
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 font-medium leading-none">
+        {/* <div className="flex gap-2 font-medium leading-none">
           {data?.length > 0 && (
             <>
               Inventory trending {data[0].inventory_percentage > 0 ? "up" : "down"} by{" "}
@@ -112,7 +112,7 @@ export function InventoryBarChart({ data = [] }: BarChartProps) {
         </div>
         <div className="leading-none text-muted-foreground">
           Showing inventory values by grade
-        </div>
+        </div> */}
       </CardFooter>
     </Card>
   )

@@ -103,17 +103,17 @@ export function SalesBarChart({ data = [] }: BarChartProps) {
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 font-medium leading-none">
+        {/* <div className="flex gap-2 font-medium leading-none">
           {data?.length > 0 && (
             <>
               Sales trending {data[0].sale_percentage > 0 ? "up" : "down"} by{" "}
               {Math.abs(data[0].sale_percentage)}% <TrendingUp className="h-4 w-4" />
             </>
           )}
-        </div>
-        <div className="leading-none text-muted-foreground">
+        </div> */}
+        {/* <div className="leading-none text-muted-foreground">
           Showing sales values by grade
-        </div>
+        </div> */}
       </CardFooter>
     </Card>
   )

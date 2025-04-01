@@ -18,7 +18,7 @@ export async function DashboardTable() {
       <div className="grid gap-6 md:grid-cols-2">
          <Card className="w-full overflow-hidden">
             <CardHeader className="border-b">
-               <CardTitle className="text-xl md:text-2xl font-bold capitalize">Price Checklist and Daily Basis</CardTitle>
+               <CardTitle className="text-xl md:text-2xl font-bold capitalize">Price Checklist</CardTitle>
             </CardHeader>
             <CardContent className="p-2 sm:p-4">
                <Suspense fallback={<LoadingSkeleton />}>
@@ -34,7 +34,7 @@ export async function DashboardTable() {
          </Card>
          <Card className="w-full overflow-hidden">
             <CardHeader className="border-b">
-               <CardTitle className="text-xl md:text-2xl font-bold capitalize">Portal Summary</CardTitle>
+               <CardTitle className="text-xl md:text-2xl font-bold capitalize">Daily Sales Report</CardTitle>
             </CardHeader>
             <CardContent className="p-2 sm:p-4">
                <Suspense fallback={<LoadingSkeleton />}>
