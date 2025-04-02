@@ -1,7 +1,7 @@
 'use server'
 
 import prisma from "@/lib/prisma"
-import { safeNumber } from "@/lib/utils"
+import { roundToDecimals, safeNumber } from "@/lib/utils"
 import { MonthDataItem, PriceCheckInvoiceData, ProductData } from "@/types/order"
 import { isValid, parse, parseISO } from "date-fns"
 
@@ -78,7 +78,7 @@ export async function saveMonthlyDataOptimally(transformedData: MonthDataItem[])
          categoryName: x['Category Name'],
          subCategory: x['Sub Category'],
          saleQty: x['Sale Qty']?.toString() || "",
-         saleAmount: x['Sale Amount']?.toString() || "",
+         saleAmount: roundToDecimals(safeNumber(x['Sale Amount'])).toString() || "",
          vendorName: x['Vendor Name'],
          staticGrade: x['Static Grade'],
          monthGrade: x['Month Grade'],
@@ -88,17 +88,17 @@ export async function saveMonthlyDataOptimally(transformedData: MonthDataItem[])
          orderQty: x['Order Qty'],
          saleThrough: x['Sale Through'],
          vendorPrice: x['Vendor Price'],
-         totalAmount: x['Total Amount'],
+         totalAmount: roundToDecimals(safeNumber(x['Total Amount'])).toString() || "",
          skuCodeID: x['Sku Code ID '],
          daysOfPositiveInventory: x['Days of positive inventory'],
-         roh: x['ROH']?.toString() || "",
-         doh: x['DOH']?.toString() || "",
+         roh: roundToDecimals(safeNumber(x['ROH']))?.toString() || "",
+         doh: roundToDecimals(safeNumber(x['DOH']))?.toString() || "",
          newSkuCode: x['New SKU Code'],
          staticGradeN: x['Static Grade_N']?.toString() || "",
          monthGradeN: x['Month Grade_N']?.toString() || "",
          comment: x['Comment'],
-         avgSellingPrice: x['Avg Selling Price']?.toString() || "",
-         multiplePrice: x['Multiple Price']?.toString() || "",
+         avgSellingPrice: roundToDecimals(safeNumber(x['Avg Selling Price']))?.toString() || "",
+         multiplePrice: roundToDecimals(safeNumber(x['Multiple Price']))?.toString() || "",
       }))
 
       await prisma.monthDataItem.deleteMany()
@@ -203,13 +203,13 @@ export async function savePriceCheckData(dataArray: PriceCheckInvoiceData[]) {
       sellerSkuCode: x["Seller Sku Code"],
       costPrice: safeNumber(x["Cost Price"]),
       concateArticle: x["Concate Article"],
-      totalCost: x["Total Cost"],
-      totalSellingPrice: x["Total Selling Price"],
+      totalCost: roundToDecimals(safeNumber(x["Total Cost"])).toString() || "",
+      totalSellingPrice: roundToDecimals(safeNumber(x["Total Selling Price"])).toString() || "",
       status: x["Status"],
       sellingPriceLt300: x["Selling Price < 300"],
       invoiceCount: x["Invoice Count"],
       discountPercentage: x["Discount %"],
-      multiplePrice: x['Multiple Price']?.toString() || "",
+      multiplePrice: roundToDecimals(safeNumber(x['Multiple Price']))?.toString() || "",
    }));
 
    await prisma.priceCheckData.createMany({ data: formattedData });
@@ -232,6 +232,7 @@ export async function convertPriceCheckData() {
       "Multiple Price": x.multiplePrice,
       "Cost Price": x.costPrice,
       "Channel Name": x.channelName,
+      "Remarks": `${x?.remarks ?? ""}`,
       "Order No": x.orderNo,
       "Invoice No": x.invoiceNo,
       "Shipping Package Code": x.shippingPackageCode,
@@ -283,6 +284,5 @@ export async function convertPriceCheckData() {
       "Selling Price < 300": x.sellingPriceLt300,
       "Invoice Count": x.invoiceCount,
       "Discount %": x.discountPercentage,
-      "Remarks": `${x?.remarks ?? ""}`,
    })) || [];
 }

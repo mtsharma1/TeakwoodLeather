@@ -11,7 +11,7 @@ export async function DashboardTable() {
    const stop_data: any = await priceCheckListData("stop")
    // eslint-disable-next-line @typescript-eslint/no-explicit-any
    const portal_data: any = await categoryPortalData("portal")
-   const STOP_COLS = ["Invoice Created Date", "Multiple Price", "SKU Code", "Total Selling Price"]
+   const STOP_COLS = ["Invoice Created Date", "Multiple Price", "SKU Code", "Total Selling Price", "Channel Name", "Grade"]
 
 
    return (
@@ -27,7 +27,6 @@ export async function DashboardTable() {
                      columnNames={STOP_COLS}
                      filename={"stop"}
                      pageSizeParam={9}
-                     showTools={false}
                   />
                </Suspense>
             </CardContent>
@@ -42,7 +41,6 @@ export async function DashboardTable() {
                      data={portal_data.metrics || []}
                      columnNames={Object.keys(portal_data.metrics[0] || {})}
                      filename={"portal"}
-                     showTools={false}
                   />
 
                </Suspense>

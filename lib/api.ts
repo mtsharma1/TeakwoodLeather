@@ -1,8 +1,10 @@
+import { unstable_noStore } from "next/cache";
 import { CHANNEL_REPORT_API_BODY, ITEM_MASTER_DROPBOX_API_BODY, MONTHLY_REPORT_API_BODY } from "./api-utils"
 
 const BASE_URL = "https://teakwoodindia.unicommerce.com"
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
+   unstable_noStore()
    const accessToken = await getAccessToken()
    const res = await fetch(url, {
       ...options,
