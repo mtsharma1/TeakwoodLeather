@@ -740,7 +740,7 @@ export const OtherColumns: ColumnDef<CategoryData>[] = [
     {
         id: "roh",
         accessorKey: "ROH",
-        header: "ROH",
+        header: "ROS",
     },
     {
         id: "vendorName",

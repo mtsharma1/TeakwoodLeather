@@ -73,7 +73,7 @@ export function transformData(
             "Order Qty": orderQty.toString(),
             "Sale Through": saleThrough.toString(),
             "Total Amount": totalAmount.toString(),
-            "ROH": roundToDecimals(roh),
+            "ROS": roundToDecimals(roh),
             "DOH": roundToDecimals(doh),
             "New SKU Code": `${item["Sku Code"]}_${item.Size}`,
             "Static Grade_N": staticGrade.rank,
