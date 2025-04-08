@@ -11,14 +11,14 @@ export async function DashboardTable() {
    const stop_data: any = await priceCheckListData("stop")
    // eslint-disable-next-line @typescript-eslint/no-explicit-any
    const portal_data: any = await categoryPortalData("portal")
-   const STOP_COLS = ["Invoice Created Date", "Multiple Price", "SKU Code", "Total Selling Price", "Channel Name", "Grade"]
+   const STOP_COLS = ["SKU Code", "Multiple Price", "Channel Name", "Total Selling Price", "Cost Price", "Grade"]
 
 
    return (
       <div className="grid gap-6 md:grid-cols-2">
          <Card className="w-full overflow-hidden">
             <CardHeader className="border-b">
-               <CardTitle className="text-xl md:text-2xl font-bold capitalize">Price Checklist</CardTitle>
+               <CardTitle className="text-xl md:text-2xl font-bold capitalize">Stop Only</CardTitle>
             </CardHeader>
             <CardContent className="p-2 sm:p-4">
                <Suspense fallback={<LoadingSkeleton />}>

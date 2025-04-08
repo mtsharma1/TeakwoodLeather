@@ -179,9 +179,18 @@ export function calc_Count_Amt(data: MonthDataItem[]) {
 }
 
 export function analysis(analysisData: MonthDataItem[], key?: string) {
+    const excludeSubCategoryUnderStock = [
+        "COMBO-2",
+        "COMBOS",
+        "LEATHER MEN AUTOLOCK BELT",
+        "LEATHER MEN REVERSIBLE BELT",
+        "LOGO",
+        "PULLER"
+    ]
+
     const filters = {
         overstock: (item: MonthDataItem) => item.DOH > DOH_THRESHOLDS.OVERSTOCK,
-        understock: (item: MonthDataItem) => item.DOH < DOH_THRESHOLDS.UNDERSTOCK && ['A', 'B'].includes(item["Static Grade"]),
+        understock: (item: MonthDataItem) => item.DOH < DOH_THRESHOLDS.UNDERSTOCK && ['A', 'B'].includes(item["Static Grade"]) && !excludeSubCategoryUnderStock.includes(item['Sub Category']),
         underprice2: (item: MonthDataItem) => item['Multiple Price'] < MULTIPLE_SELLING_PRICE,
         newgrade: (item: MonthDataItem) => item['Static Grade'] === "NEW"
     }
@@ -249,7 +258,7 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         vendorPrice: number,
         vendorName: string,
         totalPrice: number,
-        
+
         sku_: Record<string, string>,
     }>();
 
@@ -322,11 +331,11 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         // Inventory data
         skuData.availableInventorySize[size] = (skuData.availableInventorySize[size] || 0) + availableInventory;
         skuData.availableInventorySizeTotal += availableInventory;
-        
+
         // Purchase data
         skuData.openPurchaseSize[size] = (skuData.openPurchaseSize[size] || 0) + openPurchase;
         skuData.openPurchaseSizeTotal += openPurchase;
-        
+
         // Order data
         skuData.orderQtySize[size] = (skuData.orderQtySize[size] || 0) + orderQty;
         skuData.orderQtySizeTotal += orderQty;
