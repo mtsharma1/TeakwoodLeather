@@ -34,12 +34,16 @@ export const calcStaticGrade = (grade: MonthGradeTypes): GradeResult => ({
 })
 
 export const getSupportData = (subCategory: string, size: string): SupportItem | undefined => {
-    const lookupKey = `${subCategory}_${size}`
+    const lookupKey = `${subCategory}_${size.toUpperCase()}`
     return SUPPORT.find(item => {
         const supportKey = item["Sub Category New"] || item["Sub Category"]
+        // console.log(supportKey === lookupKey || supportKey === subCategory)
         return supportKey === lookupKey || supportKey === subCategory
     })
 }
+
+
+// getSupportData("LEATHER MEN WALLET","os")
 
 
 export const UTILS = {
