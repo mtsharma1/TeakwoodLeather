@@ -2,6 +2,7 @@ import { InputItem, OrderSummaryItem, MonthDataItem, SalesDataItem } from "@/typ
 import { calcMonthGrade, calcStaticGrade, compareGrades, getSupportData, grades, MonthGradeTypes, MULTIPLE_SELLING_PRICE } from "./helper"
 import { categorySizeMap } from "@/components/categories/data-table-filters"
 import { roundToDecimals, safeNumber } from "./utils"
+import prisma from "./prisma"
 
 const CATEGORY_MAPPING: Record<string, string> = {
     "LEATHER WOMEN CASUAL BELT": "LEATHER WOMEN CASUAL BELT",
@@ -123,7 +124,7 @@ const mergeSalesAndInventory = (
 ) => Object.values([...sales, ...inventory].reduce((acc: Record<string, any>, item) =>
     (acc[item.grade] = { ...acc[item.grade], ...item }, acc), {}));
 
-export function calc_Count_Amt(data: MonthDataItem[]) {
+export async function calc_Count_Amt(data: MonthDataItem[]) {
     return {
         graphs: {
             bar: mergeSalesAndInventory(calcSalesGrid(data).rows, calcInventoryMIS(data).rows)
@@ -174,7 +175,12 @@ export function calc_Count_Amt(data: MonthDataItem[]) {
                 // 'Common Order Summary': { count: 0, totalValue: 0 },
                 // 'Order Summary Sheet': { count: 0, totalValue: 0 },
             }
-        )
+        ),
+        unlink_sku_card: await prisma.channelItemReport.aggregate({
+            _sum: {
+                unlink_count: true,
+            },
+        })
     };
 }
 

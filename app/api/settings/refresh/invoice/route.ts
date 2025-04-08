@@ -11,10 +11,12 @@ async function fetchAndSaveInvoiceData() {
   try {
     await prisma.priceCheckData.deleteMany()
     const today = new Date()
+    const isTodayMonday = today.getDay() === 1
     const tomorrow = format(new Date().setDate(today.getDate() + 1), "yyyy-MM-dd")
     const dayBeforeYesterday = format(new Date().setDate(today.getDate() - 1), "yyyy-MM-dd")
+    const dayBeforeYesterday_2 = format(new Date().setDate(today.getDate() - 2), "yyyy-MM-dd")
 
-    const jobResponse = await createInvoiceJob(dayBeforeYesterday, tomorrow)
+    const jobResponse = await createInvoiceJob(isTodayMonday ? dayBeforeYesterday_2 : dayBeforeYesterday, tomorrow)
 
     if (!jobResponse.successful) {
       throw new Error(`Failed to create export job: ${JSON.stringify(jobResponse)}`)
@@ -37,7 +39,7 @@ async function fetchAndSaveInvoiceData() {
 export async function GET() {
   try {
     const result = await fetchAndSaveInvoiceData();
-    
+
     if (!result.success) {
       return NextResponse.json({
         success: false,
@@ -46,7 +48,7 @@ export async function GET() {
         timestamp: new Date().toISOString()
       }, { status: 500 });
     }
-    
+
     return NextResponse.json({
       success: true,
       message: 'Invoice data processed successfully',
@@ -55,8 +57,8 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Failed:', error);
-    return NextResponse.json({ 
-      success: false, 
+    return NextResponse.json({
+      success: false,
       error: error instanceof Error ? error.message : String(error),
       timestamp: new Date().toISOString()
     }, { status: 500 });

@@ -75,7 +75,7 @@ export function InventoryBarChart({ data = [] }: BarChartProps) {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Inventory Analysis</CardTitle>
+        <CardTitle>Inventory Analysis (Month Wise)</CardTitle>
         <CardDescription>Inventory count by grade</CardDescription>
       </CardHeader>
       <CardContent>

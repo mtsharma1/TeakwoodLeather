@@ -75,7 +75,7 @@ export function SalesBarChart({ data = [] }: BarChartProps) {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Sales Analysis</CardTitle>
+        <CardTitle>Sales Analysis (Month Wise)</CardTitle>
         <CardDescription>Sales value by grade</CardDescription>
       </CardHeader>
       <CardContent>

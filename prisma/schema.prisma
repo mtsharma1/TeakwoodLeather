@@ -219,7 +219,7 @@ model User {
 
 model channelItemReport {
   id                     String @id @default(uuid())
-  uniware_sku_code       String @unique @map("Uniware Sku Code")
+  uniware_sku_code       String @unique @map("Uniware Sku Code") // seller sku
   ajio_dropship          Int
   ajio_dropship_suitcase Int
   amazon_in_api          Int
@@ -233,4 +233,5 @@ model channelItemReport {
   tatacliq               Int
   cocoblu                Int
   grand_total            Int
+  unlink_count           Int
 }

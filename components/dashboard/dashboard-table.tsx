@@ -39,6 +39,7 @@ export async function DashboardTable() {
                <Suspense fallback={<LoadingSkeleton />}>
                   <AdvancedInventoryTable
                      data={portal_data.metrics || []}
+                     totalData={portal_data.totals || []}
                      columnNames={Object.keys(portal_data.metrics[0] || {})}
                      filename={"portal"}
                   />

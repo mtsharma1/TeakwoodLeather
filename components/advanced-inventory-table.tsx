@@ -12,7 +12,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -46,12 +46,14 @@ export default function AdvancedInventoryTable({
   filename,
   pageSizeParam = 20,
   showTools = true,
+  totalData = {}
 }: {
   data: { [key: string]: string }[]
   columnNames?: string[]
   filename: string
   pageSizeParam?: number
   showTools?: boolean
+  totalData?: { [key: string]: string }
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -366,6 +368,23 @@ export default function AdvancedInventoryTable({
                   </TableRow>
                 )}
               </TableBody>
+              <TableFooter>
+                {
+                  totalData && Object.keys(totalData).length > 0 && (
+                    <TableRow>
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      {columns.map((column: any) => {
+                        const totalValue = totalData[column.accessorKey as keyof typeof totalData]
+                        return (
+                          <TableCell key={column.id} className="font-semibold text-gray-800">
+                            {totalValue}
+                          </TableCell>
+                        )
+                      })}
+                    </TableRow>
+                  )
+                }
+              </TableFooter>
             </Table>
           </div>
         </div>

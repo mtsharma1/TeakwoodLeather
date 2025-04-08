@@ -7,6 +7,8 @@ import { channelItemReport } from "@prisma/client";
 interface ProductRecord {
   'Channel Name': string;
   'Uniware Sku Code': string;
+  'Status Code': string;
+  'Seller Sku Code': string;
   sellerSku: string;
 }
 
@@ -35,17 +37,20 @@ const processJsonData = (jsonData: ProductRecord[]): OutputData => {
 
   jsonData.forEach(row => {
     const channel = row['Channel Name']?.trim();
-    const sku = row['Uniware Sku Code']?.trim();
+    // const sku = row['Uniware Sku Code']?.trim();
+    const sellerSku = row['Seller Sku Code']?.trim();
+    const statusCode = row['Status Code']?.trim();
 
     if (!ALLOWED_CHANNELS.includes(channel || "")) return
 
     uniqueChannels.add(channel);
 
-    if (!outputData[sku]) {
-      outputData[sku] = {};
+    if (!outputData[sellerSku]) {
+      outputData[sellerSku] = {};
     }
 
-    outputData[sku][channel] = (outputData[sku][channel] || 0) + 1;
+    outputData[sellerSku][channel] = (outputData[sellerSku][channel] || 0) + 1;
+    outputData[sellerSku].unlink_count = (outputData[sellerSku].unlink_count || 0) + (statusCode === "UNLINKED" ? 1 : 0);
   });
 
   return outputData;
@@ -55,7 +60,8 @@ const generateOutputJson = (outputData: OutputData) => {
   const sortedChannels = Array.from(new Set(Object.values(outputData).flatMap(obj => Object.keys(obj)))).sort();
 
   return Object.entries(outputData).map(([sku, channelData]) => {
-    const row: { [key: string]: string | number } = { 'uniware_sku_code': sku };
+    // [09-04-2025] : uniware_sku_code is seller sku code 
+    const row: { [key: string]: string | number } = { 'uniware_sku_code': sku }; 
     let total = 0;
 
     sortedChannels.forEach(channel => {
@@ -65,6 +71,7 @@ const generateOutputJson = (outputData: OutputData) => {
     });
 
     row['grand_total'] = total;
+    row['unlink_count'] = channelData.unlink_count || 0;
     return row;
   });
 };
@@ -102,7 +109,7 @@ export async function GET() {
 
   try {
     const result = await fetchAndChannelReportData();
-    
+
     if (!result.success) {
       return NextResponse.json({
         success: false,
@@ -111,7 +118,7 @@ export async function GET() {
         timestamp: new Date().toISOString()
       }, { status: 500 });
     }
-    
+
     return NextResponse.json({
       success: true,
       message: 'Channel report data processed successfully',

@@ -374,13 +374,13 @@ export const categoryPortalData = cache(async (type: string) => {
     const year = now.getFullYear();
     const month = now.getMonth();
     const todayDate = now.getDate();
+    const isTodayMonday = now.getDay() === 1;
 
     const todayStart = new Date(year, month, todayDate, 0, 0, 0);  // 00:00:00 today
-    const todayEnd = new Date(year, month, todayDate, 11, 30, 0);  // 11:30:00 today
+    const todayEnd = new Date(year, month, todayDate, 23, 59, 59);  // 11:30:00 today
 
-    const yesterdayStart = new Date(year, month, todayDate - 1, 11, 30, 0);  // 11:30:00 yesterday
-    const yesterdayEnd = new Date(year, month, todayDate - 1, 23, 59, 59);   // 23:59:59 yesterday
-
+    const yesterdayStart = new Date(year, month, todayDate - (isTodayMonday ? 2 : 1), 11, 30, 0);  // 11:30:00 yesterday
+    const yesterdayEnd = new Date(year, month, todayDate - (isTodayMonday ? 2 : 1), 23, 59, 59);   // 23:59:59 yesterday
 
     const todayData = filterInvoices(transformedData, todayStart, todayEnd);
     const yesterdayData = filterInvoices(transformedData, yesterdayStart, yesterdayEnd);

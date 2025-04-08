@@ -6,8 +6,7 @@ import Link from "next/link"
 export const dynamic = 'force-dynamic'
 
 export async function DashboardCards() {
-  const { cards } = await analysisDasboard()
-
+  const { cards, unlink_sku_card } = await analysisDasboard()
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {Object.entries(cards).map(([label, data]) => (
@@ -15,6 +14,9 @@ export async function DashboardCards() {
           <AnalysisCard label={label} count={data.count} amount={data.totalValue} />
         </Link>
       ))}
+      <Link key={"Unlink SKU Card"} href={`/channel-report`}>
+        <AnalysisCard label={"Unlink SKU Card"} count={unlink_sku_card._sum.unlink_count || 0} />
+      </Link>
     </div>
   )
 }
@@ -25,8 +27,8 @@ function AnalysisCard({
   amount,
 }: {
   label: string
-  count: number
-  amount: number
+  count?: number
+  amount?: number
 }) {
   return (
     <Card className="transition-all duration-300 ease-in-out transform hover:scale-105">
@@ -35,11 +37,11 @@ function AnalysisCard({
         <BarChart3 className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{count.toLocaleString()}</div>
-        <p className="text-xs text-muted-foreground flex items-center mt-1">
+        <div className="text-2xl font-bold">{count?.toLocaleString()}</div>
+        {amount && <p className="text-xs text-muted-foreground flex items-center mt-1">
           <IndianRupee className="h-3 w-3 mr-1" />
-          {amount.toLocaleString()}
-        </p>
+          {amount?.toLocaleString()}
+        </p>}
       </CardContent>
     </Card>
   )
