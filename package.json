@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "npx primsa db generate && next build",
+    "build": "npx prisma db push && next build",
     "start": "next start",
     "lint": "next lint",
     "cron:build": "next build && tsc --project tsconfig.server.json",
