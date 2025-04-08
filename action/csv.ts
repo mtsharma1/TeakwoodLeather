@@ -219,7 +219,7 @@ export async function fetchMonthlyData() {
             "Sku Code": x.skuCode,
             "Sale Qty": safeNumber(x.saleQty),
             "DOH": safeNumber(x.doh),
-            "ROH": safeNumber(x.roh),
+            "ROS": safeNumber(x.ros),
             "Required Qty": x.requiredQty,
             "Order Qty": x.orderQty,
             "Parent SKU": x.parentSKU,

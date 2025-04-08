@@ -35,7 +35,7 @@ model MonthDataItem {
   totalAmount             String @map("Total Amount")
   skuCodeID               String @map("Sku Code ID")
   daysOfPositiveInventory String @map("Days of positive inventory")
-  roh                     String @map("ROH")
+  ros                     String @map("ROS")
   doh                     String @map("DOH")
   newSkuCode              String @map("New SKU Code")
   staticGradeN            String @map("Static Grade_N")

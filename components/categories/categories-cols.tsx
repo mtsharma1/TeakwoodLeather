@@ -144,8 +144,8 @@ export const MensShoescolumns: ColumnDef<CategoryData>[] = [
         header: "Vendor Name",
     },
     {
-        accessorKey: "roh",
-        header: "ROH",
+        accessorKey: "ros",
+        header: "ROS",
     },
     ...createSizeColumns(categorySizeMap.mensshoes, "sku_"),
 ]
@@ -261,8 +261,8 @@ export const WomensShoescolumns: ColumnDef<CategoryData>[] = [
         header: "Vendor Name",
     },
     {
-        accessorKey: "roh",
-        header: "ROH",
+        accessorKey: "ros",
+        header: "ROS",
     },
     ...createSizeColumns(categorySizeMap.womenshoes, "sku_"),
 ]
@@ -379,8 +379,8 @@ export const KidsShoescolumns: ColumnDef<CategoryData>[] = [
     },
     
     {
-        accessorKey: "roh",
-        header: "ROH",
+        accessorKey: "ros",
+        header: "ROS",
     },
 ...createSizeColumns(categorySizeMap.kidsshoes, "sku_"),
 
@@ -497,8 +497,8 @@ export const Jacketcolumns: ColumnDef<CategoryData>[] = [
         header: "Vendor Name",
     },
     {
-        accessorKey: "roh",
-        header: "ROH",
+        accessorKey: "ros",
+        header: "ROS",
     },
 ...createSizeColumns(categorySizeMap.leatherjackets, "sku_"),
 
@@ -615,8 +615,8 @@ export const Beltcolumns: ColumnDef<CategoryData>[] = [
         header: "Vendor Name",
     },
     {
-        accessorKey: "roh",
-        header: "ROH",
+        accessorKey: "ros",
+        header: "ROS",
     },
 ...createSizeColumns(categorySizeMap.leathermencasualbelt, "sku_"),
 
@@ -738,9 +738,9 @@ export const OtherColumns: ColumnDef<CategoryData>[] = [
         header: "DOH",
     },
     {
-        id: "roh",
-        accessorKey: "ROH",
-        header: "ROH",
+        id: "ros",
+        accessorKey: "ROS",
+        header: "ROS",
     },
     {
         id: "vendorName",

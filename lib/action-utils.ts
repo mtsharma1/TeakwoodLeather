@@ -62,8 +62,8 @@ export function transformData(
 
         const saleThrough = roundToDecimals(safeNumber((saleQty / (availableInventory + saleQty))) * 100)
         const totalAmount = vendorPrice * orderQty
-        const roh = daysPositive ? (saleQty / daysPositive) : 0
-        const doh = roh ? (availableInventory / roh) : 0
+        const ros = daysPositive ? (saleQty / daysPositive) : 0
+        const doh = ros ? (availableInventory / ros) : 0
         const avgSellingPrice = sumSalesQty ? (sumSalesAmount / sumSalesQty) : 0
 
         return {
@@ -73,7 +73,7 @@ export function transformData(
             "Order Qty": orderQty.toString(),
             "Sale Through": saleThrough.toString(),
             "Total Amount": totalAmount.toString(),
-            "ROH": roundToDecimals(roh),
+            "ROS": roundToDecimals(ros),
             "DOH": roundToDecimals(doh),
             "New SKU Code": `${item["Sku Code"]}_${item.Size}`,
             "Static Grade_N": staticGrade.rank,
@@ -229,7 +229,7 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
     const skuMap = new Map<string, {
         sku: string,
         category: string,
-        roh: string,
+        ros: string,
         subCategory: string,
         salesSizes: Record<string, number>,
         totalSaleQty: number,
@@ -278,7 +278,7 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         if (!skuData) {
             skuData = {
                 sku,
-                roh: "",
+                ros: "",
                 category,
                 subCategory,
                 salesSizes: {},
@@ -309,10 +309,10 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         const openPurchase = safeNumber(item['Open Purchase']);
         const orderQty = safeNumber(item['Order Qty']);
         const vendorPrice = safeNumber(item['Vendor Price']);
-        const roh = item.ROH;
+        const ros = item.ROS;
 
-        // ROH
-        skuData.roh = roundToDecimals(roh).toString();
+        // ROS
+        skuData.ros = roundToDecimals(ros).toString();
 
         // Sales data
         skuData.salesSizes[size] = (skuData.salesSizes[size] || 0) + saleQty;

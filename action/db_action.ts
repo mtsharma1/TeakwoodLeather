@@ -91,7 +91,7 @@ export async function saveMonthlyDataOptimally(transformedData: MonthDataItem[])
          totalAmount: roundToDecimals(safeNumber(x['Total Amount'])).toString() || "",
          skuCodeID: x['Sku Code ID '],
          daysOfPositiveInventory: x['Days of positive inventory'],
-         roh: roundToDecimals(safeNumber(x['ROH']))?.toString() || "",
+         ros: roundToDecimals(safeNumber(x['ROS']))?.toString() || "",
          doh: roundToDecimals(safeNumber(x['DOH']))?.toString() || "",
          newSkuCode: x['New SKU Code'],
          staticGradeN: x['Static Grade_N']?.toString() || "",

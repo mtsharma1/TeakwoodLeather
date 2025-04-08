@@ -29,7 +29,7 @@ export interface SalesDataItem {
 }
 
 export interface MonthDataItem extends InputItem {
-    "ROH": number
+    "ROS": number
     "DOH": number
     "Static Grade_N": number
     "Month Grade_N": number
