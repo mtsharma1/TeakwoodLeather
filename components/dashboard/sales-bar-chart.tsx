@@ -16,6 +16,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import Link from "next/link"
 
 type BarChartProps = {
   data?: {
@@ -74,10 +75,12 @@ export function SalesBarChart({ data = [] }: BarChartProps) {
 
   return (
     <Card className="h-full">
-      <CardHeader>
-        <CardTitle>Sales Analysis (Month Wise)</CardTitle>
-        <CardDescription>Sales value by grade</CardDescription>
-      </CardHeader>
+      <Link href={`/monthly-report/analysis/sales-Summary`}>
+        <CardHeader>
+          <CardTitle>Sales Analysis (Month Wise)</CardTitle>
+          <CardDescription>Sales value by grade</CardDescription>
+        </CardHeader>
+      </Link>
       <CardContent>
         <ChartContainer config={chartConfig}>
           <BarChart accessibilityLayer data={chartData} margin={{ top: 20 }}>

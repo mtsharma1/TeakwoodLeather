@@ -17,6 +17,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import Link from "next/link"
 
 type BarChartProps = {
   data?: {
@@ -74,10 +75,12 @@ export function InventoryBarChart({ data = [] }: BarChartProps) {
 
   return (
     <Card className="h-full">
-      <CardHeader>
-        <CardTitle>Inventory Analysis (Month Wise)</CardTitle>
-        <CardDescription>Inventory count by grade</CardDescription>
-      </CardHeader>
+      <Link href={'/monthly-report/analysis/inventory-mis'}>
+        <CardHeader>
+          <CardTitle>Inventory Analysis (Month Wise)</CardTitle>
+          <CardDescription>Inventory count by grade</CardDescription>
+        </CardHeader>
+      </Link>
       <CardContent>
         <ChartContainer config={chartConfig}>
           <BarChart accessibilityLayer data={chartData} margin={{ top: 20 }}>
