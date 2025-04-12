@@ -757,9 +757,16 @@ export const OtherColumns: ColumnDef<CategoryData>[] = [
         cell: ({ row }) => <div className="font-medium">{row.getValue("skuCode")}</div>,
     },
     {
-        id: "newSkuCode",
-        accessorKey: "New SKU Code",
-        header: "New SKU Code",
+        id: "parentSKU",
+        accessorKey: "Parent SKU",
+        header: "Parent SKU",
+        // cell: ({ row }) => <div className="font-medium">{row.getValue("parentSKU")}</div>,
+    },
+    {
+        id: "Size",
+        accessorKey: "Size",
+        header: "Size",
+        // cell: ({ row }) => <div className="font-medium">{row.getValue("parentSKU")}</div>,
     },
     {
         id: "categoryName",
@@ -836,28 +843,28 @@ export const OtherColumns: ColumnDef<CategoryData>[] = [
         header: "Open Purchase",
     },
     { accessorKey: "Required Qty", header: "Required Qty" },
-    { accessorKey: "orderQty", header: "Order Qty" },
-    { accessorKey: "vendorPricet", header: "Vendor Price" },
-    { accessorKey: "Total Amount", header: "Total Amount" },
-    { accessorKey: "Days of positive inventory", header: "Days of positive inventory" },
+    { accessorKey: "Order Qty", header: "Order Qty" },
     {
         id: "saleThrough",
         accessorKey: "Sale Through",
         header: "Sale Through",
+    },
+    { accessorKey: "Vendor Price", header: "Vendor Price" },
+    { accessorKey: "Total Amount", header: "Total Amount" },
+    { accessorKey: "New SKU Code", header: "New SKU Code" },
+    { accessorKey: "Days of positive inventory", header: "Days of positive inventory" },
+    {
+        id: "ros",
+        accessorKey: "ROS",
+        header: "ROS",
     },
     {
         id: "doh",
         accessorKey: "DOH",
         header: "DOH",
     },
-    {
-        id: "ros",
-        accessorKey: "ROS",
-        header: "ROS",
-    },
-    { accessorKey: "New SKU Code", header: "New SKU Code" },
-    { accessorKey: "Static Grade", header: "Static Grade" },
-    { accessorKey: "Month Grade", header: "Month Grade" },
+    // { accessorKey: "Static Grade", header: "Static Grade" },
+    // { accessorKey: "Month Grade", header: "Month Grade" },
     { accessorKey: "Comment", header: "Comment" },
     {
         id: "avgSellingPrice",
@@ -870,7 +877,26 @@ export const OtherColumns: ColumnDef<CategoryData>[] = [
                 currency: "INR",
             }).format(amount)
         },
+    
     },
-    { accessorKey: "Mutiple Price", header: "Mutiple Price" },
+    { 
+        id: 'MultiplePrice',
+        accessorKey: "Multiple Price", 
+        header: "Multiple Price",
+        cell: ({ row }) => {
+            console.log(row.original)
+            console.log(row.getValue("Multiple Price"))
+             return (
+                <div className="font-medium">{row.getValue("Multiple Price")}</div>
+             )
+        },
+
+     },
+    // {
+    //     id: "newSkuCode",
+    //     accessorKey: "New SKU Code",
+    //     header: "New SKU Code",
+    // },
+    
 
 ]

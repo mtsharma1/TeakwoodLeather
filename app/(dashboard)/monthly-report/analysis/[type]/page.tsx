@@ -26,6 +26,7 @@ async function OverStockContent({ type }: { type: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data: any = await analysisData(type)
 
+
   return (
     <div className="space-y-4">
       {(data?.totalSale || data?.totalInventory )&& <div className="grid gap-4 sm:grid-cols-2 p-4">

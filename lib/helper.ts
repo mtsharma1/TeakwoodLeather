@@ -9,6 +9,14 @@ const GRADE_THRESHOLDS = {
 
 export type MonthGradeTypes = "A" | "B" | "C" | "D" | "NEW"
 export const grades: Array<MonthGradeTypes> = ['A', 'B', 'C', 'D', 'NEW'];
+export const excludeSubCategoryUnderStock = [
+    "COMBO-2",
+    "COMBOS",
+    "LEATHER MEN AUTOLOCK BELT",
+    "LEATHER MEN REVERSIBLE BELT",
+    "LOGO",
+    "PULLER"
+]
 
 export const compareGrades = (monthGrade: string, staticGrade: string): string => {
     const monthNum = Number(monthGrade)

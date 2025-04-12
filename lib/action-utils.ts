@@ -1,5 +1,5 @@
 import { InputItem, OrderSummaryItem, MonthDataItem, SalesDataItem } from "@/types/order"
-import { calcMonthGrade, calcStaticGrade, compareGrades, getSupportData, grades, MonthGradeTypes, MULTIPLE_SELLING_PRICE } from "./helper"
+import { calcMonthGrade, calcStaticGrade, compareGrades, excludeSubCategoryUnderStock, getSupportData, grades, MonthGradeTypes, MULTIPLE_SELLING_PRICE } from "./helper"
 import { categorySizeMap } from "@/components/categories/data-table-filters"
 import { roundToDecimals, safeNumber } from "./utils"
 import prisma from "./prisma"
@@ -140,7 +140,7 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
                 }
 
                 // Under Stock
-                if (item.DOH < DOH_THRESHOLDS.UNDERSTOCK) {
+                if (item.DOH < DOH_THRESHOLDS.UNDERSTOCK && ['A', 'B'].includes(item["Static Grade"]) && !excludeSubCategoryUnderStock.includes(item['Sub Category'])) {
                     summary['Under Stock'].count++;
                     summary['Under Stock'].totalValue += value;
                 }
@@ -185,15 +185,6 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
 }
 
 export function analysis(analysisData: MonthDataItem[], key?: string) {
-    const excludeSubCategoryUnderStock = [
-        "COMBO-2",
-        "COMBOS",
-        "LEATHER MEN AUTOLOCK BELT",
-        "LEATHER MEN REVERSIBLE BELT",
-        "LOGO",
-        "PULLER"
-    ]
-
     const filters = {
         overstock: (item: MonthDataItem) => item.DOH > DOH_THRESHOLDS.OVERSTOCK,
         understock: (item: MonthDataItem) => item.DOH < DOH_THRESHOLDS.UNDERSTOCK && ['A', 'B'].includes(item["Static Grade"]) && !excludeSubCategoryUnderStock.includes(item['Sub Category']),
