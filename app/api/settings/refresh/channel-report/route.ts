@@ -12,17 +12,23 @@ interface ProductRecord {
   sellerSku: string;
 }
 
+interface ChannelData {
+  [channel: string]: number;
+}
+
 interface OutputData {
-  [sku: string]: { [channel: string]: number };
+  [sku: string]: ChannelData & {
+    category: string;
+    available_inventory: number;
+    unlink_count: number;
+  };
 }
 
 const ALLOWED_CHANNELS = [
   "AJIO_DROPSHIP",
-  "AJIO_DROPSHIP_suitcase",
   "AMAZON_IN_API",
   "cocoblu",
   "CRED",
-  "CRED-APSIS",
   "FLIPKART",
   "MYNTRAPPMP",
   "NYKAA_COM",
@@ -31,37 +37,75 @@ const ALLOWED_CHANNELS = [
   "TATACLIQ",
 ];
 
-const processJsonData = (jsonData: ProductRecord[]): OutputData => {
+const EXCLUDED_CATEGORY = [
+  'COMBOS',
+  'APSIS COMBO',
+  'TEAKWOOD BUCKLE'
+]
+
+const processJsonData = async (jsonData: ProductRecord[]): Promise<OutputData> => {
   const outputData: OutputData = {};
   const uniqueChannels: Set<string> = new Set();
 
-  jsonData.forEach(row => {
-    const channel = row['Channel Name']?.trim();
-    // const sku = row['Uniware Sku Code']?.trim();
-    const sellerSku = row['Seller Sku Code']?.trim();
-    const statusCode = row['Status Code']?.trim();
+  // Get all unique seller SKUs
+  const skus = new Set(jsonData.map(row => row['Uniware Sku Code']?.trim()).filter(Boolean));
 
-    if (!ALLOWED_CHANNELS.includes(channel || "")) return
+  // Fetch inventory and category data for all SKUs at once
+  const monthlyData = await prisma.monthDataItem.findMany({
+    where: {
+      skuCode: {
+        in: Array.from(skus)
+      }
+    },
+    select: {
+      skuCode: true,
+      categoryName: true,
+      availableInventory: true
+    }
+  });
+
+  // Create a map for quick lookup
+  const skuDataMap = new Map(monthlyData.map(item => [item.skuCode, item]));
+
+  for (const row of jsonData) {
+    const channel = row['Channel Name']?.trim();
+    const sku = row['Uniware Sku Code']?.trim();
+    const sellerSkuCode = row['Seller Sku Code']?.trim();
+
+    if (!ALLOWED_CHANNELS.includes(channel || "")) continue;
 
     uniqueChannels.add(channel);
 
-    if (!outputData[sellerSku]) {
-      outputData[sellerSku] = {};
+    if (!outputData[sku]) {
+      const monthlyItem = skuDataMap.get(sku);
+      if (monthlyItem?.categoryName && EXCLUDED_CATEGORY.includes(monthlyItem?.categoryName)) {
+        continue;
+      }
+      outputData[sku] = {
+        category: monthlyItem?.categoryName || '',  
+        available_inventory: parseInt(monthlyItem?.availableInventory || '0'),
+        unlink_count: 0
+      } as OutputData[string];
     }
 
-    outputData[sellerSku][channel] = (outputData[sellerSku][channel] || 0) + 1;
-    outputData[sellerSku].unlink_count = (outputData[sellerSku].unlink_count || 0) + (statusCode === "UNLINKED" ? 1 : 0);
-  });
+    outputData[sku][channel] = (outputData[sku][channel] || 0) + 1;
+    outputData[sku].unlink_count = (outputData[sku].unlink_count || 0) + (sellerSkuCode === sku ? 1 : 0);
+  }
 
   return outputData;
 };
 
 const generateOutputJson = (outputData: OutputData) => {
-  const sortedChannels = Array.from(new Set(Object.values(outputData).flatMap(obj => Object.keys(obj)))).sort();
+  const sortedChannels = Array.from(new Set(Object.values(outputData).flatMap(obj => Object.keys(obj)))).sort()
+    .filter(key => !['category', 'available_inventory', 'unlink_count'].includes(key));
 
   return Object.entries(outputData).map(([sku, channelData]) => {
     // [09-04-2025] : uniware_sku_code is seller sku code 
-    const row: { [key: string]: string | number } = { 'uniware_sku_code': sku }; 
+    const row: { [key: string]: string | number } = {
+      'uniware_sku_code': sku,
+      'category': channelData.category,
+      'available_inventory': channelData.available_inventory
+    };
     let total = 0;
 
     sortedChannels.forEach(channel => {
@@ -91,7 +135,7 @@ async function fetchAndChannelReportData() {
 
     await prisma.channelItemReport.deleteMany({})
 
-    const processedData = generateOutputJson(processJsonData(rawData))
+    const processedData = generateOutputJson(await processJsonData(rawData))
 
     await prisma.channelItemReport.createMany({
       data: processedData as channelItemReport[],
