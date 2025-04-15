@@ -220,11 +220,11 @@ model User {
 model channelItemReport {
   id                     String @id @default(uuid())
   uniware_sku_code       String @unique @map("Uniware Sku Code") // seller sku
+  category               String @map("Category")
+  available_inventory    Int    @default(0) @map("Available Inventory")
   ajio_dropship          Int
-  ajio_dropship_suitcase Int
   amazon_in_api          Int
   cred                   Int
-  cred_apsis             Int
   flipkart               Int
   myntrappmp             Int
   nykaa_com              Int
