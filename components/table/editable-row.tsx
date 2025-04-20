@@ -27,7 +27,7 @@ interface ImageCarouselProps {
   sku: string
 }
 
-const ImageCarousel = ({ sku }: ImageCarouselProps) => {
+export const ImageCarousel = ({ sku }: ImageCarouselProps) => {
   const [images, setImages] = useState<string[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)

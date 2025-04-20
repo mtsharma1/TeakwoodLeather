@@ -28,7 +28,6 @@ export default async function PortalPage() {
 async function PortalContent() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data: any = await getCachedCategoryPortal()
-
   return (
     <div className="space-y-4">
       {/* <div className="grid gap-4 sm:grid-cols-2 p-4">
@@ -40,7 +39,7 @@ async function PortalContent() {
         )}
       </div> */}
       <div className="relative w-full overflow-hidden">
-        <AdvancedInventoryTable data={data.metrics|| []} columnNames={Object.keys(data.metrics[0] || {})} filename={"portal"}/>
+        <AdvancedInventoryTable data={data.metrics|| []} columnNames={Object.keys(data.metrics[0] || {})} filename={"portal"} totalData={data.totals}/>
       </div>
     </div>
   )

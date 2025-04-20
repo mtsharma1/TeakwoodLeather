@@ -89,7 +89,7 @@ const processJsonData = async (jsonData: ProductRecord[]): Promise<OutputData> =
     }
 
     outputData[sku][channel] = (outputData[sku][channel] || 0) + 1;
-    outputData[sku].unlink_count = (outputData[sku].unlink_count || 0) + (sellerSkuCode === sku ? 1 : 0);
+    outputData[sku].unlink_count = (outputData[sku].unlink_count || 0) + (sellerSkuCode === "" ? 1 : 0);
   }
 
   return outputData;

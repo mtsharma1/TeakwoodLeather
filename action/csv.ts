@@ -365,6 +365,18 @@ export async function priceCheckListData(type: string) {
     }
 }
 
+const invoiceHeaders: string[] = [
+    "Order No", "Invoice No", "Shipping Package Code", "Shipping Package Status Code",
+    "Invoice Created Date", "Channel Invoice Created Date", "EWayBill No", "EWayBill Date",
+    "EWayBill Valid Till", "Customer Name", "SKU Code", "SKU Name", "Quantity", "Invoice Tax",
+    "Invoice Total", "Invoice Cancelled", "HSN Code", "GST Tax Type Code", "Tax Type Code",
+    "CGST", "IGST", "SGST", "UTGST", "VAT", "CST", "Additional Tax", "Additional Tax Percentage",
+    "Tax Percentage", "CESS", "CGST Rate", "IGST Rate", "SGST Rate", "UTGST Rate", "CESS Rate",
+    "Shipping Charge", "COD Charge", "TCS Amount", "Channel Name", "Uniware Invoice Code",
+    "Adjustment In Selling Price", "Adjustment In Discount", "Grade", "MRP", "Color", "Brand",
+    "Size", "Seller Sku Code", "Cost Price"
+];
+
 /**************Category and Portal**************/
 export const categoryPortalData = cache(async (type: string) => {
     const transformedData = await convertPriceCheckData()
@@ -385,7 +397,7 @@ export const categoryPortalData = cache(async (type: string) => {
     const todayData = filterInvoices(transformedData, todayStart, todayEnd);
     const yesterdayData = filterInvoices(transformedData, yesterdayStart, yesterdayEnd);
 
-    if (type === "rawdata") return transformedData
+    if (type === "rawdata") return { rows: transformedData, cols: invoiceHeaders }
     if (type === "yesterday") return yesterdayData
     if (type === "today") return todayData
     if (type === "portal") return calculatePortalMetrics(yesterdayData, todayData)

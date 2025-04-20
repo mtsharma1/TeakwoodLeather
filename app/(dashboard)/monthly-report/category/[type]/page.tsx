@@ -10,7 +10,6 @@ export default async function Category({ params }: { params: { type: string } })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data: any = await categoryData(key)
 
-  console.log(data[0])
   return (
     <Card className="w-full overflow-hidden">
       <CardHeader className="border-b">

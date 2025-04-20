@@ -78,7 +78,7 @@ export async function saveMonthlyDataOptimally(transformedData: MonthDataItem[])
          categoryName: x['Category Name'],
          subCategory: x['Sub Category'],
          saleQty: x['Sale Qty']?.toString() || "",
-         saleAmount: roundToDecimals(safeNumber(x['Sale Amount'])).toString() || "",
+         saleAmount: roundToDecimals(safeNumber(x['Sale Amount']))?.toString() || "",
          vendorName: x['Vendor Name'],
          staticGrade: x['Static Grade'],
          monthGrade: x['Month Grade'],
@@ -88,7 +88,7 @@ export async function saveMonthlyDataOptimally(transformedData: MonthDataItem[])
          orderQty: x['Order Qty'],
          saleThrough: x['Sale Through'],
          vendorPrice: x['Vendor Price'],
-         totalAmount: roundToDecimals(safeNumber(x['Total Amount'])).toString() || "",
+         totalAmount: roundToDecimals(safeNumber(x['Total Amount']))?.toString() || "",
          skuCodeID: x['Sku Code ID '],
          daysOfPositiveInventory: x['Days of positive inventory'],
          ros: roundToDecimals(safeNumber(x['ROS']))?.toString() || "",
@@ -222,7 +222,7 @@ export async function convertPriceCheckData() {
             multiplePrice: 'desc',
          },
       ],
-      // take: 600,
+      take: 600,
    });
    return priceCheckData.map((x) => ({
       "id": x.id,
@@ -232,7 +232,6 @@ export async function convertPriceCheckData() {
       "Multiple Price": x.multiplePrice,
       "Cost Price": x.costPrice,
       "Channel Name": x.channelName,
-      "Remarks": `${x?.remarks ?? ""}`,
       "Order No": x.orderNo,
       "Invoice No": x.invoiceNo,
       "Shipping Package Code": x.shippingPackageCode,
@@ -284,5 +283,6 @@ export async function convertPriceCheckData() {
       "Selling Price < 300": x.sellingPriceLt300,
       "Invoice Count": x.invoiceCount,
       "Discount %": x.discountPercentage,
+      "Remarks": `${x?.remarks ?? ""}`,
    })) || [];
 }

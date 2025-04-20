@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ChevronDown, DownloadIcon, PinIcon, Search, X } from "lucide-react"
+import { ChevronDown, DownloadIcon, ImageIcon, PinIcon, Search, X } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { enhancedMultiSelectFilter, getUniqueColumnValues } from "./data-table-filters"
@@ -27,6 +27,8 @@ import { ArrowUpDown } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "../ui/pagination"
 import streamSaver from 'streamsaver';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip"
+import { ImageCarousel } from "../table/editable-row"
 
 const getBgColor = (columnId: string, isHeader: boolean = false): string => {
   if (columnId.startsWith('salesSizes_') || columnId === 'Sales Sizes' || columnId === 'totalSaleQty') {
@@ -363,7 +365,7 @@ export default function CategoryDataTable({
         <div className="relative w-full overflow-auto">
           <Table className="min-w-[1200px]">
             <TableHeader>
-             {filename !== 'othercategory' && <TableRow>
+              {filename !== 'othercategory' && <TableRow>
                 {groupedColumns.map((group, index) => (
                   <TableHead
                     key={index}
@@ -421,12 +423,32 @@ export default function CategoryDataTable({
                   <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
                     {row.getVisibleCells().map((cell, index) => {
                       const isPinned = pinnedColumns.includes(cell.column.id)
+                      const isSkuColumn = cell.column.id.toLowerCase().includes('sku')
+
                       return (
                         <TableCell
-                          className={`whitespace-nowrap  ${index === 0 && isPinned ? "sticky left-0 z-10 bg-blue-50 shadow-lg" : ""} ${getBgColor(cell.column.id)}`}
+                          className={`whitespace-nowrap ${index === 0 && isPinned ? "sticky left-0 z-10 bg-blue-50 shadow-lg" : ""} ${getBgColor(cell.column.id)}`}
                           key={cell.id}
                         >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {isSkuColumn ? (
+                            <div className="flex items-center gap-2">
+                              <span>{cell.getValue() as string}</span>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button className="p-1 rounded-full hover:bg-gray-100">
+                                      <ImageIcon className="h-4 w-4 text-blue-500" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right" sideOffset={5} className="p-0 border-0">
+                                    <ImageCarousel sku={cell.getValue() as string} />
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
+                          ) : (
+                            flexRender(cell.column.columnDef.cell, cell.getContext())
+                          )}
                         </TableCell>
                       )
                     })}

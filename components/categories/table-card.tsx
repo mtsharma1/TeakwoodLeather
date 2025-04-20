@@ -20,7 +20,6 @@ export default function TableCard({ data }: { data: CategoryData[] }) {
   } as const;
 
   const columns = CATEGORY_COLUMNS[key] || [];
-  console.log(data[0])
 
   return (
     <Suspense fallback={<>Loading....</>}>

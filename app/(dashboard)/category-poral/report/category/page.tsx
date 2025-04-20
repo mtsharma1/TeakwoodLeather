@@ -40,7 +40,7 @@ async function PortalContent() {
         )}
       </div> */}
       <div className="relative w-full overflow-hidden">
-        <AdvancedInventoryTable data={data.metrics|| []} columnNames={Object.keys(data.metrics[0] || {})} filename={"category"} />
+        <AdvancedInventoryTable data={data.metrics|| []} columnNames={Object.keys(data.metrics[0] || {})} filename={"category"} totalData={data.totals} />
       </div>
     </div>
   )

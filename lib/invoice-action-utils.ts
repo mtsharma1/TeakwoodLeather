@@ -47,7 +47,9 @@ export function transformInvoiceData(INPUT: InvoiceData[]): PriceCheckInvoiceDat
         aggregated.invoiceTotal += invoiceTotal;
     }
 
-    return INPUT.map((item) => {
+    return INPUT
+    .filter((item) => item["SKU Name"] !== "MEN BUCKLE")
+    .map((item) => {
         const invoiceTotal = safeNumber(item["Invoice Total"]);
         const invoiceNo = item["Invoice No"];
         const aggregated = aggregatedData.get(invoiceNo)!;
