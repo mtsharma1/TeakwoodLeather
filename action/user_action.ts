@@ -77,9 +77,13 @@ export async function updateMonthDataItem(
 
 
 export async function getProductImageBySKU(sku: string) {
-  return await prisma.productWithImage.findUnique({
+  return await prisma.productWithImage.findFirst({
     where: {
-      product_code: sku
+      OR: [
+
+        { parent_sku: sku },
+        { product_code: sku }
+      ]
     },
     select: {
       image_urls: true

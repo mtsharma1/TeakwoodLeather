@@ -441,7 +441,7 @@ export default function CategoryDataTable({
                                     </button>
                                   </TooltipTrigger>
                                   <TooltipContent side="right" sideOffset={5} className="p-0 border-0">
-                                    <ImageCarousel sku={cell.getValue() as string} />
+                                    <ImageCarousel sku={row.original.sku as string} />
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
