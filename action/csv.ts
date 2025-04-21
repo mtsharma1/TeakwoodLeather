@@ -333,8 +333,11 @@ export async function priceCheckListData(type: string) {
         const month = now.getMonth();
         const todayDate = now.getDate();
 
-        const yesterdayStart = new Date(year, month, todayDate - 1, 11, 30, 1);  // 11:30:00 yesterday
-        const yesterdayEnd = new Date(year, month, todayDate - 1, 23, 59, 59);   // 23:59:59 yesterday
+
+        const today = new Date()
+        const isTodayMonday = today.getDay() === 1
+        const yesterdayStart = new Date(year, month, todayDate - (isTodayMonday ? 2 : 1), 11, 30, 1);  // 11:30:00 yesterday
+        const yesterdayEnd = new Date(year, month, todayDate - (isTodayMonday ? 2 : 1), 23, 59, 59);   // 23:59:59 yesterday
 
         const data = await convertPriceCheckData()
 

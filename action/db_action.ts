@@ -222,7 +222,7 @@ export async function convertPriceCheckData() {
             multiplePrice: 'desc',
          },
       ],
-      take: 600,
+      // take: 600,
    });
    return priceCheckData.map((x) => ({
       "id": x.id,
