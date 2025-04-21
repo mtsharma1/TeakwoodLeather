@@ -322,49 +322,47 @@ export async function categoryData(key: keyof typeof categorySizeMap) {
 
 export async function priceCheckListData(type: string) {
     try {
-        // if (invoiceCache.isEmpty()) {
-        //     await fetchInvoiceData(0, 50)
-        // }
+        // Get current date and time in India timezone (UTC+5:30)
+        const indiaOptions = { timeZone: 'Asia/Kolkata' };
+        const indiaNow = new Date(new Date().toLocaleString('en-US', indiaOptions));
 
-        // const rawData = invoiceCache.getData()
-        // const data = transformInvoiceData(rawData)
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth();
-        const todayDate = now.getDate();
+        const year = indiaNow.getFullYear();
+        const month = indiaNow.getMonth();
+        const todayDate = indiaNow.getDate();
 
+        // Check if today is Monday in India timezone
+        const isTodayMonday = indiaNow.getDay() === 1;
 
-        const today = new Date()
-        const isTodayMonday = today.getDay() === 1
-        const yesterdayStart = new Date(year, month, todayDate - (isTodayMonday ? 2 : 1), 11, 30, 1);  // 11:30:00 yesterday
-        const yesterdayEnd = new Date(year, month, todayDate - (isTodayMonday ? 2 : 1), 23, 59, 59);   // 23:59:59 yesterday
+        // Set yesterday's start and end times (if Monday, use Saturday data)
+        const daysToSubtract = isTodayMonday ? 2 : 1;
 
-        const data = await convertPriceCheckData()
+        // Create dates in India timezone
+        const yesterdayStart = new Date(year, month, todayDate - daysToSubtract, 11, 30, 1);
+        const yesterdayEnd = new Date(year, month, todayDate - daysToSubtract, 23, 59, 59);
 
+        const data = await convertPriceCheckData();
+
+        console.log("Date range:", yesterdayStart, yesterdayEnd);
 
         const yesterdayData = filterInvoices(data, yesterdayStart, yesterdayEnd);
 
         switch (type) {
             case "overview":
-                return yesterdayData
-
+                return yesterdayData;
             case "analysis":
-                return invoiceGradeAnalysis(yesterdayData)
-
+                return invoiceGradeAnalysis(yesterdayData);
             case "stop":
-                return yesterdayData.filter(({ Status }) => Status?.toUpperCase() === "STOP")
-
+                return yesterdayData.filter(({ Status }) => Status?.toUpperCase() === "STOP");
             case "under300":
-                return yesterdayData.filter((item) => safeNumber(item['Total Selling Price']) < 300)
+                return yesterdayData.filter((item) => safeNumber(item['Total Selling Price']) < 300);
             case "check":
-                return yesterdayData.filter((item) => safeNumber(item['Total Selling Price']) > 300)
-
+                return yesterdayData.filter((item) => safeNumber(item['Total Selling Price']) > 300);
             default:
-                throw new Error("Invalid request type")
+                throw new Error("Invalid request type");
         }
     } catch (error) {
-        console.error(error)
-        throw new Error("Failed to analyze data")
+        console.error(error);
+        throw new Error("Failed to analyze data");
     }
 }
 
