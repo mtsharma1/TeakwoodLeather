@@ -131,18 +131,20 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
         },
         cards: data.reduce(
             (summary, item) => {
-                const value = roundToDecimals(safeNumber(item["Total Amount"]));
+                // const value = roundToDecimals(safeNumber(item["Total Amount"]));
+                const vendorPrice = roundToDecimals(safeNumber(item["Vendor Price"]));
+                const aIv = roundToDecimals(safeNumber(item["Available Inventory"]));
 
                 // Over Stock
                 if (item.DOH > DOH_THRESHOLDS.OVERSTOCK) {
                     summary["Over Stock"].count++;
-                    summary["Over Stock"].totalValue += value;
+                    summary["Over Stock"].totalValue += (vendorPrice * aIv);
                 }
 
                 // Under Stock
                 if (item.DOH < DOH_THRESHOLDS.UNDERSTOCK && ['A', 'B'].includes(item["Static Grade"]) && !excludeSubCategoryUnderStock.includes(item['Sub Category'])) {
                     summary['Under Stock'].count++;
-                    summary['Under Stock'].totalValue += value;
+                    summary['Under Stock'].totalValue += (vendorPrice * aIv);
                 }
 
                 // Under Price 2
