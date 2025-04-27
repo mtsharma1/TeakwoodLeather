@@ -16,7 +16,11 @@ export const excludeSubCategoryUnderStock = [
     "LEATHER MEN REVERSIBLE BELT",
     "LOGO",
     "PULLER"
-]
+] 
+
+export const excludeSubCategoryOverStock = [
+    "Men Buckle"
+] 
 
 export const compareGrades = (monthGrade: string, staticGrade: string): string => {
     const monthNum = Number(monthGrade)
