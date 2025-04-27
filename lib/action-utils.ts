@@ -1,5 +1,5 @@
 import { InputItem, OrderSummaryItem, MonthDataItem, SalesDataItem } from "@/types/order"
-import { calcMonthGrade, calcStaticGrade, compareGrades, excludeSubCategoryUnderStock, getSupportData, grades, MonthGradeTypes, MULTIPLE_SELLING_PRICE } from "./helper"
+import { calcMonthGrade, calcStaticGrade, compareGrades, excludeSubCategoryOverStock, excludeSubCategoryUnderStock, getSupportData, grades, MonthGradeTypes, MULTIPLE_SELLING_PRICE } from "./helper"
 import { categorySizeMap } from "@/components/categories/data-table-filters"
 import { roundToDecimals, safeNumber } from "./utils"
 import prisma from "./prisma"
@@ -188,7 +188,7 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
 
 export function analysis(analysisData: MonthDataItem[], key?: string) {
     const filters = {
-        overstock: (item: MonthDataItem) => item.DOH > DOH_THRESHOLDS.OVERSTOCK,
+        overstock: (item: MonthDataItem) => item.DOH > DOH_THRESHOLDS.OVERSTOCK && !excludeSubCategoryOverStock.includes(item['Sub Category']),
         understock: (item: MonthDataItem) => item.DOH < DOH_THRESHOLDS.UNDERSTOCK && ['A', 'B'].includes(item["Static Grade"]) && !excludeSubCategoryUnderStock.includes(item['Sub Category']),
         underprice2: (item: MonthDataItem) => item['Multiple Price'] < MULTIPLE_SELLING_PRICE,
         newgrade: (item: MonthDataItem) => item['Static Grade'] === "NEW"
@@ -228,7 +228,7 @@ export function orderCategory(analysisData: MonthDataItem[], key: keyof typeof c
         "leatherjackets": ["LEATHER JACKETS"],
         "leathermencasualbelt": ["LEATHER MEN CASUAL BELT"],
         // "othercategory": ["PU MEN SHOES", "LEATHER MEN SHOES", "LEATHER WOMEN SHOES", "PU WOMEN SHOES", "LEATHER KID SHOES", "LEATHER JACKETS", "LEATHER MEN CASUAL BELT"],
-        "othercategory": ["SHOES", "LEATHER WOMEN SHOES", 'LEATHER SHOES', 'PU SHOES', 'LEATHER MEN SHOES', 'KIDS SHOE', 'LEATHER JACKETS', 'LEATHER MEN CASUAL BELT', 'LEATHER STRAP', 'LEATHER BELTS', 'BUCKLE'],
+        "othercategory": ["SHOES", "LEATHER WOMEN SHOES", 'LEATHER SHOES', 'PU SHOES', 'LEATHER MEN SHOES', 'KIDS SHOE', 'LEATHER JACKETS', 'LEATHER MEN CASUAL BELT', 'LEATHER BELTS', 'BUCKLE'],
     }
 
     const categoryConfig = new Map(Object.entries(categoryDisplay));
