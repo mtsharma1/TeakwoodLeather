@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/pagination"
 import { ExcelDownloader } from "../excel-downloader"
 import { EditableRow } from "./editable-row"
+import { List, AutoSizer } from "react-virtualized" // Import react-virtualized components
 
 const multiSelectFilter = (row: { getValue: (colName: string) => string }, columnId: string, filterValue: string[]) => {
   if (!filterValue.length) return true
@@ -189,31 +190,23 @@ export default function AdvancedInventoryTable({
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-[200px] p-0" align="end">
-                              <ScrollArea className="h-72 p-2">
+                              <div className="p-2">
                                 <Input
                                   placeholder={`Search ${column.id}...`}
                                   value={(column.getFilterValue() as string) ?? ""}
                                   onChange={(event) => column.setFilterValue(event.target.value)}
-                                  className="max-w-sm mb-2"
+                                  className="mb-2"
                                 />
-                                {Array.from(
-                                  new Set(dataWithIds.map((item) => String(item[column.id as keyof typeof item]))),
-                                ).map((value) => (
-                                  <div key={value} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      checked={activeFilters[column.id]?.includes(value)}
-                                      onCheckedChange={(checked) => {
-                                        if (checked) {
-                                          handleFilterChange(column.id, value)
-                                        } else {
-                                          removeFilter(column.id, value)
-                                        }
-                                      }}
-                                    />
-                                    <label className="text-sm">{value}</label>
-                                  </div>
-                                ))}
-                              </ScrollArea>
+                                <div style={{ height: "200px" }}>
+                                  <VirtualizedFilterList
+                                    columnId={column.id}
+                                    data={dataWithIds}
+                                    activeFilters={activeFilters}
+                                    handleFilterChange={handleFilterChange}
+                                    removeFilter={removeFilter}
+                                  />
+                                </div>
+                              </div>
                             </PopoverContent>
                           </Popover>
                         )
@@ -319,10 +312,11 @@ export default function AdvancedInventoryTable({
                         </TableHead>
                       )
                     })}
-                    {/* Add header for edit column */}
-                  {isEditing &&  <TableHead className="w-[100px] text-ellipsis text-nowrap whitespace-nowrap">
-                      Actions
-                    </TableHead>}
+                    {isEditing && (
+                      <TableHead className="w-[100px] text-ellipsis text-nowrap whitespace-nowrap">
+                        Actions
+                      </TableHead>
+                    )}
                   </TableRow>
                 ))}
               </TableHeader>
@@ -332,10 +326,8 @@ export default function AdvancedInventoryTable({
                     const firstColumnId = table.getHeaderGroups()[0].headers[0].column.id
                     const isPinned = pinnedColumns.includes(firstColumnId)
 
-                    // Get column IDs in the current order
                     const orderedColumnIds = table.getVisibleLeafColumns().map(col => col.id)
 
-                    // Pass the row data to EditableRow component
                     return (
                       <EditableRow
                         key={row.id}
@@ -474,6 +466,64 @@ export default function AdvancedInventoryTable({
         </PaginationContent>
       </Pagination>
     </div>
+  )
+}
+
+// New component for virtualized filter list using react-virtualized
+function VirtualizedFilterList({
+  columnId,
+  data,
+  activeFilters,
+  handleFilterChange,
+  removeFilter,
+}: {
+  columnId: string
+  data: { [key: string]: string | number }[]
+  activeFilters: Record<string, string[]>
+  handleFilterChange: (columnId: string, filterValue: string) => void
+  removeFilter: (columnId: string, filterValue: string) => void
+}) {
+  // Get unique values for the column
+  const uniqueValues = React.useMemo(
+    () => Array.from(new Set(data.map((item) => String(item[columnId as keyof typeof item])))).sort(),
+    [data, columnId]
+  )
+
+  // Row renderer for the List component
+  const rowRenderer = ({ index, key, style }: { index: number; key: string; style: React.CSSProperties }) => {
+    const value = uniqueValues[index]
+    return (
+      <div key={key} style={{ ...style, padding: "4px 8px" }}>
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            checked={activeFilters[columnId]?.includes(value)}
+            onCheckedChange={(checked) => {
+              if (checked) {
+                handleFilterChange(columnId, value)
+              } else {
+                removeFilter(columnId, value)
+              }
+            }}
+          />
+          <label className="text-sm">{value}</label>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <AutoSizer>
+      {({ height, width }) => (
+        <List
+          height={height}
+          width={width}
+          rowCount={uniqueValues.length}
+          rowHeight={32} // Adjust based on your item height
+          rowRenderer={rowRenderer}
+          overscanRowCount={5} // Number of rows to render outside the visible area
+        />
+      )}
+    </AutoSizer>
   )
 }
 

@@ -342,8 +342,6 @@ export async function priceCheckListData(type: string) {
 
         const data = await convertPriceCheckData();
 
-        console.log("Date range:", yesterdayStart, yesterdayEnd);
-
         const yesterdayData = filterInvoices(data, yesterdayStart, yesterdayEnd);
 
         switch (type) {
