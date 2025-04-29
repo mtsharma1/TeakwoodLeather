@@ -21,14 +21,29 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ChevronDown, DownloadIcon, ImageIcon, PinIcon, Search, X } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { enhancedMultiSelectFilter, getUniqueColumnValues } from "./data-table-filters"
+import { getUniqueColumnValues } from "./data-table-filters" // Removed enhancedMultiSelectFilter import
 import type { CategoryData } from "./categories-cols"
 import { ArrowUpDown } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "../ui/pagination"
-import streamSaver from 'streamsaver';
+import streamSaver from 'streamsaver'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip"
 import { ImageCarousel } from "../table/editable-row"
+import { List, AutoSizer } from "react-virtualized"
+import "react-virtualized/styles.css"
+
+// Define enhancedMultiSelectFilter for exact matches
+const enhancedMultiSelectFilter = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  row: { getValue: (colName: string) => any },
+  columnId: string,
+  filterValue: string[]
+): boolean => {
+  if (!filterValue || filterValue.length === 0) return true;
+  const cellValue = String(row.getValue(columnId)); // Convert to string for exact match
+  console.log(cellValue, filterValue)
+  return filterValue.includes(cellValue);
+};
 
 const getBgColor = (columnId: string, isHeader: boolean = false): string => {
   if (columnId.startsWith('salesSizes_') || columnId === 'Sales Sizes' || columnId === 'totalSaleQty') {
@@ -47,12 +62,14 @@ export default function CategoryDataTable({
   data = [],
   columns = [],
   groupLength,
-  filename
+  filename,
+  filterRowHeight = 32,
 }: {
   data: CategoryData[]
   columns: ColumnDef<CategoryData>[]
   groupLength: number
   filename: string
+  filterRowHeight?: number
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -99,11 +116,11 @@ export default function CategoryDataTable({
         const currentValues = updatedFilters[columnFilterIndex].value as string[]
         updatedFilters[columnFilterIndex] = {
           id: columnId,
-          value: [...currentValues, filterValue],
+          value: [...currentValues, String(filterValue)], // Ensure string
         }
         return updatedFilters
       } else {
-        return [...prev, { id: columnId, value: [filterValue] }]
+        return [...prev, { id: columnId, value: [String(filterValue)] }]
       }
     })
   }, [])
@@ -116,7 +133,7 @@ export default function CategoryDataTable({
         const currentValues = updatedFilters[columnFilterIndex].value as string[]
         updatedFilters[columnFilterIndex] = {
           id: columnId,
-          value: currentValues.filter((value) => value !== filterValue),
+          value: currentValues.filter((value) => value !== String(filterValue)),
         }
         return updatedFilters.filter((filter) => (filter.value as string[]).length > 0)
       }
@@ -154,19 +171,7 @@ export default function CategoryDataTable({
     { title: "Order Qty", span: groupLength + 1, color: "text-medium bg-orange-100" },
   ]
 
-  // const formatCSVData = table.getCoreRowModel().rows.map(item=>({
-  //   x: item.
-  // }))
-  // console.log(formatCSVData[0])
-
   const downloadCSV = async (selectedOnly: boolean = false) => {
-    // Setup WritableStream for streaming
-    // const stream = new WritableStream({
-    //   async write(chunk) {
-    //     await new Blob([chunk]).stream().pipeTo(streamWriter);
-    //   }
-    // });
-
     const fileStream = streamSaver.createWriteStream(`${filename}_${new Date().toISOString().split('T')[0]}.csv`);
     const streamWriter = fileStream.getWriter();
 
@@ -248,7 +253,6 @@ export default function CategoryDataTable({
                       .getAllColumns()
                       .filter((column) => column.getCanFilter())
                       .map((column) => {
-                        const uniqueValues = getUniqueColumnValues(data, column.id)
                         const displayName = column.id
 
                         return (
@@ -260,23 +264,25 @@ export default function CategoryDataTable({
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-[200px] p-0" align="end">
-                              <ScrollArea className="h-72 p-2">
-                                {uniqueValues.map((value) => (
-                                  <div key={value} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      checked={(column.getFilterValue() as string[])?.includes(value)}
-                                      onCheckedChange={(checked) => {
-                                        if (checked) {
-                                          handleFilterChange(column.id, value)
-                                        } else {
-                                          removeFilter(column.id, value)
-                                        }
-                                      }}
-                                    />
-                                    <label className="text-sm">{value}</label>
-                                  </div>
-                                ))}
-                              </ScrollArea>
+                              <div className="p-2">
+                                <Input
+                                  placeholder={`Search ${column.id}...`}
+                                  value={(column.getFilterValue() as string) ?? ""}
+                                  onChange={(event) => column.setFilterValue(event.target.value)}
+                                  className="mb-2"
+                                />
+                                <VirtualizedFilterList
+                                  columnId={column.id}
+                                  data={data}
+                                  activeFilters={columnFilters.reduce((acc, filter) => ({
+                                    ...acc,
+                                    [filter.id]: filter.value as string[],
+                                  }), {})}
+                                  handleFilterChange={handleFilterChange}
+                                  removeFilter={removeFilter}
+                                  rowHeight={filterRowHeight}
+                                />
+                              </div>
                             </PopoverContent>
                           </Popover>
                         )
@@ -307,42 +313,12 @@ export default function CategoryDataTable({
               ))}
             </SelectContent>
           </Select>
-          {/* <CsvDownloader filename={"filename"} datas={formatCSVData} columns={table.getAllFlatColumns().map(x => ({ id: x.id, displayName: x.id.toUpperCase() }))}> */}
           <Button size={'icon'} onClick={() => downloadCSV()}>
             <DownloadIcon size={18} />
           </Button>
-          {/* </CsvDownloader> */}
         </div>
       </div>
-      {/* Col visibility */}
-      {/* <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu> */}
 
-      {/* Active filters display */}
       <div className="flex flex-wrap gap-2">
         {columnFilters.map((filter) =>
           (filter.value as string[]).map((filterValue) => (
@@ -360,7 +336,6 @@ export default function CategoryDataTable({
         )}
       </div>
 
-      {/* Table */}
       <div className="rounded-lg border">
         <div className="relative w-full overflow-auto">
           <Table className="min-w-[1200px]">
@@ -480,7 +455,6 @@ export default function CategoryDataTable({
           </PaginationItem>
           {table.getPageCount() > 0 && (
             <>
-              {/* First Page */}
               <PaginationItem>
                 <PaginationLink
                   href="#"
@@ -494,14 +468,12 @@ export default function CategoryDataTable({
                 </PaginationLink>
               </PaginationItem>
 
-              {/* Show ellipsis if there are many pages before current */}
               {table.getState().pagination.pageIndex > 2 && (
                 <PaginationItem>
                   <PaginationEllipsis />
                 </PaginationItem>
               )}
 
-              {/* Current page and surrounding pages */}
               {table.getState().pagination.pageIndex > 1 && (
                 <PaginationItem>
                   <PaginationLink
@@ -546,14 +518,12 @@ export default function CategoryDataTable({
                 </PaginationItem>
               )}
 
-              {/* Show ellipsis if there are many pages after current */}
               {table.getState().pagination.pageIndex < table.getPageCount() - 3 && (
                 <PaginationItem>
                   <PaginationEllipsis />
                 </PaginationItem>
               )}
 
-              {/* Last Page */}
               {table.getPageCount() > 1 && (
                 <PaginationItem>
                   <PaginationLink
@@ -583,6 +553,70 @@ export default function CategoryDataTable({
           </PaginationItem>
         </PaginationContent>
       </Pagination>
+    </div>
+  )
+}
+
+// VirtualizedFilterList component for column filters
+function VirtualizedFilterList({
+  columnId,
+  data,
+  activeFilters,
+  handleFilterChange,
+  removeFilter,
+  rowHeight = 32,
+}: {
+  columnId: string
+  data: CategoryData[]
+  activeFilters: Record<string, string[]>
+  handleFilterChange: (columnId: string, filterValue: string) => void
+  removeFilter: (columnId: string, filterValue: string) => void
+  rowHeight?: number
+}) {
+  // Get unique values for the column
+  const uniqueValues = React.useMemo(
+    () => getUniqueColumnValues(data, columnId).map(String).sort(), // Ensure string values
+    [data, columnId]
+  )
+
+  // Calculate dynamic height: min of (rowHeight * number of items, maxHeight)
+  const maxHeight = 300 // Maximum height of the filter list
+  const calculatedHeight = Math.min(uniqueValues.length * rowHeight, maxHeight)
+
+  // Row renderer for react-virtualized List
+  const rowRenderer = ({ index, key, style }: { index: number; key: string; style: React.CSSProperties }) => {
+    const value = uniqueValues[index]
+    return (
+      <div key={key} style={style} className="flex items-center space-x-2 px-2 py-1">
+        <Checkbox
+          checked={activeFilters[columnId]?.includes(value)}
+          onCheckedChange={(checked) => {
+            if (checked) {
+              handleFilterChange(columnId, value)
+            } else {
+              removeFilter(columnId, value)
+            }
+          }}
+        />
+        <label className="text-sm">{value}</label>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ height: `${calculatedHeight}px` }}>
+      <AutoSizer>
+        {({ height, width }) => (
+          <List
+            width={width} // Auto-adjust width to container
+            height={height} // Auto-adjust height to container
+            rowCount={uniqueValues.length} // Total number of items
+            rowHeight={rowHeight} // Use prop for row height
+            rowRenderer={rowRenderer} // Function to render each row
+            overscanRowCount={5} // Render extra rows for smoother scrolling
+          />
+        )}
+      </AutoSizer>
     </div>
   )
 }
