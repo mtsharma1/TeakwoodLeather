@@ -12,7 +12,6 @@ export default async function SettingsPage() {
       startedAt: true,
       completedAt: true
     },
-    take: 10
   })
   return (
     <div className="container max-w-xl mx-auto py-10">

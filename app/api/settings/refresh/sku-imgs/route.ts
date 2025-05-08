@@ -60,8 +60,15 @@ async function processAndSaveProductData(jobId: string, path: string) {
 export async function GET() {
   try {
     // Create a new job status record
-    const jobStatus = await prisma.jobStatus.create({
-      data: {
+    const jobStatus = await prisma.jobStatus.upsert({
+      where: { 
+        jobType: "sku-imgs",
+      },
+      update: {
+        status: "pending",
+        message: "Creating SKU dropbox export job..."
+      },
+      create: {
         jobType: "sku-imgs",
         status: "pending",
         message: "Creating SKU dropbox export job..."
