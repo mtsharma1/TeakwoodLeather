@@ -40,7 +40,7 @@ interface RecentJobsI {
   filePath: string | null;
   message: string | null;
   status: string;
-  startedAt: Date;
+  updatedAt: Date;
   completedAt: Date | null;
 }
 
@@ -489,7 +489,7 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
                             {renderStatusBadge(job.status)}
                           </div>
                           <div className="text-muted-foreground">
-                            {formatDate(job.startedAt)}
+                            {formatDate(job.updatedAt)}
                           </div>
                         </div>
                         {job.message && (

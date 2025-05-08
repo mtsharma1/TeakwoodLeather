@@ -80,7 +80,8 @@ export async function GET() {
       },
       update: {
         status: "pending",
-        message: "Creating export job..."
+        message: "Creating export job...",
+        startedAt: new Date(),
       },
       create: {
         jobType: "monthly",

@@ -93,8 +93,8 @@ export async function GET() {
       },
       update: {
         status: "pending",
-        message: "Creating invoice export job..."
-
+        message: "Creating invoice export job...",
+        startedAt: new Date(),
       },
       create: {
         jobType: "invoice",

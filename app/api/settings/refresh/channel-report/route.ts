@@ -207,7 +207,8 @@ export async function GET() {
       },
       update: {
         status: "pending",
-        message: "Creating channel report export job..."
+        message: "Creating channel report export job...",
+        startedAt: new Date(),
       },
       create: {
         jobType: "channel-report",

@@ -66,7 +66,8 @@ export async function GET() {
       },
       update: {
         status: "pending",
-        message: "Creating SKU dropbox export job..."
+        message: "Creating SKU dropbox export job...",
+        startedAt: new Date(),
       },
       create: {
         jobType: "sku-imgs",

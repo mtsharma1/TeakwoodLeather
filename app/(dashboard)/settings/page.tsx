@@ -9,7 +9,7 @@ export default async function SettingsPage() {
       filePath: true,
       status: true,
       message: true,
-      startedAt: true,
+      updatedAt: true,
       completedAt: true
     },
   })
