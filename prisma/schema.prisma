@@ -235,3 +235,16 @@ model channelItemReport {
   grand_total            Int
   unlink_count           Int
 }
+
+model JobStatus {
+  id         String   @id @default(uuid())
+  jobType    String   // e.g., "monthly", "invoice", "channel-report", "sku-imgs"
+  status     String   // "pending", "processing", "completed", "failed"
+  filePath   String?  @db.Text
+  progress   Int      @default(0)
+  message    String?
+  error      String?  @db.Text
+  startedAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  completedAt DateTime?
+}

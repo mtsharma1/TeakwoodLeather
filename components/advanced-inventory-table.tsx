@@ -53,7 +53,7 @@ export default function AdvancedInventoryTable({
 }: {
   data: { [key: string]: string }[]
   columnNames?: string[]
-  filename: string
+  filename?: string
   pageSizeParam?: number
   showTools?: boolean
   totalData?: { [key: string]: string }
@@ -237,10 +237,10 @@ export default function AdvancedInventoryTable({
                 ))}
               </SelectContent>
             </Select>
-            <ExcelDownloader
+            {filename && <ExcelDownloader
               data={data}
               filename={filename}
-            />
+            />}
           </div>
         </div>
       )}

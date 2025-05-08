@@ -3,11 +3,18 @@
 import { useState, useEffect, useMemo } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Copy, RefreshCw, CheckCircle, AlertCircle } from "lucide-react"
+import { Copy, RefreshCw, CheckCircle, AlertCircle, Clock, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
+import { format } from "date-fns"
+import { Badge } from "@/components/ui/badge"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 
 interface ApiEndpoint {
   id: string
@@ -15,11 +22,33 @@ interface ApiEndpoint {
   endpoint: string
 }
 
-export function SettingsUrl() {
+interface JobStatus {
+  id: string
+  jobType: string
+  status: "pending" | "processing" | "completed" | "failed"
+  filePath: string | null
+  progress: number
+  message: string | null
+  error: string | null
+  startedAt: string
+  updatedAt: string
+  completedAt: string | null
+}
+
+interface RecentJobsI {
+  jobType: string;
+  filePath: string | null;
+  message: string | null;
+  status: string;
+  startedAt: Date;
+  completedAt: Date | null;
+}
+
+export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
   // Define the 5 different API endpoints
   const apiEndpoints: ApiEndpoint[] = useMemo(
     () => [
-      { id: "montlhly-report", name: "Monthly Report", endpoint: "/api/settings/refresh/monthly" },
+      { id: "monthly-report", name: "Monthly Report", endpoint: "/api/settings/refresh/monthly" },
       { id: "invoice-report", name: "Invoice Report", endpoint: "/api/settings/refresh/invoice" },
       { id: "channel-report", name: "Channel Report", endpoint: "/api/settings/refresh/channel-report" },
       { id: "sku-imgs", name: "SKU Images", endpoint: "/api/settings/refresh/sku-imgs" },
@@ -31,6 +60,52 @@ export function SettingsUrl() {
   const [urls, setUrls] = useState<Record<string, string>>(
     apiEndpoints.reduce((acc, api) => ({ ...acc, [api.id]: "" }), {}),
   )
+
+  // Initialize URLs from recent jobs if available
+  useEffect(() => {
+    if (recentJobs && recentJobs.length > 0) {
+      const initialUrls: Record<string, string> = { ...urls };
+      
+      recentJobs.forEach(job => {
+        if (job.filePath) {
+          const apiId = getApiIdFromJobType(job.jobType);
+          if (apiId && !initialUrls[apiId]) {
+            initialUrls[apiId] = job.filePath;
+          }
+        }
+      });
+      
+      setUrls(initialUrls);
+    }
+  }, [recentJobs]);
+
+  // Helper to convert jobType to apiId
+  const getApiIdFromJobType = (jobType: string): string | null => {
+    switch(jobType) {
+      case "monthly": return "monthly-report";
+      case "invoice": return "invoice-report";
+      case "channel-report": return "channel-report";
+      case "sku-imgs": return "sku-imgs";
+      default: return null;
+    }
+  }
+
+  // Helper to convert apiId to jobType
+  const getJobTypeFromApiId = (apiId: string): string => {
+    switch(apiId) {
+      case "monthly-report": return "monthly";
+      case "invoice-report": return "invoice";
+      case "channel-report": return "channel-report";
+      case "sku-imgs": return "sku-imgs";
+      default: return apiId;
+    }
+  }
+
+  // Get recent jobs for a specific endpoint
+  const getRecentJobsForEndpoint = (apiId: string) => {
+    const jobType = getJobTypeFromApiId(apiId);
+    return recentJobs.filter(job => job.jobType === jobType);
+  }
 
   // Loading states for each API
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
@@ -52,6 +127,16 @@ export function SettingsUrl() {
     apiEndpoints.reduce((acc, api) => ({ ...acc, [api.id]: "idle" }), {}),
   )
 
+  // Status messages for each API
+  const [statusMessages, setStatusMessages] = useState<Record<string, string>>(
+    apiEndpoints.reduce((acc, api) => ({ ...acc, [api.id]: "" }), {}),
+  )
+
+  // Active jobs for each API
+  const [activeJobs, setActiveJobs] = useState<Record<string, string | null>>(
+    apiEndpoints.reduce((acc, api) => ({ ...acc, [api.id]: null }), {}),
+  )
+
   // Effect to handle timers for long-running operations
   useEffect(() => {
     const intervals: Record<string, NodeJS.Timeout> = {}
@@ -61,20 +146,6 @@ export function SettingsUrl() {
         intervals[api.id] = setInterval(() => {
           setTimers((prev) => {
             const newTime = prev[api.id] + 1
-
-            // Update progress based on time
-            setProgress((prevProgress) => ({
-              ...prevProgress,
-              [api.id]: Math.min(99, newTime > 20 ? 90 + Math.floor(newTime / 10) : newTime * 4),
-            }))
-
-            // Show a toast for long-running operations
-            if (newTime === 20) {
-              toast.info(`${api.name} is taking longer than expected...`, {
-                duration: 5000,
-              })
-            }
-
             return { ...prev, [api.id]: newTime }
           })
         }, 1000)
@@ -87,6 +158,120 @@ export function SettingsUrl() {
       Object.values(intervals).forEach((interval) => clearInterval(interval))
     }
   }, [loadingStates, apiEndpoints])
+
+  // Effect to poll job status
+  useEffect(() => {
+    const intervals: Record<string, NodeJS.Timeout> = {}
+
+    apiEndpoints.forEach((api) => {
+      const jobId = activeJobs[api.id]
+      if (jobId && (statuses[api.id] === "loading")) {
+        intervals[api.id] = setInterval(async () => {
+          try {
+            const apiId = api.id === "monthly-report" ? "monthly" : 
+                           api.id === "invoice-report" ? "invoice" : 
+                           api.id === "channel-report" ? "channel-report" : "sku-imgs"
+            
+            const response = await fetch(`/api/settings/job-status?jobType=${apiId}`)
+            if (!response.ok) throw new Error("Failed to fetch job status")
+            
+            const data = await response.json()
+            if (!data.success) throw new Error(data.message)
+            
+            const jobStatus: JobStatus = data.data
+
+            // Update progress
+            setProgress(prev => ({
+              ...prev,
+              [api.id]: jobStatus.progress
+            }))
+
+            // Update status message
+            setStatusMessages(prev => ({
+              ...prev,
+              [api.id]: jobStatus.message || ""
+            }))
+
+            // Update URL if available
+            if (jobStatus.filePath) {
+              setUrls(prev => ({
+                ...prev,
+                [api.id]: jobStatus.filePath!
+              }))
+            }
+
+            // Check if completed or failed
+            if (jobStatus.status === "completed") {
+              setLoadingStates(prev => ({
+                ...prev,
+                [api.id]: false
+              }))
+              setStatuses(prev => ({
+                ...prev,
+                [api.id]: "success"
+              }))
+              clearInterval(intervals[api.id])
+              
+              // Show success toast
+              toast.success(`${api.name} refreshed successfully`, {
+                duration: 3000,
+                icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+              })
+              
+              // Reset status after a delay
+              setTimeout(() => {
+                setStatuses(prev => ({
+                  ...prev,
+                  [api.id]: "idle"
+                }))
+                setActiveJobs(prev => ({
+                  ...prev,
+                  [api.id]: null
+                }))
+              }, 3000)
+            } else if (jobStatus.status === "failed") {
+              setLoadingStates(prev => ({
+                ...prev,
+                [api.id]: false
+              }))
+              setStatuses(prev => ({
+                ...prev,
+                [api.id]: "error"
+              }))
+              clearInterval(intervals[api.id])
+              
+              // Show error toast
+              toast.error(jobStatus.error || `Failed to refresh ${api.name}`, {
+                duration: 5000,
+                icon: <AlertCircle className="h-4 w-4 text-red-500" />,
+              })
+              
+              // Reset status after a delay
+              setTimeout(() => {
+                setStatuses(prev => ({
+                  ...prev,
+                  [api.id]: "idle"
+                }))
+                setActiveJobs(prev => ({
+                  ...prev,
+                  [api.id]: null
+                }))
+              }, 3000)
+            }
+
+          } catch (error) {
+            console.error("Error polling job status:", error)
+          }
+        }, 2000) // Poll every 2 seconds
+      } else if (intervals[api.id]) {
+        clearInterval(intervals[api.id])
+      }
+    })
+
+    return () => {
+      Object.values(intervals).forEach((interval) => clearInterval(interval))
+    }
+  }, [activeJobs, statuses, apiEndpoints])
 
   const copyToClipboard = (id: string) => {
     navigator.clipboard.writeText(urls[id])
@@ -105,10 +290,11 @@ export function SettingsUrl() {
     setProgress((prev) => ({ ...prev, [api.id]: 0 }))
     setLoadingStates((prev) => ({ ...prev, [api.id]: true }))
     setStatuses((prev) => ({ ...prev, [api.id]: "loading" }))
+    setStatusMessages((prev) => ({ ...prev, [api.id]: "Starting job..." }))
 
     // Show initial toast
     const toastId = toast.loading(`Refreshing ${api.name}...`, {
-      duration: Number.POSITIVE_INFINITY,
+      duration: 3000,
     })
 
     try {
@@ -116,31 +302,27 @@ export function SettingsUrl() {
       const data = await response.json()
 
       if (response.ok) {
-        // Update progress to 100% on success
-        setProgress((prev) => ({ ...prev, [api.id]: 100 }))
-        setStatuses((prev) => ({ ...prev, [api.id]: "success" }))
-
         // Update toast
-        toast.success(`${api.name} refreshed successfully`, {
+        toast.success(`${api.name} job started`, {
           id: toastId,
           duration: 3000,
-          icon: <CheckCircle className="h-4 w-4 text-green-500" />,
         })
 
-        // Update the URL if needed
+        // Update the URL if provided
         if (data.filePath) {
           updateUrl(api.id, data.filePath)
         }
 
-        // Reset status after a delay
-        setTimeout(() => {
-          setStatuses((prev) => ({ ...prev, [api.id]: "idle" }))
-        }, 3000)
+        // Set the active job ID for status polling
+        if (data.jobId) {
+          setActiveJobs((prev) => ({ ...prev, [api.id]: data.jobId }))
+        }
       } else {
         throw new Error(data.message || `Failed to refresh ${api.name}`)
       }
     } catch (error) {
       setStatuses((prev) => ({ ...prev, [api.id]: "error" }))
+      setLoadingStates((prev) => ({ ...prev, [api.id]: false }))
 
       // Update toast
       toast.error(error instanceof Error ? error.message : `Failed to refresh ${api.name}`, {
@@ -153,16 +335,14 @@ export function SettingsUrl() {
       setTimeout(() => {
         setStatuses((prev) => ({ ...prev, [api.id]: "idle" }))
       }, 3000)
-    } finally {
-      setLoadingStates((prev) => ({ ...prev, [api.id]: false }))
     }
   }
 
   // Helper function to get status message
   const getStatusMessage = (api: ApiEndpoint) => {
     if (statuses[api.id] === "loading") {
-      if (timers[api.id] > 20) {
-        return `Still working... (${timers[api.id]}s)`
+      if (statusMessages[api.id]) {
+        return `${statusMessages[api.id]} (${timers[api.id]}s)`
       }
       return `Refreshing... (${timers[api.id]}s)`
     }
@@ -175,11 +355,32 @@ export function SettingsUrl() {
     return ""
   }
 
+  // Helper function to render status badge
+  const renderStatusBadge = (status: string) => {
+    switch (status) {
+      case "completed":
+        return <Badge className="bg-green-500 hover:bg-green-600">Completed</Badge>
+      case "processing":
+        return <Badge variant="outline" className="bg-blue-500 text-white hover:bg-blue-600">Processing</Badge>
+      case "pending":
+        return <Badge variant="outline" className="bg-yellow-500 text-white hover:bg-yellow-600">Pending</Badge>
+      case "failed":
+        return <Badge variant="destructive">Failed</Badge>
+      default:
+        return <Badge variant="outline">{status}</Badge>
+    }
+  }
+
+  // Helper function to format date
+  const formatDate = (date: Date) => {
+    return format(new Date(date), "dd MMM yyyy HH:mm:ss")
+  }
+
   return (
     <Card className="shadow-lg transition-all duration-300 hover:shadow-xl">
       <CardHeader>
         <CardTitle className="text-xl font-bold">URL Settings</CardTitle>
-        <CardDescription>Refresh your endpoints - it may take longer than expected...</CardDescription>
+        <CardDescription>Refresh your endpoints - progress will be shown in real-time</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {apiEndpoints.map((api) => (
@@ -260,12 +461,52 @@ export function SettingsUrl() {
                   statuses[api.id] === "success" && "bg-green-100 dark:bg-green-900/30",
                   statuses[api.id] === "error" && "bg-red-100 dark:bg-red-900/30",
                 )}
-                // indicatorClassName={cn(
-                //   statuses[api.id] === "loading" && "bg-blue-600 dark:bg-blue-400",
-                //   statuses[api.id] === "success" && "bg-green-600 dark:bg-green-400",
-                //   statuses[api.id] === "error" && "bg-red-600 dark:bg-red-400",
-                // )}
               />
+            )}
+            
+            {/* Job History Section */}
+            {getRecentJobsForEndpoint(api.id).length > 0 && (
+              <Collapsible className="mt-2">
+                <CollapsibleTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex items-center text-xs text-muted-foreground hover:text-foreground w-full justify-between"
+                  >
+                    <span className="flex items-center">
+                      <Clock className="h-3 w-3 mr-1" />
+                      Job History
+                    </span>
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-2">
+                  <div className="space-y-2 text-xs">
+                    {getRecentJobsForEndpoint(api.id).slice(0, 3).map((job, idx) => (
+                      <div key={idx} className="border rounded-md p-2 bg-muted/40">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center">
+                            {renderStatusBadge(job.status)}
+                          </div>
+                          <div className="text-muted-foreground">
+                            {formatDate(job.startedAt)}
+                          </div>
+                        </div>
+                        {job.message && (
+                          <div className="mt-1 text-muted-foreground">
+                            {job.message}
+                          </div>
+                        )}
+                        {job.completedAt && (
+                          <div className="mt-1 text-muted-foreground">
+                            Completed: {formatDate(job.completedAt)}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             )}
           </div>
         ))}

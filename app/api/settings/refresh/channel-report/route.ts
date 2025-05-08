@@ -120,60 +120,164 @@ const generateOutputJson = (outputData: OutputData) => {
   });
 };
 
-async function fetchAndChannelReportData() {
+// Separate background processing function
+async function processAndSaveChannelData(jobId: string, path: string) {
   try {
-    const jobResponse = await createChannelItemReportJob()
+    // Update job status to processing
+    await prisma.jobStatus.update({
+      where: { id: jobId },
+      data: { 
+        status: "processing", 
+        progress: 10,
+        message: "Downloading and parsing CSV file..."
+      }
+    })
 
-    if (!jobResponse.successful) {
-      throw new Error(`Failed to create export job: ${JSON.stringify(jobResponse)}`)
-    }
-    const jobCode = jobResponse.jobCode
-
-    const result = await pollJobStatus(jobCode, 100, 2000 * 4);
-    const path = result.filePath
-    const rawData = await fetchCSV<ProductRecord>(path)
-
-    await prisma.channelItemReport.deleteMany({})
-
-    const processedData = generateOutputJson(await processJsonData(rawData))
-
+    const rawData = await fetchCSV<ProductRecord>(path);
+    
+    await prisma.jobStatus.update({
+      where: { id: jobId },
+      data: { 
+        progress: 30,
+        message: "Clearing existing data..."
+      }
+    })
+    
+    // Clear existing data
+    await prisma.channelItemReport.deleteMany({});
+    
+    await prisma.jobStatus.update({
+      where: { id: jobId },
+      data: { 
+        progress: 50,
+        message: "Processing channel data..."
+      }
+    })
+    
+    // Process the data
+    const processedData = generateOutputJson(await processJsonData(rawData));
+    
+    await prisma.jobStatus.update({
+      where: { id: jobId },
+      data: { 
+        progress: 75,
+        message: "Saving channel data to database..."
+      }
+    })
+    
+    // Save to database
     await prisma.channelItemReport.createMany({
       data: processedData as channelItemReport[],
       skipDuplicates: true,
+    });
+    
+    // Update job status to completed
+    await prisma.jobStatus.update({
+      where: { id: jobId },
+      data: { 
+        status: "completed", 
+        progress: 100,
+        message: "Channel report data processing completed successfully",
+        completedAt: new Date()
+      }
     })
-
-    return { success: true, filePath: path }
+    
+    console.log("Channel report data processing and saving completed successfully");
   } catch (error) {
-    console.error("Error in ChannelReport:", error)
-    return { success: false, error: error instanceof Error ? error.message : String(error) }
+    console.error("Background channel report processing error:", error);
+    
+    // Update job status to failed
+    await prisma.jobStatus.update({
+      where: { id: jobId },
+      data: { 
+        status: "failed", 
+        error: error instanceof Error ? error.message : String(error),
+        completedAt: new Date()
+      }
+    })
   }
 }
 
 export async function GET() {
-
   try {
-    const result = await fetchAndChannelReportData();
+    // Create a new job status record
+    const jobStatus = await prisma.jobStatus.create({
+      data: {
+        jobType: "channel-report",
+        status: "pending",
+        message: "Creating channel report export job..."
+      }
+    })
 
-    if (!result.success) {
+    // Step 1: Create the export job
+    const jobResponse = await createChannelItemReportJob();
+
+    if (!jobResponse.successful) {
+      // Update job status to failed
+      await prisma.jobStatus.update({
+        where: { id: jobStatus.id },
+        data: { 
+          status: "failed", 
+          error: "Failed to create channel report export job",
+          completedAt: new Date()
+        }
+      })
+      
       return NextResponse.json({
         success: false,
-        message: 'Failed to process channel report data',
-        error: result.error,
+        message: 'Failed to create channel report export job',
+        error: jobResponse,
+        jobId: jobStatus.id,
         timestamp: new Date().toISOString()
       }, { status: 500 });
     }
-
+    
+    const jobCode = jobResponse.jobCode;
+    
+    // Update job status
+    await prisma.jobStatus.update({
+      where: { id: jobStatus.id },
+      data: { 
+        message: "Waiting for export job to complete...",
+        progress: 5
+      }
+    })
+    
+    // Step 2: Wait for the job to complete and get the file path
+    const result = await pollJobStatus(jobCode, 100, 2000 * 4);
+    const filePath = result.filePath;
+    
+    // Update job status with file path
+    await prisma.jobStatus.update({
+      where: { id: jobStatus.id },
+      data: { 
+        filePath,
+        message: "Export job completed, starting data processing...",
+        progress: 10
+      }
+    })
+    
+    // Step 3: Return the response immediately with the file path
+    // While kicking off background processing
+    processAndSaveChannelData(jobStatus.id, filePath).catch(err => 
+      console.error("Failed in background channel report processing:", err)
+    );
+    
+    // Return success response immediately with the file path
     return NextResponse.json({
       success: true,
-      message: 'Channel report data processed successfully',
-      filePath: result.filePath,
+      message: 'Channel report data processing started',
+      filePath: filePath,
+      jobId: jobStatus.id,
+      note: 'Data processing continues in background',
       timestamp: new Date().toISOString()
     });
+    
   } catch (error) {
-    console.error('Cron job failed:', error);
+    console.error('Channel report API execution failed:', error);
     return NextResponse.json({
       success: false,
-      message: 'Cron job execution failed',
+      message: 'Failed to process channel report data',
       error: error instanceof Error ? error.message : String(error),
       timestamp: new Date().toISOString()
     }, { status: 500 });
