@@ -22,6 +22,11 @@ export const excludeSubCategoryOverStock = [
     "Men Buckle"
 ] 
 
+export const excludeSubCategoryOrderSummary = [
+    "LEATHER MEN AUTOLOCK BELT",
+    "LEATHER MEN REVERSIBLE BELT",
+]
+
 export const compareGrades = (monthGrade: string, staticGrade: string): string => {
     const monthNum = Number(monthGrade)
     const staticNum = Number(staticGrade)
@@ -53,10 +58,6 @@ export const getSupportData = (subCategory: string, size: string): SupportItem |
         return supportKey === lookupKey || supportKey === subCategory
     })
 }
-
-
-// getSupportData("LEATHER MEN WALLET","os")
-
 
 export const UTILS = {
     "monthGrade": {

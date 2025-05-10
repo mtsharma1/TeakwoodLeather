@@ -1,5 +1,5 @@
 import { InputItem, OrderSummaryItem, MonthDataItem, SalesDataItem } from "@/types/order"
-import { calcMonthGrade, calcStaticGrade, compareGrades, excludeSubCategoryOverStock, excludeSubCategoryUnderStock, getSupportData, grades, MonthGradeTypes, MULTIPLE_SELLING_PRICE } from "./helper"
+import { calcMonthGrade, calcStaticGrade, compareGrades, excludeSubCategoryOrderSummary, excludeSubCategoryOverStock, excludeSubCategoryUnderStock, getSupportData, grades, MonthGradeTypes, MULTIPLE_SELLING_PRICE } from "./helper"
 import { categorySizeMap } from "@/components/categories/data-table-filters"
 import { roundToDecimals, safeNumber } from "./utils"
 import prisma from "./prisma"
@@ -453,6 +453,12 @@ function calcInventoryMIS(analysisData: MonthDataItem[]) {
 function calcOrderSummary(analysisData: MonthDataItem[]) {
     const summary = analysisData.reduce((acc, item) => {
         const label = item["Category Name"]
+        const subCategory = item["Sub Category"]
+
+        if (excludeSubCategoryOrderSummary.includes(subCategory)) {
+            return acc
+        }
+
         if (!acc[label]) {
             acc[label] = {
                 Sale_Quantity: 0,
@@ -464,13 +470,13 @@ function calcOrderSummary(analysisData: MonthDataItem[]) {
         const entry = acc[label]
         entry.Sale_Quantity += safeNumber(item["Sale Qty"])
         entry.Order_Quantity += safeNumber(item["Order Qty"])
-        entry.Order_Value += safeNumber(item["Sale Amount"])
+        entry.Order_Value += safeNumber(item["Total Amount"])
 
         return acc
     }, {} as Record<string, OrderSummaryItem>)
 
     return {
-        rows: Object.entries(summary).map(([category, data]) => ({
+        rows: Object.entries(summary).filter(Boolean).map(([category, data]) => ({
             category,
             Sale_Quantity: roundToDecimals(data.Sale_Quantity),
             Order_Quantity: roundToDecimals(data.Order_Quantity),
