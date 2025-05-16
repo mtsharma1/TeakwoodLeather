@@ -217,34 +217,49 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+// Discontinued model : 15-05-2025
+// model channelItemReport {
+//   id                     String @id @default(uuid())
+//   uniware_sku_code       String @unique @map("Uniware Sku Code") // seller sku
+//   category               String @map("Category")
+//   available_inventory    Int    @default(0) @map("Available Inventory")
+//   ajio_dropship          Int
+//   amazon_in_api          Int
+//   cred                   Int
+//   flipkart               Int
+//   myntrappmp             Int
+//   nykaa_com              Int
+//   nykaa_fashion          Int
+//   shopify                Int
+//   tatacliq               Int
+//   cocoblu                Int
+//   grand_total            Int
+//   unlink_count           Int
+// }
+
 model channelItemReport {
-  id                     String @id @default(uuid())
-  uniware_sku_code       String @unique @map("Uniware Sku Code") // seller sku
-  category               String @map("Category")
-  available_inventory    Int    @default(0) @map("Available Inventory")
-  ajio_dropship          Int
-  amazon_in_api          Int
-  cred                   Int
-  flipkart               Int
-  myntrappmp             Int
-  nykaa_com              Int
-  nykaa_fashion          Int
-  shopify                Int
-  tatacliq               Int
-  cocoblu                Int
-  grand_total            Int
-  unlink_count           Int
+  id               String @id @default(uuid())
+  channel_name     String @map("Channel Name")
+  product_name     String @map("Product Name")
+  channel_product_id  String @map("Channel Product Id") // seller sku
+  seller_sku_code  String  @map("Seller Sku Code") // seller sku
+  status_code      String @map("Status Code")
+  selling_price    Float  @map("Selling Price")
+  max_retail_price Float  @map("Max Retail Price")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model JobStatus {
-  id         String   @id @default(uuid())
-  jobType    String @unique  // e.g., "monthly", "invoice", "channel-report", "sku-imgs"
-  status     String   // "pending", "processing", "completed", "failed"
-  filePath   String?  @db.Text
-  progress   Int      @default(0)
-  message    String?
-  error      String?  @db.Text
-  startedAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String    @id @default(uuid())
+  jobType     String    @unique // e.g., "monthly", "invoice", "channel-report", "sku-imgs"
+  status      String // "pending", "processing", "completed", "failed"
+  filePath    String?   @db.Text
+  progress    Int       @default(0)
+  message     String?
+  error       String?   @db.Text
+  startedAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   completedAt DateTime?
 }

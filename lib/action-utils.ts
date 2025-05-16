@@ -178,10 +178,10 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
                 // 'Order Summary Sheet': { count: 0, totalValue: 0 },
             }
         ),
-        unlink_sku_card: await prisma.channelItemReport.aggregate({
-            _sum: {
-                unlink_count: true,
-            },
+        unlink_sku_card: await prisma.channelItemReport.count({
+            where: {
+                status_code: 'UNLINKED'
+            }
         })
     };
 }

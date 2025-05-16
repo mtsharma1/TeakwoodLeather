@@ -502,5 +502,15 @@ export const calculatePortalMonthlyReport = async (formData: FormData) => {
 /**************Channel-itme-type-report**************/
 export async function getChannelItemTypeReport() {
 
-    return await prisma.channelItemReport.findMany()
+    return await prisma.channelItemReport.findMany({
+        select: { 
+            channel_name: true,
+            product_name: true,
+            channel_product_id: true,
+            seller_sku_code: true,
+            status_code: true,
+            selling_price: true,
+            max_retail_price: true,
+        }
+    })
 }

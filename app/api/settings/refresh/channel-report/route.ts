@@ -9,115 +9,32 @@ interface ProductRecord {
   'Uniware Sku Code': string;
   'Status Code': string;
   'Seller Sku Code': string;
+  'Selling Price': string;
+  'Max Retail Price': string;
   sellerSku: string;
 }
 
-interface ChannelData {
-  [channel: string]: number;
-}
-
-interface OutputData {
-  [sku: string]: ChannelData & {
-    category: string;
-    available_inventory: number;
-    unlink_count: number;
-  };
-}
-
-const ALLOWED_CHANNELS = [
-  "AJIO_DROPSHIP",
-  "AMAZON_IN_API",
-  "cocoblu",
-  "CRED",
-  "FLIPKART",
-  "MYNTRAPPMP",
-  "NYKAA_COM",
-  "NYKAA_FASHION",
-  "SHOPIFY",
-  "TATACLIQ",
-];
-
-const EXCLUDED_CATEGORY = [
-  'COMBOS',
-  'APSIS COMBO',
-  'TEAKWOOD BUCKLE'
-]
-
-const processJsonData = async (jsonData: ProductRecord[]): Promise<OutputData> => {
-  const outputData: OutputData = {};
-  const uniqueChannels: Set<string> = new Set();
-
-  // Get all unique seller SKUs
-  const skus = new Set(jsonData.map(row => row['Uniware Sku Code']?.trim()).filter(Boolean));
-
-  // Fetch inventory and category data for all SKUs at once
-  const monthlyData = await prisma.monthDataItem.findMany({
-    where: {
-      skuCode: {
-        in: Array.from(skus)
-      }
-    },
-    select: {
-      skuCode: true,
-      categoryName: true,
-      availableInventory: true
-    }
-  });
-
-  // Create a map for quick lookup
-  const skuDataMap = new Map(monthlyData.map(item => [item.skuCode, item]));
-
-  for (const row of jsonData) {
+const processJsonData = async (jsonData: ProductRecord[]) => {
+  return jsonData.map(row => {
     const channel = row['Channel Name']?.trim();
     const sku = row['Uniware Sku Code']?.trim();
     const sellerSkuCode = row['Seller Sku Code']?.trim();
 
-    if (!ALLOWED_CHANNELS.includes(channel || "")) continue;
+    if(row['Status Code'] === "LINKED") return null;
 
-    uniqueChannels.add(channel);
-
-    if (!outputData[sku]) {
-      const monthlyItem = skuDataMap.get(sku);
-      if (monthlyItem?.categoryName && EXCLUDED_CATEGORY.includes(monthlyItem?.categoryName)) {
-        continue;
-      }
-      outputData[sku] = {
-        category: monthlyItem?.categoryName || '',
-        available_inventory: parseInt(monthlyItem?.availableInventory || '0'),
-        unlink_count: 0
-      } as OutputData[string];
-    }
-
-    outputData[sku][channel] = (outputData[sku][channel] || 0) + 1;
-    outputData[sku].unlink_count = (outputData[sku].unlink_count || 0) + (sellerSkuCode === "" ? 1 : 0);
-  }
-
-  return outputData;
-};
-
-const generateOutputJson = (outputData: OutputData) => {
-  const sortedChannels = Array.from(new Set(Object.values(outputData).flatMap(obj => Object.keys(obj)))).sort()
-    .filter(key => !['category', 'available_inventory', 'unlink_count'].includes(key));
-
-  return Object.entries(outputData).map(([sku, channelData]) => {
-    // [09-04-2025] : uniware_sku_code is seller sku code 
-    const row: { [key: string]: string | number } = {
-      'uniware_sku_code': sku,
-      'category': channelData.category,
-      'available_inventory': channelData.available_inventory
+    return {
+      channel_name: channel,
+      product_name: sku,
+      channel_product_id: sellerSkuCode,
+      seller_sku_code: sellerSkuCode,
+      status_code: row['Status Code'],
+      selling_price: parseFloat(row['Selling Price'] || "0"),
+      max_retail_price: parseFloat(row['Max Retail Price'] || "0"),
     };
-    let total = 0;
+  }).filter(Boolean) as channelItemReport[];
 
-    sortedChannels.forEach(channel => {
-      const count = channelData[channel] || 0;
-      row[channel?.toLowerCase()?.trim()?.replace(/[^a-z0-9_]/g, "_")] = count;
-      total += count;
-    });
-
-    row['grand_total'] = total;
-    row['unlink_count'] = channelData.unlink_count || 0;
-    return row;
-  });
+  // await prisma.channelItemReport.deleteMany({});
+  // await prisma.channelItemReport.createMany({ data });
 };
 
 // Separate background processing function
@@ -155,7 +72,7 @@ async function processAndSaveChannelData(jobId: string, path: string) {
     })
 
     // Process the data
-    const processedData = generateOutputJson(await processJsonData(rawData));
+    const processedData = await processJsonData(rawData);
 
     await prisma.jobStatus.update({
       where: { id: jobId },
@@ -167,8 +84,7 @@ async function processAndSaveChannelData(jobId: string, path: string) {
 
     // Save to database
     await prisma.channelItemReport.createMany({
-      data: processedData as channelItemReport[],
-      skipDuplicates: true,
+      data: processedData,
     });
 
     // Update job status to completed

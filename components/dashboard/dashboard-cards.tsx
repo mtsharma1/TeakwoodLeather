@@ -15,7 +15,7 @@ export async function DashboardCards() {
         </Link>
       ))}
       <Link key={"Unlink SKU Card"} href={`/channel-report`}>
-        <AnalysisCard label={"Unlink SKU Card"} count={unlink_sku_card._sum.unlink_count || 0} />
+        <AnalysisCard label={"Unlink SKU Card"} count={unlink_sku_card || 0} />
       </Link>
     </div>
   )
