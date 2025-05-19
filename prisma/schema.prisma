@@ -249,6 +249,7 @@ model channelItemReport {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  uniware_sku_code String  @map("Uniware Sku Code") // seller sku
 }
 
 model JobStatus {

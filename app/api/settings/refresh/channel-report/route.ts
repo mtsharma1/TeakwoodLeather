@@ -25,6 +25,7 @@ const processJsonData = async (jsonData: ProductRecord[]) => {
     if(row['Status Code'] === "LINKED") return null;
 
     return {
+      uniware_sku_code: sku,
       channel_name: channel,
       product_name: productName,
       channel_product_id: sellerSkuCode,
