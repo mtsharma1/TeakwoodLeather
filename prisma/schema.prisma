@@ -240,7 +240,7 @@ model User {
 model channelItemReport {
   id               String @id @default(uuid())
   channel_name     String @map("Channel Name")
-  product_name     String @map("Product Name")
+  product_name  String @map("Product Name") @db.VarChar(255)
   channel_product_id  String @map("Channel Product Id") // seller sku
   seller_sku_code  String  @map("Seller Sku Code") // seller sku
   status_code      String @map("Status Code")
