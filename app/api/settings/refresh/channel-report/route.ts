@@ -6,6 +6,7 @@ import { channelItemReport } from "@prisma/client";
 
 interface ProductRecord {
   'Channel Name': string;
+  'Product Name': string;
   'Uniware Sku Code': string;
   'Status Code': string;
   'Seller Sku Code': string;
@@ -19,12 +20,13 @@ const processJsonData = async (jsonData: ProductRecord[]) => {
     const channel = row['Channel Name']?.trim();
     const sku = row['Uniware Sku Code']?.trim();
     const sellerSkuCode = row['Seller Sku Code']?.trim();
+    const productName = row['Product Name']?.trim();
 
     if(row['Status Code'] === "LINKED") return null;
 
     return {
       channel_name: channel,
-      product_name: sku,
+      product_name: productName,
       channel_product_id: sellerSkuCode,
       seller_sku_code: sellerSkuCode,
       status_code: row['Status Code'],
