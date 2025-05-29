@@ -337,12 +337,16 @@ export async function priceCheckListData(type: string) {
         const daysToSubtract = isTodayMonday ? 2 : 1;
 
         // Create dates in India timezone
-        const yesterdayStart = new Date(year, month, todayDate - daysToSubtract, 11, 30, 1);
-        const yesterdayEnd = new Date(year, month, todayDate - daysToSubtract, 23, 59, 59);
-
+        // const yesterdayStart = new Date(year, month, todayDate - daysToSubtract, 11, 30, 1);
+        // const yesterdayEnd = new Date(year, month, todayDate - daysToSubtract, 23, 59, 59);
+        const CurrentDateStart = new Date(year, month, todayDate, 0, 0, 0);
+        const CurrentDateEnd = new Date(year, month, todayDate,23, 59, 59);
+        console.log('Filter date : ' + CurrentDateStart, CurrentDateEnd + ' Filter date end');
+        
         const data = await convertPriceCheckData();
+        // console.log(data)
 
-        const yesterdayData = filterInvoices(data, yesterdayStart, yesterdayEnd);
+        const yesterdayData = filterInvoices(data, CurrentDateStart, CurrentDateEnd);
 
         switch (type) {
             case "overview":
