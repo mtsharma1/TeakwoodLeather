@@ -1,0 +1,266 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model SalesDataItem {
+  id              Int    @id @default(autoincrement())
+  itemSkuCode     String @map("Item SKU Code")
+  sellingPrice    String @map("Selling Price")
+  saleOrderStatus String @map("Sale Order Status")
+}
+
+model MonthDataItem {
+  id                      Int    @id @default(autoincrement())
+  skuCode                 String @map("Sku Code")
+  parentSKU               String @map("Parent SKU")
+  size                    String @map("Size")
+  categoryName            String @map("Category Name")
+  subCategory             String @map("Sub Category")
+  saleQty                 String @map("Sale Qty")
+  saleAmount              String @map("Sale Amount")
+  vendorName              String @map("Vendor Name")
+  staticGrade             String @map("Static Grade")
+  monthGrade              String @map("Month Grade")
+  availableInventory      String @map("Available Inventory")
+  openPurchase            String @map("Open Purchase")
+  requiredQty             String @map("Required Qty")
+  orderQty                String @map("Order Qty")
+  saleThrough             String @map("Sale Through")
+  vendorPrice             String @map("Vendor Price")
+  totalAmount             String @map("Total Amount")
+  skuCodeID               String @map("Sku Code ID")
+  daysOfPositiveInventory String @map("Days of positive inventory")
+  ros                     String @map("ROS")
+  doh                     String @map("DOH")
+  newSkuCode              String @map("New SKU Code")
+  staticGradeN            String @map("Static Grade_N")
+  monthGradeN             String @map("Month Grade_N")
+  comment                 String @map("Comment")
+  avgSellingPrice         String @map("Avg Selling Price")
+  multiplePrice           String @map("Multiple Price")
+
+  remarks String? // As per client requirement
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SupportItem {
+  id             Int     @id @default(autoincrement())
+  category       String  @map("Category")
+  subCategory    String  @map("Sub Category")
+  subCategoryNew String? @map("Sub Category New")
+  ratioSum       String  @map("Ratio Sum")
+  ratio          String  @map("Ratio")
+  size           String  @map("Size")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Utils {
+  id    Int    @id @default(autoincrement())
+  grade String
+  value Int
+
+  @@unique([grade])
+}
+
+model PriceCheckData {
+  id                        Int       @id @default(autoincrement())
+  orderNo                   String    @map("Order No")
+  invoiceNo                 String    @map("Invoice No")
+  shippingPackageCode       String    @map("Shipping Package Code")
+  shippingPackageStatusCode String    @map("Shipping Package Status Code")
+  invoiceCreatedDate        String    @map("Invoice Created Date")
+  channelInvoiceCreatedDate DateTime  @map("Channel Invoice Created Date")
+  eWayBillNo                String?   @map("EWayBill No")
+  eWayBillDate              DateTime? @map("EWayBill Date")
+  eWayBillValidTill         DateTime? @map("EWayBill Valid Till")
+  customerName              String    @map("Customer Name")
+  skuCode                   String    @map("SKU Code")
+  skuName                   String    @map("SKU Name")
+  quantity                  Int       @map("Quantity")
+  invoiceTax                Float     @map("Invoice Tax")
+  invoiceTotal              Float     @map("Invoice Total")
+  invoiceCancelled          String    @map("Invoice Cancelled")
+  hsnCode                   Int       @map("HSN Code")
+  gstTaxTypeCode            Int       @map("GST Tax Type Code")
+  taxTypeCode               Int       @map("Tax Type Code")
+  cgst                      Float     @map("CGST")
+  igst                      Float     @map("IGST")
+  sgst                      Float     @map("SGST")
+  utgst                     Float     @map("UTGST")
+  vat                       Float     @map("VAT")
+  cst                       Float     @map("CST")
+  additionalTax             Float     @map("Additional Tax")
+  additionalTaxPercentage   Float     @map("Additional Tax Percentage")
+  taxPercentage             Float     @map("Tax Percentage")
+  cess                      Float     @map("CESS")
+  cgstRate                  Float     @map("CGST Rate")
+  igstRate                  Float     @map("IGST Rate")
+  sgstRate                  Float     @map("SGST Rate")
+  utgstRate                 Float     @map("UTGST Rate")
+  cessRate                  Float     @map("CESS Rate")
+  shippingCharge            Float     @map("Shipping Charge")
+  codCharge                 Float     @map("COD Charge")
+  tcsAmount                 Float     @map("TCS Amount")
+  channelName               String    @map("Channel Name")
+  uniwareInvoiceCode        String    @map("Uniware Invoice Code")
+  adjustmentInSellingPrice  Float     @map("Adjustment In Selling Price")
+  adjustmentInDiscount      Float     @map("Adjustment In Discount")
+  grade                     String    @map("Grade")
+  mrp                       Float     @map("MRP")
+  color                     String    @map("Color")
+  brand                     String    @map("Brand")
+  size                      String    @map("Size")
+  sellerSkuCode             String    @map("Seller Sku Code")
+  costPrice                 Float     @map("Cost Price")
+  // businessType              String    @map("Business Type")
+  concateArticle            String    @map("Concate Article") @db.Text
+  totalCost                 String    @map("Total Cost")
+  totalSellingPrice         String    @map("Total Selling Price")
+  status                    String    @map("Status")
+  sellingPriceLt300         String    @map("Selling Price < 300")
+  invoiceCount              String    @map("Invoice Count")
+  discountPercentage        String    @map("Discount %")
+  multiplePrice             String    @map("Multiple Price")
+
+  remarks String? // As per client requirement
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum FILENAME {
+  CATEGORY
+  PORTAL
+}
+
+model TallyReportT {
+  id       Int    @id @default(autoincrement())
+  name     String
+  quantity Int
+  monthAvg String
+
+  reportfileName FILENAME
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, reportfileName])
+}
+
+model Metrics {
+  id           Int    @id @default(autoincrement())
+  skuName      String
+  yesterdayQty Int
+  todayQty     Int
+  total        Int
+  invoiceTotal Float
+  asp          Float
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProcessedData {
+  id              Int    @id @default(autoincrement())
+  portal          String // channels
+  yesterdayOrders Int
+  todayOrders     Int
+  total           Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductWithImage {
+  id               String  @id @default(uuid())
+  product_code     String  @unique @map("Product Code")
+  name             String  @map("Name")
+  color            String  @map("Color")
+  size             String  @map("Size")
+  brand            String  @map("Brand")
+  tags             String? @map("Tags")
+  image_urls       Json    @map("Image Urls")
+  product_page_url String? @map("Product Page Url")
+  category_name    String  @map("Category Name")
+  type             String  @map("Type")
+  sku_type         String  @map("Sku Type")
+  month_grade      String? @map("Month Grade")
+  parent_sku       String? @map("Parent SKU")
+  product_title    String? @map("Product Title")
+  vendor_name      String  @map("Vendor Name")
+
+  @@index([category_name])
+  @@index([brand])
+  @@index([color, size])
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+  name     String
+
+  // parentUserId  Int?
+  // User          User[] @relation("linkedAccount")
+  // linkedAccount User?  @relation(fields: [parentUserId], references: [id], name: "linkedAccount")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Discontinued model : 15-05-2025
+// model channelItemReport {
+//   id                     String @id @default(uuid())
+//   uniware_sku_code       String @unique @map("Uniware Sku Code") // seller sku
+//   category               String @map("Category")
+//   available_inventory    Int    @default(0) @map("Available Inventory")
+//   ajio_dropship          Int
+//   amazon_in_api          Int
+//   cred                   Int
+//   flipkart               Int
+//   myntrappmp             Int
+//   nykaa_com              Int
+//   nykaa_fashion          Int
+//   shopify                Int
+//   tatacliq               Int
+//   cocoblu                Int
+//   grand_total            Int
+//   unlink_count           Int
+// }
+
+model channelItemReport {
+  id               String @id @default(uuid())
+  channel_name     String @map("Channel Name")
+  product_name  String @map("Product Name") @db.VarChar(255)
+  channel_product_id  String @map("Channel Product Id") // seller sku
+  seller_sku_code  String  @map("Seller Sku Code") // seller sku
+  status_code      String @map("Status Code")
+  selling_price    Float  @map("Selling Price")
+  max_retail_price Float  @map("Max Retail Price")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  uniware_sku_code String  @map("Uniware Sku Code") // seller sku
+}
+
+model JobStatus {
+  id          String    @id @default(uuid())
+  jobType     String    @unique // e.g., "monthly", "invoice", "channel-report", "sku-imgs"
+  status      String // "pending", "processing", "completed", "failed"
+  filePath    String?   @db.Text
+  progress    Int       @default(0)
+  message     String?
+  error       String?   @db.Text
+  startedAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+}
