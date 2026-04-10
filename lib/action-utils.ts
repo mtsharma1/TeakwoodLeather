@@ -146,6 +146,17 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
                     summary['Under Stock'].count++;
                     summary['Under Stock'].totalValue += (vendorPrice * aIv);
                 }
+                // if(item["Open Purchase"])
+                // {
+                    summary['Open Purchase'].count++;
+                    summary['Open Purchase'].totalValue+= safeNumber(item["Open Purchase"]) * safeNumber(item["Vendor Price"]);
+
+
+                    summary['Open Sales Value'].count+=safeNumber(item["Sale Qty"]);
+                    summary['Open Sales Value'].totalValue+= safeNumber(item["Sale Qty"]) * safeNumber(item["Sale Amount"]);
+
+                
+                    // }
 
                 // Under Price 2
                 // if (item['Multiple Price'] < MULTIPLE_SELLING_PRICE) {
@@ -172,6 +183,8 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
             {
                 'Over Stock': { count: 0, totalValue: 0 },
                 'Under Stock': { count: 0, totalValue: 0 },
+                'Open Purchase': {count: 0, totalValue: 0},
+                'Open Sales Value': {count: 0, totalValue: 0}                
                 // 'Under Price 2': { count: 0, totalValue: 0 },
                 // 'New Grade': { count: 0, totalValue: 0 },
                 // 'Common Order Summary': { count: 0, totalValue: 0 },
@@ -191,7 +204,7 @@ export function analysis(analysisData: MonthDataItem[], key?: string) {
         overstock: (item: MonthDataItem) => item.DOH > DOH_THRESHOLDS.OVERSTOCK && !excludeSubCategoryOverStock.includes(item['Sub Category']),
         understock: (item: MonthDataItem) => item.DOH < DOH_THRESHOLDS.UNDERSTOCK && ['A', 'B'].includes(item["Static Grade"]) && !excludeSubCategoryUnderStock.includes(item['Sub Category']),
         underprice2: (item: MonthDataItem) => item['Multiple Price'] < MULTIPLE_SELLING_PRICE,
-        newgrade: (item: MonthDataItem) => item['Static Grade'] === "NEW"
+        newgrade: (item: MonthDataItem) => item['Static Grade'] === "NEW",       
     }
 
     const sortBySaleQtyDesc = (a: MonthDataItem, b: MonthDataItem) => {

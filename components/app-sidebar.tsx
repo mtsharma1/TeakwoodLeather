@@ -55,6 +55,16 @@ const data = {
           icon: ChartNoAxesCombined,
           items: [
             {
+              title: "Portal Wise",
+              url: "/monthly-report/analysis/portal-wise",
+              icon: ArrowUpNarrowWide,
+            },
+            {
+              title: "Category Wise",
+              url: "/monthly-report/analysis/category-wise",
+              icon: ArrowUpNarrowWide,
+            },
+            {
               title: "Over Stock",
               url: "/monthly-report/analysis/over-stock",
               icon: ArrowUpNarrowWide,

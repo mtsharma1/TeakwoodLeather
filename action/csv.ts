@@ -9,6 +9,7 @@ import { roundToDecimals, safeNumber } from "@/lib/utils"
 import { cache } from "react"
 import { calculateCategoryMetrics, calculatePortalMetrics } from "@/lib/category-poral-action-utils"
 import type { SalesRecord } from "@/types/category-poral-monthly"
+import type { PriceCheckInvoiceData } from "@/types/order"
 import { getDaysInMonth } from "date-fns"
 import { getJobStatus } from "@/lib/api"
 import prisma from "@/lib/prisma"
@@ -260,6 +261,14 @@ export async function fetchMonthlyData() {
 
 export async function analysisData(key: string) {
     try {
+        if (key === "portalwise") {
+            return await priceChecklistPortalWiseData()
+        }
+
+        if (key === "categorywise") {
+            return await inventoryCategoryWiseData()
+        }
+
         // if (monthlyAnalysisCache.isEmpty()) {
         //     await fetchMonthlyData(0, 50)
         // }
@@ -270,6 +279,84 @@ export async function analysisData(key: string) {
     } catch (error) {
         console.error("Error in analysisData:", error)
         throw new Error("Failed to analyze data")
+    }
+}
+
+async function priceChecklistPortalWiseData() {
+    const overviewData = await priceCheckListData("overview") as PriceCheckInvoiceData[]
+
+    const groupedData = overviewData.reduce((acc, item) => {
+        const channelName = item["Channel Name"]?.trim() || "Unknown"
+
+        if (!acc[channelName]) {
+            acc[channelName] = {
+                "Channel Name": channelName,
+                "Quantity": 0,
+                "Invoice Total": 0,
+            }
+        }
+
+        acc[channelName]["Quantity"] += safeNumber(item["Quantity"])
+        acc[channelName]["Invoice Total"] += safeNumber(item["Invoice Total"])
+
+        return acc
+    }, {} as Record<string, {
+        "Channel Name": string
+        "Quantity": number
+        "Invoice Total": number
+    }>)
+
+    const rows = Object
+        .values(groupedData)
+        .map((item) => ({
+            ...item,
+            "Quantity": roundToDecimals(item["Quantity"]),
+            "Invoice Total": roundToDecimals(item["Invoice Total"]),
+        }))
+        .sort((a, b) => b["Quantity"] - a["Quantity"])
+
+    return {
+        rows,
+        cols: ["Channel Name", "Quantity", "Invoice Total"],
+    }
+}
+
+async function inventoryCategoryWiseData() {
+    const rawData = await fetchMonthlyData()
+
+    const groupedData = rawData.reduce((acc, item) => {
+        const subCategory = item["Sub Category"]?.trim() || "Unknown"
+
+        if (!acc[subCategory]) {
+            acc[subCategory] = {
+                "Sub Category": subCategory,
+                "Sale Qty": 0,
+                "Sale Amount": 0,
+            }
+        }
+
+        acc[subCategory]["Sale Qty"] += safeNumber(item["Sale Qty"])
+        acc[subCategory]["Sale Amount"] += safeNumber(item["Sale Amount"])
+
+        return acc
+    }, {} as Record<string, {
+        "Sub Category": string
+        "Sale Qty": number
+        "Sale Amount": number
+    }>)
+
+    const rows = Object
+        .values(groupedData)
+        .map((item) => ({
+            ...item,
+            "Sale Qty": roundToDecimals(item["Sale Qty"]),
+            "Sale Amount": roundToDecimals(item["Sale Amount"]),
+        }))
+        .sort((a, b) => b["Sale Qty"] - a["Sale Qty"])
+
+    return {
+        rows,
+        cols: ["Sub Category", "Sale Qty", "Sale Amount"],
     }
 }
 
