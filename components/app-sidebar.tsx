@@ -55,14 +55,21 @@ const data = {
           icon: ChartNoAxesCombined,
           items: [
             {
-              title: "Portal Wise",
-              url: "/monthly-report/analysis/portal-wise",
-              icon: ArrowUpNarrowWide,
-            },
-            {
-              title: "Category Wise",
-              url: "/monthly-report/analysis/category-wise",
-              icon: ArrowUpNarrowWide,
+              title: "Daily Order",
+              url: "/monthly-report/analysis/daily-order",
+              icon: Calendar,
+              items: [
+                {
+                  title: "Portal",
+                  url: "/monthly-report/analysis/portal-wise",
+                  icon: GalleryHorizontal,
+                },
+                {
+                  title: "Sub Category",
+                  url: "/monthly-report/analysis/category-wise",
+                  icon: Boxes,
+                },
+              ],
             },
             {
               title: "Over Stock",
@@ -104,6 +111,23 @@ const data = {
               title: "New Grade",
               url: "/monthly-report/analysis/new-grade",
               icon: LayoutGrid,
+            },
+            {
+              title: "Return",
+              url: "/monthly-report/analysis/return",
+              icon: BringToFront,
+              items: [
+                {
+                  title: "Courier",
+                  url: "/monthly-report/analysis/return-courier",
+                  icon: Package,
+                },
+                {
+                  title: "Reverse",
+                  url: "/monthly-report/analysis/return-reverse",
+                  icon: ArrowDownWideNarrow,
+                },
+              ],
             },
           ],
         },

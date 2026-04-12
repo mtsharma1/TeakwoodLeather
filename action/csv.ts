@@ -11,9 +11,9 @@ import { calculateCategoryMetrics, calculatePortalMetrics } from "@/lib/category
 import type { SalesRecord } from "@/types/category-poral-monthly"
 import type { PriceCheckInvoiceData } from "@/types/order"
 import { getDaysInMonth } from "date-fns"
-import { getJobStatus } from "@/lib/api"
+import { createReturnInvoiceCourierJob, createReturnReverseJob, getJobStatus } from "@/lib/api"
 import prisma from "@/lib/prisma"
-import { convertPriceCheckData } from "./db_action"
+import { convertPriceCheckData, convertReturnCourierData, convertReturnInvoiceData, convertReturnReverseData, saveReturnCourierData, saveReturnReverseData } from "./db_action"
 import { FILENAME } from "@prisma/client"
 
 // Constants
@@ -269,6 +269,28 @@ export async function analysisData(key: string) {
             return await inventoryCategoryWiseData()
         }
 
+        if (key === "returninvoice") {
+            return await persistedReturnInvoiceAnalysisData()
+        }
+
+        if (key === "returncourier") {
+            try {
+                return await persistedReturnCourierAnalysisData()
+            } catch (error) {
+                console.error("returncourier analysis failed:", error)
+                return { rows: [], cols: [] }
+            }
+        }
+
+        if (key === "returnreverse") {
+            try {
+                return await persistedReturnReverseAnalysisData()
+            } catch (error) {
+                console.error("returnreverse analysis failed:", error)
+                return { rows: [], cols: [] }
+            }
+        }
+
         // if (monthlyAnalysisCache.isEmpty()) {
         //     await fetchMonthlyData(0, 50)
         // }
@@ -278,6 +300,9 @@ export async function analysisData(key: string) {
         return analysis(data, key)
     } catch (error) {
         console.error("Error in analysisData:", error)
+        if (key.startsWith("return")) {
+            return { rows: [], cols: [] }
+        }
         throw new Error("Failed to analyze data")
     }
 }
@@ -358,6 +383,149 @@ async function inventoryCategoryWiseData() {
         rows,
         cols: ["Sub Category", "Sale Qty", "Sale Amount"],
     }
+}
+
+async function persistedReturnInvoiceAnalysisData() {
+    const rows = await convertReturnInvoiceData()
+
+    return {
+        rows,
+        cols: Object.keys(rows[0] || {}),
+    }
+}
+
+function getNormalizedValue(item: Record<string, string | number>, possibleKeys: string[]) {
+    const normalizedKeys = possibleKeys.map((x) => x.replaceAll(" ", "").toLowerCase())
+
+    for (const [key, value] of Object.entries(item)) {
+        const normalizedKey = key.replaceAll(" ", "").toLowerCase()
+        if (normalizedKeys.includes(normalizedKey)) {
+            return `${value ?? ""}`.trim()
+        }
+    }
+
+    return ""
+}
+
+async function persistedReturnCourierAnalysisData() {
+    let allRows: Record<string, string | number>[] = []
+    try {
+        allRows = await convertReturnCourierData() as unknown as Record<string, string | number>[]
+    } catch {
+        allRows = []
+    }
+
+    if (allRows.length === 0) {
+        try {
+            const rawRows = await fetchReturnInvoiceRowsForAnalysis()
+            if (rawRows.length > 0) {
+                await saveReturnCourierData(rawRows)
+            }
+            allRows = rawRows
+        } catch (error) {
+            // Keep UI usable even if API/download fails.
+            console.error("Courier fallback fetch failed:", error)
+            allRows = []
+        }
+    }
+
+    const filteredRows = applyCourierFilter(allRows)
+
+    return {
+        rows: filteredRows,
+        cols: Object.keys(filteredRows[0] || {}),
+    }
+}
+
+async function persistedReturnReverseAnalysisData() {
+    let allRows: Record<string, string | number>[] = []
+    try {
+        allRows = await convertReturnReverseData() as unknown as Record<string, string | number>[]
+    } catch {
+        allRows = []
+    }
+
+    if (allRows.length === 0) {
+        try {
+            const rawRows = await fetchReturnReverseRowsForAnalysis()
+            if (rawRows.length > 0) {
+                await saveReturnReverseData(rawRows)
+            }
+            allRows = rawRows
+        } catch (error) {
+            // Keep UI usable even if API/download fails.
+            console.error("Reverse fallback fetch failed:", error)
+            allRows = []
+        }
+    }
+
+    const filteredRows = applyReverseFilter(allRows)
+
+    return {
+        rows: filteredRows,
+        cols: Object.keys(filteredRows[0] || {}),
+    }
+}
+
+function applyCourierFilter(rawRows: Record<string, string | number>[]) {
+    return rawRows.filter((item) => {
+        const shippingStatus = normalizeStatusToken(
+            getNormalizedValue(item, ["Shipping Package Status", "shippingPackageStatus", "Shipping Package Status Code", "shippingPackageStatusCode"])
+        )
+        const putawayStatus = getNormalizedValue(item, ["Putaway Status", "putawayStatus"])
+        return shippingStatus === "RETURN_EXPECTED" && isBlankLike(putawayStatus)
+    })
+}
+
+function applyReverseFilter(rawRows: Record<string, string | number>[]) {
+    return rawRows.filter((item) => {
+        const shippingStatus = normalizeStatusToken(
+            getNormalizedValue(item, ["Reverse Pickup Status", "reversePickupStatus"])
+        )
+        const putawayStatus = getNormalizedValue(item, ["Putaway Status", "putawayStatus"])
+        return shippingStatus === "CREATED" && isBlankLike(putawayStatus)
+    })
+}
+
+function isBlankLike(value: string) {
+    const normalized = value.trim().toUpperCase()
+    return normalized === "" || normalized === "-" || normalized === "NULL" || normalized === "NA" || normalized === "N/A"
+}
+
+function normalizeStatusToken(value: string) {
+    return value.trim().toUpperCase().replace(/[\s-]+/g, "_")
+}
+
+async function fetchReturnInvoiceRowsForAnalysis() {
+    const jobResponse = await createReturnInvoiceCourierJob()
+
+    if (!jobResponse?.successful || !jobResponse?.jobCode) {
+        throw new Error("Failed to create return invoice export job")
+    }
+
+    const result = await pollJobStatus(jobResponse.jobCode, 100, 2000 * 4)
+
+    if (!result?.filePath) {
+        throw new Error("Return invoice export did not provide a file path")
+    }
+
+    return await fetchCSV<Record<string, string | number>>(result.filePath)
+}
+
+async function fetchReturnReverseRowsForAnalysis() {
+    const jobResponse = await createReturnReverseJob()
+
+    if (!jobResponse?.successful || !jobResponse?.jobCode) {
+        throw new Error("Failed to create reverse pickup export job")
+    }
+
+    const result = await pollJobStatus(jobResponse.jobCode, 100, 2000 * 4)
+
+    if (!result?.filePath) {
+        throw new Error("Reverse pickup export did not provide a file path")
+    }
+
+    return await fetchCSV<Record<string, string | number>>(result.filePath)
 }
 
 export async function analysisDasboard() {
