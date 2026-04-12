@@ -107,6 +107,7 @@ export function EditableRow({ row, columns, isPinned, rowIndex, isEditing }: Edi
   const [isPending, startTransition] = useTransition()
   const pathname = usePathname()
   const initialFocusRef = useRef<HTMLInputElement>(null)
+  const shouldShowSkuImagePreview = !pathname.includes("/monthly-report/analysis/return")
 
   const [optimisticRow, updateOptimisticRow] = useOptimistic(row, (state, updates) => ({
     ...state,
@@ -209,7 +210,7 @@ export function EditableRow({ row, columns, isPinned, rowIndex, isEditing }: Edi
             ) : (
               <div className="overflow-hidden text-ellipsis whitespace-nowrap flex items-center gap-2">
                 <span>{cellValue}</span>
-                {isSkuColumn && !editing && (
+                {isSkuColumn && !editing && shouldShowSkuImagePreview && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>

@@ -87,7 +87,7 @@ export function NavMain({ items, groupLabel }: { groupLabel: string; items: Menu
                 isCollapsed ? "px-2 py-2" : "px-4 py-2",
               )}
             >
-              <a href={subItem.url} onClick={handleNavigation} className="grid grid-cols-7">
+              <a href={subItem.url} onClick={handleNavigation} className="flex items-center gap-3">
                 <div className="flex items-center relative w-[18px] h-[18px]">
                   {subItem.icon && (
                     <subItem.icon
@@ -102,7 +102,7 @@ export function NavMain({ items, groupLabel }: { groupLabel: string; items: Menu
                     />
                   )}
                 </div>
-                {!isCollapsed && <span className="truncate text-sm col-span-6">{subItem.title}</span>}
+                {!isCollapsed && <span className="truncate text-sm">{subItem.title}</span>}
               </a>
             </SidebarMenuSubButton>
           )}
