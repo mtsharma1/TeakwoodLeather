@@ -50,7 +50,7 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
     () => [
       { id: "monthly-report", name: "Monthly Report", endpoint: "/api/settings/refresh/monthly" },
       { id: "invoice-report", name: "Invoice Report", endpoint: "/api/settings/refresh/invoice" },
-      { id: "return-invoice", name: "Return Invoice", endpoint: "/api/settings/refresh/return-invoice" },
+      // { id: "return-invoice", name: "Return Invoice", endpoint: "/api/settings/refresh/return-invoice" },
       { id: "return-courier", name: "Return Courier", endpoint: "/api/settings/refresh/return-courier" },
       { id: "return-reverse", name: "Return Reverse", endpoint: "/api/settings/refresh/return-reverse" },
       { id: "channel-report", name: "Channel Report", endpoint: "/api/settings/refresh/channel-report" },

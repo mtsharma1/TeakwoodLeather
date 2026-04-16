@@ -269,9 +269,9 @@ export async function analysisData(key: string) {
             return await inventoryCategoryWiseData()
         }
 
-        if (key === "returninvoice") {
-            return await persistedReturnInvoiceAnalysisData()
-        }
+        // if (key === "returninvoice") {
+        //     return await persistedReturnInvoiceAnalysisData()
+        // }
 
         if (key === "returncourier") {
             try {

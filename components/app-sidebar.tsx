@@ -54,23 +54,23 @@ const data = {
           isActive: true,
           icon: ChartNoAxesCombined,
           items: [
-            {
-              title: "Daily Order",
-              url: "/monthly-report/analysis/daily-order",
-              icon: Calendar,
-              items: [
-                {
-                  title: "Portal",
-                  url: "/monthly-report/analysis/portal-wise",
-                  icon: GalleryHorizontal,
-                },
-                {
-                  title: "Sub Category",
-                  url: "/monthly-report/analysis/category-wise",
-                  icon: Boxes,
-                },
-              ],
-            },
+            // {
+            //   title: "Daily Order",
+            //   url: "/monthly-report/analysis/daily-order",
+            //   icon: Calendar,
+            //   items: [
+            //     {
+            //       title: "Portal",
+            //       url: "/monthly-report/analysis/portal-wise",
+            //       icon: GalleryHorizontal,
+            //     },
+            //     {
+            //       title: "Sub Category",
+            //       url: "/monthly-report/analysis/category-wise",
+            //       icon: Boxes,
+            //     },
+            //   ],
+            // },
             {
               title: "Over Stock",
               url: "/monthly-report/analysis/over-stock",
