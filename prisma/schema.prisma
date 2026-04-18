@@ -137,6 +137,104 @@ model PriceCheckData {
   updatedAt DateTime @updatedAt
 }
 
+model ReturnInvoiceData {
+  id                        Int      @id @default(autoincrement())
+  displayOrderCode          String   @map("Display Order Code")
+  invoiceCode               String   @map("Invoice Code")
+  returnInvoiceCode         String   @map("Return Invoice Code")
+  shippingPackageCode       String   @map("Shipping Package Code")
+  shippingPackageStatusCode String   @map("Shipping Package Status Code")
+  returnedDate              String   @map("Returned Date")
+  customerName              String   @map("Customer Name")
+  skuCode                   String   @map("SKU Code")
+  itemTypeName              String   @map("Item Type Name")
+  qty                       Int      @map("Qty")
+  transferPrice             Float    @map("Transfer Price")
+  cgst                      Float    @map("CGST")
+  igst                      Float    @map("IGST")
+  sgst                      Float    @map("SGST")
+  utgst                     Float    @map("UTGST")
+  cess                      Float    @map("CESS")
+  cgstRate                  Float    @map("CGST Rate")
+  igstRate                  Float    @map("IGST Rate")
+  sgstRate                  Float    @map("SGST Rate")
+  utgstRate                 Float    @map("UTGST Rate")
+  cessRate                  Float    @map("CESS Rate")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ReturnCourierData {
+  id                        Int      @id @default(autoincrement())
+  displayOrderCode          String   @map("Display Order Code")
+  invoiceCode               String   @map("Invoice Code")
+  returnInvoiceCode         String   @map("Return Invoice Code")
+  shippingPackageCode       String   @map("Shipping Package Code")
+  shippingPackageStatusCode String   @map("Shipping Package Status Code")
+  putawayStatus             String?  @map("Putaway Status")
+  returnedDate              String   @map("Returned Date")
+  customerName              String   @map("Customer Name")
+  skuCode                   String   @map("SKU Code")
+  itemTypeName              String   @map("Item Type Name")
+  qty                       Int      @map("Qty")
+  transferPrice             Float    @map("Transfer Price")
+  cgst                      Float    @map("CGST")
+  igst                      Float    @map("IGST")
+  sgst                      Float    @map("SGST")
+  utgst                     Float    @map("UTGST")
+  cess                      Float    @map("CESS")
+  cgstRate                  Float    @map("CGST Rate")
+  igstRate                  Float    @map("IGST Rate")
+  sgstRate                  Float    @map("SGST Rate")
+  utgstRate                 Float    @map("UTGST Rate")
+  cessRate                  Float    @map("CESS Rate")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ReturnReverseData {
+  id                       Int     @id @default(autoincrement())
+  saleOrderItemCode        String  @default("") @map("Sale Order Item Code")
+  saleOrderCreated         String  @default("") @map("Sale Order Created")
+  saleOrderCode            String  @default("") @map("Sale Order Code")
+  itemTypeName             String  @default("") @map("Item Type Name")
+  itemTypeSku              String  @default("") @map("Item Type SKU")
+  reversePickupCode        String  @default("") @map("Reverse Pickup Code")
+  trackingNumber           String  @default("") @map("Tracking Number")
+  dispatchedDate           String  @default("") @map("Dispatched Date")
+  referenceCode            String  @default("") @map("Reference Code")
+  importReferenceId        String  @default("") @map("Import Reference Id")
+  reversePickupCreated     String  @default("") @map("Reverse Pickup Created")
+  reversePickupUpdated     String  @default("") @map("Reverse Pickup Updated")
+  reversePickupStatus      String  @default("") @map("Reverse Pickup Status")
+  reversePickupAction      String  @default("") @map("Reverse Pickup Action")
+  returnReason             String  @default("") @map("Return Reason")
+  customerImageUrl         String  @default("") @map("Customer Image Url")
+  replacementSaleOrderCode String  @default("") @map("Replacement Sale Order Code")
+  channel                  String  @default("") @map("Channel")
+  totalReceivedItems       Int     @default(0) @map("Total Received Items")
+  qcComments               String  @default("") @map("QC Comments")
+  reversePickupCreatedBy   String  @default("") @map("Reverse Pickup Created By")
+  putawayCode              String  @default("") @map("Putaway Code")
+  createdBy                String  @default("") @map("Created By")
+  putawayStatus            String? @map("Putaway Status")
+  putawayLastUpdated       String  @default("") @map("Putaway Last Updated")
+  courierProviderName      String  @default("") @map("Courier Provider Name")
+  returnItemStatus         String  @default("") @map("Return Item Status")
+  shippingCourierStatus    String  @default("") @map("Shipping Courier Status")
+  shippingTrackingStatus   String  @default("") @map("Shipping Tracking Status")
+  itemSealId               String  @default("") @map("Item Seal Id")
+  returnDeliveryDate       String  @default("") @map("Return Delivery Date")
+  channelReturnCreatedDate String  @default("") @map("Channel Return Created Date")
+  returnCourierName        String  @default("") @map("Return Courier Name")
+  returnRemarks            String  @default("") @map("Return Remarks")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 enum FILENAME {
   CATEGORY
   PORTAL

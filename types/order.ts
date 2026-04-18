@@ -136,6 +136,71 @@ export type PriceCheckData = {
 
 export type PriceCheckInvoiceData = InvoiceData & PriceCheckData;
 
+export type ReturnInvoiceData = {
+    "Display Order Code": string;
+    "Invoice Code": string;
+    "Return Invoice Code": string;
+    "Shipping Package Code": string;
+    "Shipping Package Status Code": string;
+    "Returned Date": string;
+    "Customer Name": string;
+    "skuCode": string;
+    "Item Type Name": string;
+    "Qty": number;
+    "Transfer Price": number;
+    "CGST": number;
+    "IGST": number;
+    "SGST": number;
+    "UTGST": number;
+    "CESS": number;
+    "CGST Rate": number;
+    "IGST Rate": number;
+    "SGST Rate": number;
+    "UTGST Rate": number;
+    "CESS Rate": number;
+};
+
+export type ReturnCourierData = ReturnInvoiceData & {
+    "Putaway Status"?: string;
+};
+
+export type ReturnReverseData = {
+    "Sale Order Item Code": string;
+    "Sale Order Created": string;
+    "Sale Order Code": string;
+    "Item Type Name": string;
+    "Item Type SKU": string;
+    "Reverse Pickup Code": string;
+    "Tracking Number": string;
+    "Dispatched Date": string;
+    "Reference Code": string;
+    "Import Reference Id": string;
+    "Reverse Pickup Created": string;
+    "Reverse Pickup Updated": string;
+    "Reverse Pickup Status": string;
+    "Reverse Pickup Action": string;
+    "Return Reason": string;
+    "Customer Image Url": string;
+    "Replacement Sale Order Code": string;
+    "Channel": string;
+    "Total Received Items": number;
+    "QC Comments": string;
+    "Reverse Pickup Created By": string;
+    "Putaway Code": string;
+    "Created By": string;
+    "Putaway Status": string;
+    "Putaway Last Updated": string;
+    "Courier Provider Name": string;
+    "Return Item Status": string;
+    "Shipping Courier Status": string;
+    "Shipping Tracking Status": string;
+    "Item Seal Id": string;
+    "Return Delivery Date": string;
+    "Channel Return Created Date": string;
+    "Return Courier Name": string;
+    "Return Remarks": string;
+};
+
 export interface Metrics {
     skuName: string;
     yesterday_Qty: number;

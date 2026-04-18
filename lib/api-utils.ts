@@ -78,3 +78,40 @@ export const ITEM_MASTER_DROPBOX_API_BODY = {
    "exportFilters": [],
    "frequency": "ONETIME"
 }
+
+export const RETURN_INVOICE_API_BODY = {
+   "exportJobTypeName": "Return Invoices",
+   "exportColums": [
+      "displayorderCode",
+      "invoiceCode",
+      "returnInvoiceCode",
+      "ShippingPackageCode",
+      "shippingPackageStatusCode",
+      "returnedDate",
+      "customerName",
+      "skuCode",
+      "itemTypeName",
+      "qty",
+      "transferPrice",
+      "cgst",
+      "igst",
+      "sgst",
+      "utgst",
+      "cess",
+      "cgstrate",
+      "igstrate",
+      "sgstrate",
+      "utgstrate",
+      "cessrate"
+   ],
+   "exportFilters": [
+      {
+         "id": "addedOn",
+         "dateRange": {
+            "start": 1774981800000,
+            "end": 1775845799999
+         }
+      }
+   ],
+   "frequency": "ONETIME"
+}

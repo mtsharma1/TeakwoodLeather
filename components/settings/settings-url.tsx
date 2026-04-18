@@ -50,6 +50,9 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
     () => [
       { id: "monthly-report", name: "Monthly Report", endpoint: "/api/settings/refresh/monthly" },
       { id: "invoice-report", name: "Invoice Report", endpoint: "/api/settings/refresh/invoice" },
+      // { id: "return-invoice", name: "Return Invoice", endpoint: "/api/settings/refresh/return-invoice" },
+      { id: "return-courier", name: "Return Courier", endpoint: "/api/settings/refresh/return-courier" },
+      { id: "return-reverse", name: "Return Reverse", endpoint: "/api/settings/refresh/return-reverse" },
       { id: "channel-report", name: "Channel Report", endpoint: "/api/settings/refresh/channel-report" },
       { id: "sku-imgs", name: "SKU Images", endpoint: "/api/settings/refresh/sku-imgs" },
     ],
@@ -84,6 +87,9 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
     switch(jobType) {
       case "monthly": return "monthly-report";
       case "invoice": return "invoice-report";
+      case "return-invoice": return "return-invoice";
+      case "return-courier": return "return-courier";
+      case "return-reverse": return "return-reverse";
       case "channel-report": return "channel-report";
       case "sku-imgs": return "sku-imgs";
       default: return null;
@@ -95,6 +101,9 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
     switch(apiId) {
       case "monthly-report": return "monthly";
       case "invoice-report": return "invoice";
+      case "return-invoice": return "return-invoice";
+      case "return-courier": return "return-courier";
+      case "return-reverse": return "return-reverse";
       case "channel-report": return "channel-report";
       case "sku-imgs": return "sku-imgs";
       default: return apiId;
@@ -170,6 +179,9 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
           try {
             const apiId = api.id === "monthly-report" ? "monthly" : 
                            api.id === "invoice-report" ? "invoice" : 
+                           api.id === "return-invoice" ? "return-invoice" :
+                           api.id === "return-courier" ? "return-courier" :
+                           api.id === "return-reverse" ? "return-reverse" :
                            api.id === "channel-report" ? "channel-report" : "sku-imgs"
             
             const response = await fetch(`/api/settings/job-status?jobType=${apiId}`)
@@ -465,49 +477,52 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
             )}
             
             {/* Job History Section */}
-            {getRecentJobsForEndpoint(api.id).length > 0 && (
-              <Collapsible className="mt-2">
-                <CollapsibleTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="flex items-center text-xs text-muted-foreground hover:text-foreground w-full justify-between"
-                  >
-                    <span className="flex items-center">
-                      <Clock className="h-3 w-3 mr-1" />
-                      Job History
-                    </span>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="pt-2">
-                  <div className="space-y-2 text-xs">
-                    {getRecentJobsForEndpoint(api.id).slice(0, 3).map((job, idx) => (
-                      <div key={idx} className="border rounded-md p-2 bg-muted/40">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center">
-                            {renderStatusBadge(job.status)}
-                          </div>
-                          <div className="text-muted-foreground">
-                            {formatDate(job.updatedAt)}
-                          </div>
+            <Collapsible className="mt-2">
+              <CollapsibleTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="flex items-center text-xs text-muted-foreground hover:text-foreground w-full justify-between"
+                >
+                  <span className="flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    Job History
+                  </span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-2">
+                <div className="space-y-2 text-xs">
+                  {getRecentJobsForEndpoint(api.id).length === 0 && (
+                    <div className="border rounded-md p-2 bg-muted/40 text-muted-foreground">
+                      No history yet.
+                    </div>
+                  )}
+                  {getRecentJobsForEndpoint(api.id).slice(0, 3).map((job, idx) => (
+                    <div key={idx} className="border rounded-md p-2 bg-muted/40">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          {renderStatusBadge(job.status)}
                         </div>
-                        {job.message && (
-                          <div className="mt-1 text-muted-foreground">
-                            {job.message}
-                          </div>
-                        )}
-                        {job.completedAt && (
-                          <div className="mt-1 text-muted-foreground">
-                            Completed: {formatDate(job.completedAt)}
-                          </div>
-                        )}
+                        <div className="text-muted-foreground">
+                          {formatDate(job.updatedAt)}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            )}
+                      {job.message && (
+                        <div className="mt-1 text-muted-foreground">
+                          {job.message}
+                        </div>
+                      )}
+                      {job.completedAt && (
+                        <div className="mt-1 text-muted-foreground">
+                          Completed: {formatDate(job.completedAt)}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         ))}
       </CardContent>

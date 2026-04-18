@@ -7,13 +7,24 @@ export const dynamic = 'force-dynamic'
 
 export async function DashboardCards() {
   const { cards, unlink_sku_card } = await analysisDasboard()
+  const disabledNavigationCards = new Set(["open purchase", "open sales value"])
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {Object.entries(cards).map(([label, data]) => (
-        <Link key={label} href={`/monthly-report/analysis/${label.toLocaleLowerCase().replaceAll(" ", "-")}`}>
-          <AnalysisCard label={label} count={data.count} amount={data.totalValue} />
-        </Link>
-      ))}
+      {Object.entries(cards).map(([label, data]) => {
+        const normalizedLabel = label.toLocaleLowerCase().trim()
+        const isNavigationDisabled = disabledNavigationCards.has(normalizedLabel)
+
+        if (isNavigationDisabled) {
+          return <AnalysisCard key={label} label={label} count={data.count} amount={data.totalValue} />
+        }
+
+        return (
+          <Link key={label} href={`/monthly-report/analysis/${normalizedLabel.replaceAll(" ", "-")}`} className="block">
+            <AnalysisCard label={label} count={data.count} amount={data.totalValue} />
+          </Link>
+        )
+      })}
       <Link key={"Unlink SKU Card"} href={`/channel-report`}>
         <AnalysisCard label={"Unlink SKU Card"} count={unlink_sku_card || 0} />
       </Link>
