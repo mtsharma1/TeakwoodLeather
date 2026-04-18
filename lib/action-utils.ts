@@ -202,8 +202,14 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
 export function analysis(analysisData: MonthDataItem[], key?: string) {
     const filters = {
         overstock: (item: MonthDataItem) => item.DOH > DOH_THRESHOLDS.OVERSTOCK && !excludeSubCategoryOverStock.includes(item['Sub Category']),
-        understock: (item: MonthDataItem) => item.DOH < DOH_THRESHOLDS.UNDERSTOCK && ['A', 'B'].includes(item["Static Grade"]) && !excludeSubCategoryUnderStock.includes(item['Sub Category']),
-        underprice2: (item: MonthDataItem) => item['Multiple Price'] < MULTIPLE_SELLING_PRICE,
+        understock: (item: MonthDataItem) =>
+            item.DOH < DOH_THRESHOLDS.UNDERSTOCK &&
+            ['A', 'B'].includes(item["Static Grade"]) &&
+            !excludeSubCategoryUnderStock.includes(item['Sub Category']) &&
+            safeNumber(item["Sale Qty"]) !== 0,
+        underprice2: (item: MonthDataItem) =>
+            item['Multiple Price'] < MULTIPLE_SELLING_PRICE &&
+            safeNumber(item["Sale Qty"]) !== 0,
         newgrade: (item: MonthDataItem) => item['Static Grade'] === "NEW",       
     }
 
@@ -219,7 +225,7 @@ export function analysis(analysisData: MonthDataItem[], key?: string) {
 
     if (key === 'overview') return analysisData.sort(sortBySaleQtyDesc);
     if (key === 'salesSummary') return calcSalesGrid(analysisData);
-    if (key === 'inventorymis') return calcInventoryMIS(analysisData);
+    if (key === 'inventorymis') return calcInventoryMIS(analysisData, true);
     if (key === 'ordersummary') return calcOrderSummary(analysisData);
     if (key === 'commonordersummary') return commonOrderSummary(analysisData);
 
@@ -419,7 +425,7 @@ function calcSalesGrid(analysisData: MonthDataItem[]) {
     }
 }
 
-function calcInventoryMIS(analysisData: MonthDataItem[]) {
+function calcInventoryMIS(analysisData: MonthDataItem[], includeTotalsRow = false) {
     const initialGradeSummary = Object.fromEntries(
         grades.map(grade => [grade, {
             inventory_value: 0,
@@ -453,12 +459,24 @@ function calcInventoryMIS(analysisData: MonthDataItem[]) {
         grade.inventory_value = roundToDecimals(grade.inventory_value)
     })
 
+    const rows = Object.entries(summary.gradeWiseSales).map(([grade, data]) => ({
+        grade,
+        ...data
+    }))
+
+    if (includeTotalsRow) {
+        rows.push({
+            grade: "TOTAL",
+            inventory_value: roundToDecimals(summary.totalInventory),
+            inventory_percentage: roundToDecimals(
+                rows.reduce((acc, row) => acc + row.inventory_percentage, 0)
+            )
+        })
+    }
+
     return {
         total_Inventory: roundToDecimals(summary.totalInventory),
-        rows: Object.entries(summary.gradeWiseSales).map(([grade, data]) => ({
-            grade,
-            ...data
-        })),
+        rows,
         cols: ['grade', 'inventory_value', 'inventory_percentage']
     }
 }

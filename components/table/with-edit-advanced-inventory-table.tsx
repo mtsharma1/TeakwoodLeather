@@ -325,6 +325,9 @@ export default function AdvancedInventoryTable({
                   table.getRowModel().rows.map((row, rowIndex) => {
                     const firstColumnId = table.getHeaderGroups()[0].headers[0].column.id
                     const isPinned = pinnedColumns.includes(firstColumnId)
+                    const rowData = row.original as Record<string, string | number>
+                    const gradeValue = String(rowData.grade ?? rowData.Grade ?? "").toUpperCase()
+                    const isTotalRow = filename === "inventorymis" && gradeValue === "TOTAL"
 
                     const orderedColumnIds = table.getVisibleLeafColumns().map(col => col.id)
 
@@ -336,6 +339,7 @@ export default function AdvancedInventoryTable({
                         isPinned={isPinned}
                         rowIndex={rowIndex}
                         isEditing={isEditing}
+                        isTotalRow={isTotalRow}
                       />
                     )
                   })
