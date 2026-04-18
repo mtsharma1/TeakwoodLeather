@@ -21,6 +21,7 @@ interface EditableRowProps {
   isPinned: boolean
   isEditing: boolean
   rowIndex: number
+  isTotalRow?: boolean
 }
 
 interface ImageCarouselProps {
@@ -102,7 +103,7 @@ export const ImageCarousel = ({ sku }: ImageCarouselProps) => {
   )
 }
 
-export function EditableRow({ row, columns, isPinned, rowIndex, isEditing }: EditableRowProps) {
+export function EditableRow({ row, columns, isPinned, rowIndex, isEditing, isTotalRow = false }: EditableRowProps) {
   const [editing, setEditing] = useState(false)
   const [isPending, startTransition] = useTransition()
   const pathname = usePathname()
@@ -179,6 +180,7 @@ export function EditableRow({ row, columns, isPinned, rowIndex, isEditing }: Edi
       className={`
         ${rowIndex % 2 === 0 ? "bg-gray-50/50" : ""}
         ${editing ? "bg-blue-50/50" : ""}
+        ${isTotalRow ? "font-bold" : ""}
         relative
       `}
     >
@@ -209,7 +211,7 @@ export function EditableRow({ row, columns, isPinned, rowIndex, isEditing }: Edi
               />
             ) : (
               <div className="overflow-hidden text-ellipsis whitespace-nowrap flex items-center gap-2">
-                <span>{cellValue}</span>
+                <span className={isTotalRow ? "font-bold" : ""}>{cellValue}</span>
                 {isSkuColumn && !editing && shouldShowSkuImagePreview && (
                   <TooltipProvider>
                     <Tooltip>
