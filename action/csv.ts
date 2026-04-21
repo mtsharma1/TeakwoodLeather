@@ -11,7 +11,7 @@ import { calculateCategoryMetrics, calculatePortalMetrics } from "@/lib/category
 import type { SalesRecord } from "@/types/category-poral-monthly"
 import type { PriceCheckInvoiceData } from "@/types/order"
 import { getDaysInMonth } from "date-fns"
-import { createReturnInvoiceCourierJob, createReturnReverseJob, getJobStatus } from "@/lib/api"
+import { createReturnCourierJob, createReturnReverseJob, getJobStatus } from "@/lib/api"
 import prisma from "@/lib/prisma"
 import { convertPriceCheckData, convertReturnCourierData, convertReturnInvoiceData, convertReturnReverseData, saveReturnCourierData, saveReturnReverseData } from "./db_action"
 import { FILENAME } from "@prisma/client"
@@ -417,7 +417,7 @@ async function persistedReturnCourierAnalysisData() {
 
     if (allRows.length === 0) {
         try {
-            const rawRows = await fetchReturnInvoiceRowsForAnalysis()
+            const rawRows = await fetchReturnCourierRowsForAnalysis()
             if (rawRows.length > 0) {
                 await saveReturnCourierData(rawRows)
             }
@@ -496,17 +496,17 @@ function normalizeStatusToken(value: string) {
     return value.trim().toUpperCase().replace(/[\s-]+/g, "_")
 }
 
-async function fetchReturnInvoiceRowsForAnalysis() {
-    const jobResponse = await createReturnInvoiceCourierJob()
+async function fetchReturnCourierRowsForAnalysis() {
+    const jobResponse = await createReturnCourierJob()
 
     if (!jobResponse?.successful || !jobResponse?.jobCode) {
-        throw new Error("Failed to create return invoice export job")
+        throw new Error("Failed to create return courier export job")
     }
 
     const result = await pollJobStatus(jobResponse.jobCode, 100, 2000 * 4)
 
     if (!result?.filePath) {
-        throw new Error("Return invoice export did not provide a file path")
+        throw new Error("Return courier export did not provide a file path")
     }
 
     return await fetchCSV<Record<string, string | number>>(result.filePath)
@@ -639,18 +639,22 @@ const invoiceHeaders: string[] = [
 export const categoryPortalData = cache(async (type: string) => {
     const transformedData = await convertPriceCheckData()
 
-    // Get current date
+    // Build noon-to-noon windows.
+    // Today window: previous day 12:00:00 PM to current day 11:59:59 AM.
+    // Yesterday window: day-before-previous 12:00:00 PM to previous day 11:59:59 AM.
+    // Monday behavior remains: "yesterday" points to Saturday window.
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
     const todayDate = now.getDate();
     const isTodayMonday = now.getDay() === 1;
+    const yesterdayOffsetDays = isTodayMonday ? 2 : 1;
 
-    const todayStart = new Date(year, month, todayDate, 0, 0, 0);  // 00:00:00 today
-    const todayEnd = new Date(year, month, todayDate, 23, 59, 59);  // 11:30:00 today
+    const todayStart = new Date(year, month, todayDate - 1, 12, 0, 0);   // previous day 12:00:00 PM
+    const todayEnd = new Date(year, month, todayDate, 11, 59, 59);        // current day 11:59:59 AM
 
-    const yesterdayStart = new Date(year, month, todayDate - (isTodayMonday ? 2 : 1), 11, 30, 0);  // 11:30:00 yesterday
-    const yesterdayEnd = new Date(year, month, todayDate - (isTodayMonday ? 2 : 1), 23, 59, 59);   // 23:59:59 yesterday
+    const yesterdayStart = new Date(year, month, todayDate - (yesterdayOffsetDays + 1), 12, 0, 0); // previous window start at 12:00:00 PM
+    const yesterdayEnd = new Date(year, month, todayDate - yesterdayOffsetDays, 11, 59, 59);       // previous window end at 11:59:59 AM
 
     const todayData = filterInvoices(transformedData, todayStart, todayEnd);
     const yesterdayData = filterInvoices(transformedData, yesterdayStart, yesterdayEnd);

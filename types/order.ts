@@ -136,32 +136,32 @@ export type PriceCheckData = {
 
 export type PriceCheckInvoiceData = InvoiceData & PriceCheckData;
 
-export type ReturnInvoiceData = {
-    "Display Order Code": string;
-    "Invoice Code": string;
-    "Return Invoice Code": string;
-    "Shipping Package Code": string;
-    "Shipping Package Status Code": string;
-    "Returned Date": string;
-    "Customer Name": string;
-    "skuCode": string;
-    "Item Type Name": string;
-    "Qty": number;
-    "Transfer Price": number;
-    "CGST": number;
-    "IGST": number;
-    "SGST": number;
-    "UTGST": number;
-    "CESS": number;
-    "CGST Rate": number;
-    "IGST Rate": number;
-    "SGST Rate": number;
-    "UTGST Rate": number;
-    "CESS Rate": number;
-};
 
-export type ReturnCourierData = ReturnInvoiceData & {
+
+export type ReturnCourierData = {
+    "Sale Order No": string;
+    "Shipping Package Code": string;
+    "Shipping Package Status": string;
+    "Shipping Provider": string;
+    "Shipping Courier": string;
+    "AWB No": string;
+    "Return Delivery Date": string;
+    "RTO Reason": string;
+    "Created": string;
+    "Channel Created": string;
+    "Return Manifest Code": string;
+    "Return Manifest Added": string;
+    "Return Manifest Status": string;
+    "Return Manifest Created By": string;
+    "Return Manifest Created At": string;
+    "Reshipment Action": string;
+    "Channel": string;
+    "Putaway No": string;
     "Putaway Status"?: string;
+    "Putaway By": string;
+    "Putaway Date": string;
+    "Dispatch Facility": string;
+    "Return Facility": string;
 };
 
 export type ReturnReverseData = {

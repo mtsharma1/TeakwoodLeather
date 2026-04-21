@@ -88,6 +88,21 @@ const data = {
               subIcon: MoveDown
             },
             {
+              title: "Open Purchase",
+              url: "/monthly-report/analysis/open-purchase",
+              icon: CircleDollarSign,
+            },
+            {
+              title: "Open Sales Value",
+              url: "/monthly-report/analysis/open-sales-value",
+              icon: SquareActivity,
+            },
+            {
+              title: "Daily Open Sales Value",
+              url: "/monthly-report/analysis/daily-open-sales-value",
+              icon: SquareActivity,
+            },
+            {
               title: "Sales Grade",
               url: "/monthly-report/analysis/sales-Summary",
               icon: LayoutGrid,

@@ -1,7 +1,7 @@
 import { saveReturnCourierData } from "@/action/db_action"
 import { fetchCSV, pollJobStatus } from "@/action/csv"
 import { NextResponse } from "next/server"
-import { createReturnInvoiceCourierJob } from "@/lib/api"
+import { createReturnCourierJob } from "@/lib/api"
 import prisma from "@/lib/prisma"
 
 function isAlreadyRunningError(jobResponse: unknown) {
@@ -97,7 +97,7 @@ export async function GET() {
       },
     })
 
-    const jobResponse = await createReturnInvoiceCourierJob()
+    const jobResponse = await createReturnCourierJob()
     let filePath = ""
 
     if (!jobResponse.successful) {
