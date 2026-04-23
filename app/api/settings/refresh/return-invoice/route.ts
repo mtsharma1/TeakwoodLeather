@@ -1,4 +1,3 @@
-import type { ReturnInvoiceData } from "@/types/order"
 import { saveReturnInvoiceData } from "@/action/db_action"
 import { fetchCSV, pollJobStatus } from "@/action/csv"
 import { NextResponse } from "next/server"
@@ -16,7 +15,7 @@ async function processAndSaveReturnInvoiceData(jobId: string, path: string) {
       },
     })
 
-    const rawData = await fetchCSV<ReturnInvoiceData>(path)
+    const rawData = await fetchCSV<Record<string, string | number>>(path)
 
     await prisma.jobStatus.update({
       where: { id: jobId },
@@ -26,7 +25,7 @@ async function processAndSaveReturnInvoiceData(jobId: string, path: string) {
       },
     })
 
-    await saveReturnInvoiceData(rawData as unknown as Record<string, string | number>[])
+    await saveReturnInvoiceData(rawData)
 
     await prisma.jobStatus.update({
       where: { id: jobId },

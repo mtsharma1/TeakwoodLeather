@@ -52,7 +52,8 @@ export function transformData(
         const daysPositive = safeNumber(item["Days of positive inventory"])
         const vendorPrice = safeNumber(item["Vendor Price"])
 
-        const requiredQty = (saleQty * 2) - (availableInventory + openPurchase)
+        const requiredQtyMultiplier = item["Category Name"] === "LEATHER SHOES" ? 3 : 2 //checking if Category is leather shoes then multiplying sale qty by 3 else 2 for other categories to get required qty
+        const requiredQty = (saleQty * requiredQtyMultiplier) - (availableInventory + openPurchase)
 
 
         const orderQty = parseInt((supportData
@@ -148,15 +149,13 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
                 }
                 // if(item["Open Purchase"])
                 // {
-                    summary['Open Purchase'].count++;
-                    summary['Open Purchase'].totalValue+= safeNumber(item["Open Purchase"]) * safeNumber(item["Vendor Price"]);
+                    summary['Open Purchase'].count += safeNumber(item["Open Purchase"]);
+                    summary['Open Purchase'].totalValue += safeNumber(item["Open Purchase"]) * safeNumber(item["Vendor Price"]);
 
 
                     summary['Open Sales Value'].count+=safeNumber(item["Sale Qty"]);
                     summary['Open Sales Value'].totalValue+= safeNumber(item["Sale Qty"]) * safeNumber(item["Sale Amount"]);
 
-                    summary['Daily Open Sales Value'].count+=safeNumber(item["Sale Qty"]);
-                    summary['Daily Open Sales Value'].totalValue+= safeNumber(item["Sale Qty"]) * safeNumber(item["Sale Amount"]);
                 
                     // }
 
@@ -186,8 +185,7 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
                 'Over Stock': { count: 0, totalValue: 0 },
                 'Under Stock': { count: 0, totalValue: 0 },
                 'Open Purchase': {count: 0, totalValue: 0},
-                'Open Sales Value': {count: 0, totalValue: 0}, 
-                'Daily Open Sales Value': {count: 0, totalValue: 0}
+                'Open Sales Value': {count: 0, totalValue: 0}                
                 // 'Under Price 2': { count: 0, totalValue: 0 },
                 // 'New Grade': { count: 0, totalValue: 0 },
                 // 'Common Order Summary': { count: 0, totalValue: 0 },
@@ -205,8 +203,16 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
 export function analysis(analysisData: MonthDataItem[], key?: string) {
     const filters = {
         overstock: (item: MonthDataItem) => item.DOH > DOH_THRESHOLDS.OVERSTOCK && !excludeSubCategoryOverStock.includes(item['Sub Category']),
-        understock: (item: MonthDataItem) => item.DOH < DOH_THRESHOLDS.UNDERSTOCK && ['A', 'B'].includes(item["Static Grade"]) && !excludeSubCategoryUnderStock.includes(item['Sub Category']),
-        underprice2: (item: MonthDataItem) => item['Multiple Price'] < MULTIPLE_SELLING_PRICE,
+        understock: (item: MonthDataItem) =>
+            item.DOH < DOH_THRESHOLDS.UNDERSTOCK &&
+            ['A', 'B'].includes(item["Static Grade"]) &&
+            !excludeSubCategoryUnderStock.includes(item['Sub Category']) &&
+            safeNumber(item["Sale Qty"]) !== 0,
+        underprice2: (item: MonthDataItem) =>
+            item['Multiple Price'] < MULTIPLE_SELLING_PRICE &&
+            safeNumber(item["Sale Qty"]) !== 0,
+        openpurchase: (item: MonthDataItem) => safeNumber(item["Open Purchase"]) > 0,
+        opensalesvalue: (item: MonthDataItem) => safeNumber(item["Sale Qty"]) > 0,
         newgrade: (item: MonthDataItem) => item['Static Grade'] === "NEW",       
     }
 
@@ -222,7 +228,7 @@ export function analysis(analysisData: MonthDataItem[], key?: string) {
 
     if (key === 'overview') return analysisData.sort(sortBySaleQtyDesc);
     if (key === 'salesSummary') return calcSalesGrid(analysisData);
-    if (key === 'inventorymis') return calcInventoryMIS(analysisData);
+    if (key === 'inventorymis') return calcInventoryMIS(analysisData, true);
     if (key === 'ordersummary') return calcOrderSummary(analysisData);
     if (key === 'commonordersummary') return commonOrderSummary(analysisData);
 
@@ -422,7 +428,7 @@ function calcSalesGrid(analysisData: MonthDataItem[]) {
     }
 }
 
-function calcInventoryMIS(analysisData: MonthDataItem[]) {
+function calcInventoryMIS(analysisData: MonthDataItem[], includeTotalsRow = false) {
     const initialGradeSummary = Object.fromEntries(
         grades.map(grade => [grade, {
             inventory_value: 0,
@@ -456,12 +462,24 @@ function calcInventoryMIS(analysisData: MonthDataItem[]) {
         grade.inventory_value = roundToDecimals(grade.inventory_value)
     })
 
+    const rows = Object.entries(summary.gradeWiseSales).map(([grade, data]) => ({
+        grade,
+        ...data
+    }))
+
+    if (includeTotalsRow) {
+        rows.push({
+            grade: "TOTAL",
+            inventory_value: roundToDecimals(summary.totalInventory),
+            inventory_percentage: roundToDecimals(
+                rows.reduce((acc, row) => acc + row.inventory_percentage, 0)
+            )
+        })
+    }
+
     return {
         total_Inventory: roundToDecimals(summary.totalInventory),
-        rows: Object.entries(summary.gradeWiseSales).map(([grade, data]) => ({
-            grade,
-            ...data
-        })),
+        rows,
         cols: ['grade', 'inventory_value', 'inventory_percentage']
     }
 }

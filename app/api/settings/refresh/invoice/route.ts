@@ -71,15 +71,30 @@ async function processAndSaveInvoiceData(jobId: string, path: string) {
 
 // Get date range for the invoice job
 function getDateRange() {
-  const today = new Date()
-  const isTodayMonday = today.getDay() === 1
-  const tomorrow = format(new Date(today.setDate(today.getDate() + 1)), "yyyy-MM-dd")
-  const dayBeforeYesterday = format(new Date(today.setDate(today.getDate() - 2)), "yyyy-MM-dd") // Adjusting for the +1 above
-  const dayBeforeYesterday_2 = format(new Date(today.setDate(today.getDate() - 1)), "yyyy-MM-dd") // Adjusting for the -2 above
+  const now = new Date()
+  const isTodayMonday = now.getDay() === 1
+
+  const start = new Date(now)
+  const end = new Date(now)
+
+  // Monday behavior remains: shift window one more day back.
+  if (isTodayMonday) {
+    start.setDate(start.getDate() - 3)
+    end.setDate(end.getDate())
+  } else {
+    start.setDate(start.getDate() - 2)
+  }
+
+  // 12:00:00 PM yesterday to 11:59:59 AM today
+  start.setHours(12, 0, 0, 0)
+  end.setHours(11, 59, 59, 0)
+
+  console.log("Start date : " + start)
+  console.log("End date : " + end)
 
   return {
-    startDate: isTodayMonday ? dayBeforeYesterday_2 : dayBeforeYesterday,
-    endDate: tomorrow
+    startDate: format(start, "yyyy-MM-dd HH:mm:ss"),
+    endDate: format(end, "yyyy-MM-dd HH:mm:ss"),
   }
 }
 

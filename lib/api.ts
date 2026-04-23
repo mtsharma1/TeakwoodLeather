@@ -47,6 +47,19 @@ async function getAccessToken() {
 
 async function createInvoiceJob(startDate: string, endDate: string) {
    const url = `${BASE_URL}/services/rest/v1/export/job/create`
+   const toUtcIsoString = (dateTime: string) => {
+      const normalized = dateTime.includes("T") ? dateTime : dateTime.replace(" ", "T")
+      const parsedDate = new Date(normalized)
+
+      if (Number.isNaN(parsedDate.getTime())) {
+         throw new Error(`Invalid date-time for invoice export: ${dateTime}`)
+      }
+
+      return parsedDate.toISOString()
+   }
+
+   const startDateUtc = toUtcIsoString(startDate)
+   const endDateUtc = toUtcIsoString(endDate)
    const body = {
       exportJobTypeName: "Invoice",
       exportColums: [
@@ -103,8 +116,8 @@ async function createInvoiceJob(startDate: string, endDate: string) {
          {
             id: "dateCreatedRange",
             dateRange: {
-               start: startDate,
-               end: endDate,
+               start: startDateUtc,
+               end: endDateUtc,
             },
          },
       ],
@@ -149,40 +162,42 @@ function getLastTwoMonthsDateRangeISTMillis() {
    return { start, end }
 }
 
-const RETURN_INVOICE_EXPORT_COLUMNS = [
-   "displayorderCode",
-   "invoiceCode",
-   "returnInvoiceCode",
-   "ShippingPackageCode",
-   "shippingPackageStatusCode",
-   "returnedDate",
-   "customerName",
-   "skuCode",
-   "itemTypeName",
-   "qty",
-   "transferPrice",
-   "cgst",
-   "igst",
-   "sgst",
-   "utgst",
-   "cess",
-   "cgstrate",
-   "igstrate",
-   "sgstrate",
-   "utgstrate",
-   "cessrate",
+const COURIER_RETURNS_EXPORT_COLUMNS = [
+   "saleOrderNo",
+   "shippingPackageCode",
+   "shippingPackageStatus",
+   "shippingProvider",
+   "shippingCourier",
+   "awbNo",
+   "returnDeliveryDate",
+   "rtoReason",
+   "created",
+   "channelCreated",
+   "returnManifestCode",
+   "returnManifestAdded",
+   "returnManifestStatus",
+   "returnManifestCreatedBy",
+   "returnManifestCreatedAt",
+   "reshipmentAction",
+   "channel",
+   "putawayNo",
+   "putawayStatus",
+   "putawayBy",
+   "putawayDate",
+   "dispatchFacility",
+   "returnFacility",
 ]
 
-async function createReturnInvoiceCourierJob() {
+async function createReturnCourierJob() {
    const url = `${BASE_URL}/services/rest/v1/export/job/create`
    const dateRange = getLastTwoMonthsDateRangeISTMillis()
 
    const body = {
-      exportJobTypeName: "Return Invoices",
-      exportColums: RETURN_INVOICE_EXPORT_COLUMNS,
+      exportJobTypeName: "Courier Returns",
+      exportColums: COURIER_RETURNS_EXPORT_COLUMNS,
       exportFilters: [
          {
-            id: "addedOn",
+            id: "soDateRange",
             dateRange,
          },
       ],
@@ -260,6 +275,6 @@ export {
    createChannelItemReportJob,
    createItemMasterDropboxJob,
    createReturnInvoiceJob,
-   createReturnInvoiceCourierJob,
+   createReturnCourierJob,
    createReturnReverseJob,
 }
