@@ -57,21 +57,21 @@ export function NavMain({ items, groupLabel }: { groupLabel: string; items: Menu
               <CollapsibleTrigger asChild>
                 <SidebarMenuSubButton
                   className={cn(
-                    "w-full text-slate-100 justify-between hover:text-white hover:bg-slate-700/50 transition-colors duration-200 rounded-md flex items-center group",
+                    "w-full text-[#5a6476] justify-between hover:text-[#2f7ae5] hover:bg-[#e7eefb] transition-colors duration-200 rounded-md flex items-center group",
                     isCollapsed ? "px-2 py-2" : "px-4 py-2",
                   )}
                 >
                   <div className="flex items-center gap-3">
                     {subItem.icon && (
-                      <subItem.icon
-                        size={18}
-                        className="transition-colors duration-150 text-white group-hover:text-white"
-                      />
-                    )}
+                        <subItem.icon
+                          size={18}
+                          className="transition-colors duration-150 text-[#7e8798] group-hover:text-[#2f7ae5]"
+                        />
+                      )}
                     {!isCollapsed && <span className="truncate text-sm font-medium">{subItem.title}</span>}
                   </div>
                   {!isCollapsed && (
-                    <ChevronRight className="h-4 w-4 flex-shrink-0 transition-transform duration-200 text-slate-400 group-hover:text-white group-data-[state=open]:rotate-90" />
+                    <ChevronRight className="h-4 w-4 flex-shrink-0 transition-transform duration-200 text-[#9aa3b2] group-hover:text-[#2f7ae5] group-data-[state=open]:rotate-90" />
                   )}
                 </SidebarMenuSubButton>
               </CollapsibleTrigger>
@@ -83,7 +83,7 @@ export function NavMain({ items, groupLabel }: { groupLabel: string; items: Menu
             <SidebarMenuSubButton
               asChild
               className={cn(
-                "w-full text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors duration-200 rounded-md",
+                "w-full text-[#5a6476] hover:text-[#2f7ae5] hover:bg-[#e7eefb] transition-colors duration-200 rounded-md",
                 isCollapsed ? "px-2 py-2" : "px-4 py-2",
               )}
             >
@@ -92,13 +92,13 @@ export function NavMain({ items, groupLabel }: { groupLabel: string; items: Menu
                   {subItem.icon && (
                     <subItem.icon
                       size={18}
-                      className="transition-colors duration-150 text-white group-hover:text-white absolute"
+                      className="transition-colors duration-150 text-[#7e8798] group-hover:text-[#2f7ae5] absolute"
                     />
                   )}
                   {subItem.subIcon && (
                     <subItem.subIcon
                       size={10}
-                      className="transition-colors duration-150 text-white group-hover:text-white absolute left-[0.96rem] bottom-0"
+                      className="transition-colors duration-150 text-[#7e8798] group-hover:text-[#2f7ae5] absolute left-[0.96rem] bottom-0"
                     />
                   )}
                 </div>
@@ -114,7 +114,7 @@ export function NavMain({ items, groupLabel }: { groupLabel: string; items: Menu
   return (
     <SidebarGroup>
       {!isCollapsed && (
-        <SidebarGroupLabel className="px-4 py-1 font-semibold text-gray-300 bg-slate-600 text-sm rounded-t-lg mb-2">
+        <SidebarGroupLabel className="px-3 py-1 font-semibold text-[#8a94a7] text-[11px] tracking-[0.09em] uppercase rounded-md mb-2">
           {groupLabel}
         </SidebarGroupLabel>
       )}
@@ -127,7 +127,7 @@ export function NavMain({ items, groupLabel }: { groupLabel: string; items: Menu
                   <SidebarMenuButton
                     tooltip={item.title}
                     className={cn(
-                      "w-full hover:bg-slate-700/50 hover:text-white justify-between transition-colors duration-200 rounded-md group",
+                      "w-full text-[#4f596a] hover:bg-[#e7eefb] hover:text-[#2f7ae5] justify-between transition-colors duration-200 rounded-md group",
                       isCollapsed ? "px-2 py-2" : "px-4 py-2",
                     )}
                   >
@@ -136,7 +136,7 @@ export function NavMain({ items, groupLabel }: { groupLabel: string; items: Menu
                       {!isCollapsed && <span className="font-medium truncate">{item.title}</span>}
                     </div>
                     {!isCollapsed && (
-                      <ChevronRight className="ml-2 h-4 w-4 flex-shrink-0 text-slate-400 transition-transform duration-200 group-data-[state=open]:rotate-90" />
+                      <ChevronRight className="ml-2 h-4 w-4 flex-shrink-0 text-[#9aa3b2] transition-transform duration-200 group-data-[state=open]:rotate-90" />
                     )}
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
@@ -149,13 +149,13 @@ export function NavMain({ items, groupLabel }: { groupLabel: string; items: Menu
                 asChild
                 tooltip={item.title}
                 className={cn(
-                  "w-full hover:bg-slate-700/50 hover:text-white transition-colors duration-200 rounded-md",
+                  "w-full text-[#4f596a] hover:bg-[#e7eefb] hover:text-[#2f7ae5] transition-colors duration-200 rounded-md",
                   isCollapsed ? "px-2 py-2" : "px-4 py-2",
                 )}
               >
                 <a href={item.url} onClick={handleNavigation} className="flex items-center">
                   {item.icon && (
-                    <item.icon className="text-slate-300 group-hover:text-white transition-colors duration-200" />
+                    <item.icon className="text-[#8f98a8] group-hover:text-[#2f7ae5] transition-colors duration-200" />
                   )}
                   {!isCollapsed && <span className="font-medium truncate ml-2">{item.title}</span>}
                 </a>

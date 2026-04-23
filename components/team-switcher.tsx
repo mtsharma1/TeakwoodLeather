@@ -18,16 +18,16 @@ export function TeamSwitcher({
   return (
     <Button
       size={'lg'}
-      className="p-2 bg-inherit hover:bg-inherit"
+      className="h-auto w-full justify-start gap-3 rounded-lg border border-[#dde3ec] bg-white px-3 py-3 text-[#2d3445] hover:bg-[#f7f9fc]"
     >
-      <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-        <Image src={'/logo.jpg'} height={100} width={100} alt="Logo" className="rounded-md" />
+      <div className="flex size-10 items-center justify-center overflow-hidden rounded-full bg-[#edf2f8]">
+        <Image src={'/logo.jpg'} height={100} width={100} alt="Logo" className="h-full w-full object-cover" />
       </div>
-      <div className="grid flex-1 text-left text-sm leading-tight">
-        <span className="truncate font-semibold">
+      <div className="grid flex-1 text-left leading-tight">
+        <span className="truncate text-sm font-semibold uppercase tracking-[0.06em] text-[#3c4457]">
           {activeTeam.name}
         </span>
-        <span className="truncate text-xs">{activeTeam.plan}</span>
+        <span className="truncate text-xs text-[#8c95a6]">{activeTeam.plan}</span>
       </div>
     </Button>
   )

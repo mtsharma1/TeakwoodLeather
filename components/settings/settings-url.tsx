@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Copy, RefreshCw, CheckCircle, AlertCircle, Clock, ChevronDown } from "lucide-react"
+import { Copy, RefreshCw, CheckCircle, AlertCircle, Clock, ChevronDown, Database, FileText, FolderSync, ImageIcon, RefreshCcwDot, ScanSearch } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -44,6 +44,8 @@ interface RecentJobsI {
   completedAt: Date | null;
 }
 
+type EndpointFilter = "all" | "in-progress" | "completed" | "failed"
+
 export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
   // Define the 5 different API endpoints
   const apiEndpoints: ApiEndpoint[] = useMemo(
@@ -63,13 +65,18 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
   const [urls, setUrls] = useState<Record<string, string>>(
     apiEndpoints.reduce((acc, api) => ({ ...acc, [api.id]: "" }), {}),
   )
+  const [recentJobsState, setRecentJobsState] = useState<RecentJobsI[]>(recentJobs)
+
+  useEffect(() => {
+    setRecentJobsState(recentJobs)
+  }, [recentJobs])
 
   // Initialize URLs from recent jobs if available
   useEffect(() => {
-    if (recentJobs && recentJobs.length > 0) {
+    if (recentJobsState && recentJobsState.length > 0) {
       const initialUrls: Record<string, string> = { ...urls };
       
-      recentJobs.forEach(job => {
+      recentJobsState.forEach(job => {
         if (job.filePath) {
           const apiId = getApiIdFromJobType(job.jobType);
           if (apiId && !initialUrls[apiId]) {
@@ -80,7 +87,7 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
       
       setUrls(initialUrls);
     }
-  }, [recentJobs]);
+  }, [recentJobsState]);
 
   // Helper to convert jobType to apiId
   const getApiIdFromJobType = (jobType: string): string | null => {
@@ -113,7 +120,32 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
   // Get recent jobs for a specific endpoint
   const getRecentJobsForEndpoint = (apiId: string) => {
     const jobType = getJobTypeFromApiId(apiId);
-    return recentJobs.filter(job => job.jobType === jobType);
+    return recentJobsState.filter(job => job.jobType === jobType);
+  }
+
+  const upsertRecentJob = (job: RecentJobsI) => {
+    setRecentJobsState((prev) => {
+      const key = `${job.jobType}-${new Date(job.updatedAt).getTime()}-${job.status}`
+      const filtered = prev.filter((item) => {
+        const itemKey = `${item.jobType}-${new Date(item.updatedAt).getTime()}-${item.status}`
+        return itemKey !== key
+      })
+
+      return [job, ...filtered].sort(
+        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      )
+    })
+  }
+
+  const getLatestJobStatusForEndpoint = (apiId: string): string | null => {
+    const jobs = getRecentJobsForEndpoint(apiId)
+    if (jobs.length === 0) return null
+
+    const latestJob = [...jobs].sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    )[0]
+
+    return latestJob.status
   }
 
   // Loading states for each API
@@ -145,6 +177,7 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
   const [activeJobs, setActiveJobs] = useState<Record<string, string | null>>(
     apiEndpoints.reduce((acc, api) => ({ ...acc, [api.id]: null }), {}),
   )
+  const [statusFilter, setStatusFilter] = useState<EndpointFilter>("all")
 
   // Effect to handle timers for long-running operations
   useEffect(() => {
@@ -214,6 +247,15 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
 
             // Check if completed or failed
             if (jobStatus.status === "completed") {
+              upsertRecentJob({
+                jobType: jobStatus.jobType,
+                filePath: jobStatus.filePath,
+                message: jobStatus.message,
+                status: jobStatus.status,
+                updatedAt: new Date(jobStatus.updatedAt),
+                completedAt: jobStatus.completedAt ? new Date(jobStatus.completedAt) : null,
+              })
+
               setLoadingStates(prev => ({
                 ...prev,
                 [api.id]: false
@@ -242,6 +284,15 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
                 }))
               }, 3000)
             } else if (jobStatus.status === "failed") {
+              upsertRecentJob({
+                jobType: jobStatus.jobType,
+                filePath: jobStatus.filePath,
+                message: jobStatus.error || jobStatus.message,
+                status: jobStatus.status,
+                updatedAt: new Date(jobStatus.updatedAt),
+                completedAt: jobStatus.completedAt ? new Date(jobStatus.completedAt) : null,
+              })
+
               setLoadingStates(prev => ({
                 ...prev,
                 [api.id]: false
@@ -371,16 +422,59 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
   const renderStatusBadge = (status: string) => {
     switch (status) {
       case "completed":
-        return <Badge className="bg-green-500 hover:bg-green-600">Completed</Badge>
+        return <Badge className="bg-green-500 hover:bg-green-600 text-white">Completed</Badge>
       case "processing":
-        return <Badge variant="outline" className="bg-blue-500 text-white hover:bg-blue-600">Processing</Badge>
+        return <Badge variant="outline" className="bg-blue-500 text-white hover:bg-blue-600 border-blue-500">Processing</Badge>
       case "pending":
-        return <Badge variant="outline" className="bg-yellow-500 text-white hover:bg-yellow-600">Pending</Badge>
+        return <Badge variant="outline" className="bg-yellow-500 text-white hover:bg-yellow-600 border-yellow-500">Pending</Badge>
       case "failed":
         return <Badge variant="destructive">Failed</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
+  }
+
+  const getEndpointIcon = (id: string) => {
+    switch (id) {
+      case "monthly-report":
+        return Database
+      case "invoice-report":
+        return FileText
+      case "return-courier":
+        return RefreshCcwDot
+      case "return-reverse":
+        return FolderSync
+      case "channel-report":
+        return ScanSearch
+      case "sku-imgs":
+        return ImageIcon
+      default:
+        return FileText
+    }
+  }
+
+  const getEndpointFilterStatus = (apiId: string): EndpointFilter => {
+    if (loadingStates[apiId] || statuses[apiId] === "loading") return "in-progress"
+    if (statuses[apiId] === "success") return "completed"
+    if (statuses[apiId] === "error") return "failed"
+
+    const latestStatus = getLatestJobStatusForEndpoint(apiId)
+    if (latestStatus === "completed") return "completed"
+    if (latestStatus === "failed") return "failed"
+    if (latestStatus === "processing" || latestStatus === "pending") return "in-progress"
+
+    return "in-progress"
+  }
+
+  const filteredEndpoints =
+    statusFilter === "all"
+      ? apiEndpoints
+      : apiEndpoints.filter((api) => getEndpointFilterStatus(api.id) === statusFilter)
+  const filterCounts = {
+    "all": apiEndpoints.length,
+    "in-progress": apiEndpoints.filter((api) => getEndpointFilterStatus(api.id) === "in-progress").length,
+    "completed": apiEndpoints.filter((api) => getEndpointFilterStatus(api.id) === "completed").length,
+    "failed": apiEndpoints.filter((api) => getEndpointFilterStatus(api.id) === "failed").length,
   }
 
   // Helper function to format date
@@ -389,30 +483,92 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
   }
 
   return (
-    <Card className="shadow-lg transition-all duration-300 hover:shadow-xl">
-      <CardHeader>
-        <CardTitle className="text-xl font-bold">URL Settings</CardTitle>
-        <CardDescription>Refresh your endpoints - progress will be shown in real-time</CardDescription>
+    <Card className="rounded-2xl border border-[#dde4ef] bg-[#f9fbff] shadow-none transition-all duration-300">
+      <CardHeader className="border-b border-[#e1e8f3] bg-white rounded-t-2xl">
+        <CardTitle className="text-lg md:text-xl font-semibold tracking-[0.03em] text-[#344157]">Apps</CardTitle>
+        <CardDescription className="text-[#6c778b]">
+          Refresh endpoint connectors and monitor progress in real-time.
+        </CardDescription>
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => setStatusFilter("all")}
+            className={cn(
+              "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+              statusFilter === "all"
+                ? "border-[#87a8e7] bg-[#eaf1ff] text-[#2f4d85]"
+                : "border-[#d9e1ee] bg-white text-[#4d5a72] hover:bg-[#f3f7ff]"
+            )}
+          >
+            All ({filterCounts["all"]})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter("in-progress")}
+            className={cn(
+              "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+              statusFilter === "in-progress"
+                ? "border-[#87a8e7] bg-[#eaf1ff] text-[#2f4d85]"
+                : "border-[#d9e1ee] bg-white text-[#4d5a72] hover:bg-[#f3f7ff]"
+            )}
+          >
+            In-Progress ({filterCounts["in-progress"]})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter("completed")}
+            className={cn(
+              "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+              statusFilter === "completed"
+                ? "border-[#79c492] bg-[#e8f8ee] text-[#2c8f52]"
+                : "border-[#d9e1ee] bg-white text-[#4d5a72] hover:bg-[#f3f7ff]"
+            )}
+          >
+            Completed ({filterCounts["completed"]})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter("failed")}
+            className={cn(
+              "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+              statusFilter === "failed"
+                ? "border-[#e3a0a0] bg-[#fff1f1] text-[#c24d4d]"
+                : "border-[#d9e1ee] bg-white text-[#4d5a72] hover:bg-[#f3f7ff]"
+            )}
+          >
+            Failed ({filterCounts["failed"]})
+          </button>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {apiEndpoints.map((api) => (
+      <CardContent className="space-y-4 p-5">
+        {filteredEndpoints.map((api) => (
           <div
             key={api.id}
             className={cn(
-              "space-y-3 rounded-lg p-4 transition-all duration-300",
-              statuses[api.id] === "loading" && "bg-blue-50 dark:bg-blue-950/20",
-              statuses[api.id] === "success" && "bg-green-50 dark:bg-green-950/20",
-              statuses[api.id] === "error" && "bg-red-50 dark:bg-red-950/20",
+              "space-y-3 rounded-xl border p-4 transition-all duration-300 bg-white shadow-sm",
+              statuses[api.id] === "idle" && "border-[#d8e0ec]",
+              statuses[api.id] === "loading" && "border-[#89a8e8] bg-[#eef4ff]",
+              statuses[api.id] === "success" && "border-[#79c492] bg-[#effaf3]",
+              statuses[api.id] === "error" && "border-[#e3a0a0] bg-[#fff2f2]",
             )}
           >
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium">{api.name}</h3>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-xl border border-[#dbe3ef] bg-[#f4f7fc] text-[#425372]">
+                  {(() => {
+                    const EndpointIcon = getEndpointIcon(api.id)
+                    return <EndpointIcon className="h-4 w-4" />
+                  })()}
+                </div>
+                <h3 className="text-sm md:text-[15px] font-semibold tracking-[0.02em] text-[#344157]">{api.name}</h3>
+              </div>
               <span
                 className={cn(
-                  "text-xs",
-                  statuses[api.id] === "loading" && "text-blue-600 dark:text-blue-400",
-                  statuses[api.id] === "success" && "text-green-600 dark:text-green-400",
-                  statuses[api.id] === "error" && "text-red-600 dark:text-red-400",
+                  "text-xs font-medium",
+                  statuses[api.id] === "loading" && "text-[#3567c8]",
+                  statuses[api.id] === "success" && "text-[#2c8f52]",
+                  statuses[api.id] === "error" && "text-[#c24d4d]",
+                  statuses[api.id] === "idle" && "text-[#8a93a5]",
                 )}
               >
                 {getStatusMessage(api)}
@@ -427,15 +583,15 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
                   onChange={(e) => updateUrl(api.id, e.target.value)}
                   placeholder={`Enter ${api.name} URL`}
                   className={cn(
-                    "pr-10 transition-all duration-300",
-                    statuses[api.id] === "success" && "border-green-300 dark:border-green-700",
-                    statuses[api.id] === "error" && "border-red-300 dark:border-red-700",
+                    "pr-10 h-11 border-[#d6deea] bg-white text-[#4d5870] placeholder:text-[#99a3b6] transition-all duration-300 focus-visible:ring-[#4f7ddb]/25",
+                    statuses[api.id] === "success" && "border-[#79c492]",
+                    statuses[api.id] === "error" && "border-[#e3a0a0]",
                   )}
                 />
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-0 top-0 h-full"
+                  className="absolute right-0 top-0 h-full text-[#70809d] hover:text-[#2f7ae5] hover:bg-[#eaf1ff]"
                   onClick={() => copyToClipboard(api.id)}
                   disabled={!urls[api.id]}
                 >
@@ -448,16 +604,16 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
                 disabled={loadingStates[api.id]}
                 variant="outline"
                 className={cn(
-                  "transition-all duration-300 relative overflow-hidden",
-                  loadingStates[api.id] && "bg-blue-100 dark:bg-blue-900/30",
-                  statuses[api.id] === "success" && "bg-green-100 dark:bg-green-900/30",
-                  statuses[api.id] === "error" && "bg-red-100 dark:bg-red-900/30",
+                  "h-11 min-w-[140px] rounded-full border-[#c7d3e8] bg-white text-[#344157] font-medium transition-all duration-300 relative overflow-hidden hover:bg-[#eaf1ff] hover:border-[#7fa2e7]",
+                  loadingStates[api.id] && "bg-[#e7f0ff] text-[#3567c8] border-[#89a8e8]",
+                  statuses[api.id] === "success" && "bg-[#e8f8ee] text-[#2c8f52] border-[#79c492]",
+                  statuses[api.id] === "error" && "bg-[#fff1f1] text-[#c24d4d] border-[#e3a0a0]",
                 )}
               >
                 <RefreshCw
                   className={cn(
                     "h-4 w-4 mr-2 transition-all duration-300",
-                    loadingStates[api.id] && "animate-spin text-blue-600 dark:text-blue-400",
+                    loadingStates[api.id] && "animate-spin text-[#3567c8]",
                   )}
                 />
                 {loadingStates[api.id] ? "Refreshing" : "Refresh"}
@@ -468,10 +624,10 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
               <Progress
                 value={progress[api.id]}
                 className={cn(
-                  "h-1 transition-all duration-300",
-                  statuses[api.id] === "loading" && "bg-blue-100 dark:bg-blue-900/30",
-                  statuses[api.id] === "success" && "bg-green-100 dark:bg-green-900/30",
-                  statuses[api.id] === "error" && "bg-red-100 dark:bg-red-900/30",
+                  "h-1.5 transition-all duration-300",
+                  statuses[api.id] === "loading" && "bg-[#dfeaff]",
+                  statuses[api.id] === "success" && "bg-[#dff4e6]",
+                  statuses[api.id] === "error" && "bg-[#ffe2e2]",
                 )}
               />
             )}
@@ -482,7 +638,7 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="flex items-center text-xs text-muted-foreground hover:text-foreground w-full justify-between"
+                  className="flex items-center text-xs text-[#7b8597] hover:text-[#334154] hover:bg-[#edf3ff] w-full justify-between rounded-lg"
                 >
                   <span className="flex items-center">
                     <Clock className="h-3 w-3 mr-1" />
@@ -494,27 +650,27 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
               <CollapsibleContent className="pt-2">
                 <div className="space-y-2 text-xs">
                   {getRecentJobsForEndpoint(api.id).length === 0 && (
-                    <div className="border rounded-md p-2 bg-muted/40 text-muted-foreground">
+                    <div className="border border-[#d8e0ec] rounded-lg p-2 bg-[#f8fafe] text-[#8a94a7]">
                       No history yet.
                     </div>
                   )}
                   {getRecentJobsForEndpoint(api.id).slice(0, 3).map((job, idx) => (
-                    <div key={idx} className="border rounded-md p-2 bg-muted/40">
+                    <div key={idx} className="border border-[#d8e0ec] rounded-lg p-2 bg-[#f8fafe]">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center">
                           {renderStatusBadge(job.status)}
                         </div>
-                        <div className="text-muted-foreground">
+                        <div className="text-[#8a94a7]">
                           {formatDate(job.updatedAt)}
                         </div>
                       </div>
                       {job.message && (
-                        <div className="mt-1 text-muted-foreground">
+                        <div className="mt-1 text-[#6d7890]">
                           {job.message}
                         </div>
                       )}
                       {job.completedAt && (
-                        <div className="mt-1 text-muted-foreground">
+                        <div className="mt-1 text-[#8a94a7]">
                           Completed: {formatDate(job.completedAt)}
                         </div>
                       )}
@@ -525,11 +681,16 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
             </Collapsible>
           </div>
         ))}
+        {filteredEndpoints.length === 0 && (
+          <div className="rounded-xl border border-[#d8e0ec] bg-white p-5 text-sm text-[#7d8798]">
+            No endpoints found for the selected filter.
+          </div>
+        )}
       </CardContent>
-      <CardFooter className="text-sm text-muted-foreground flex justify-between items-center border-t p-4">
+      <CardFooter className="text-sm text-[#6f7b92] flex justify-between items-center border-t border-[#d8e0ec] p-4 bg-[#fafcff] rounded-b-2xl">
         <span>Click refresh to update the corresponding routes</span>
         {Object.values(loadingStates).some((state) => state) && (
-          <span className="text-blue-600 dark:text-blue-400 animate-pulse">Operations in progress...</span>
+          <span className="text-[#3567c8] animate-pulse">Operations in progress...</span>
         )}
       </CardFooter>
     </Card>

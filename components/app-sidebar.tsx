@@ -21,14 +21,14 @@ import { RiDashboardLine } from "react-icons/ri";
 
 
 
-// This is sample data.
+// AppBranding: temporary renamed section labels for preview
 const data = {
-  groupLabel: "Monthly Order Report",
+  groupLabel: "Inventory Command",
   teams: [
     {
-      name: "Teakwood",
+      name: "Teakwood Atlas",
       logo: Package,
-      plan: "Enterprise",
+      plan: "Branding Preview",
     },
   ],
   navMain: [
@@ -185,7 +185,7 @@ const data = {
 }
 
 const data2 = {
-  groupLabel: "Price Checklist",
+  groupLabel: "Price Intelligence",
   navMain: [
     {
       title: "Price Checklist",
@@ -196,7 +196,7 @@ const data2 = {
 }
 
 const data3 = {
-  groupLabel: "Daily Sales Report",
+  groupLabel: "Sales Pulse",
   navMain: [
     {
       title: "Category and Portal",
@@ -240,7 +240,7 @@ const data3 = {
 }
 
 const data4 = {
-  groupLabel: "Channel Item Report",
+  groupLabel: "Channel Insights",
   navMain: [
     {
       title: "Channel Report",
@@ -253,17 +253,17 @@ const data4 = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="icon" {...props} className="bg-slate-800">
-      <SidebarHeader className="bg-slate-800 text-white">
+    <Sidebar collapsible="icon" {...props} className="bg-[#f1f3f6] border-r border-[#d3d9e2]">
+      <SidebarHeader className="bg-[#f1f3f6] text-[#293042] border-b border-[#dbe1e9] px-2 py-3">
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
-      <SidebarContent className="bg-slate-800 scrollbar-none text-white">
+      <SidebarContent className="bg-[#f1f3f6] scrollbar-none text-[#4a5568]">
         <NavMain items={data.navMain} groupLabel={data.groupLabel} />
         <NavMain items={data2.navMain} groupLabel={data2.groupLabel} />
         <NavMain items={data3.navMain} groupLabel={data3.groupLabel} />
         <NavMain items={data4.navMain} groupLabel={data4.groupLabel} />
       </SidebarContent>
-      <SidebarFooter className="bg-slate-800 text-white">
+      <SidebarFooter className="bg-[#f1f3f6] text-[#4a5568]">
         {/* <NavUser /> */}
       </SidebarFooter>
       <SidebarRail />

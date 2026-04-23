@@ -16,9 +16,9 @@ export async function DashboardTable() {
 
    return (
       <div className="grid gap-6 md:grid-cols-2">
-         <Card className="w-full overflow-hidden">
-            <CardHeader className="border-b">
-               <CardTitle className="text-xl md:text-2xl font-bold capitalize">Stop Only</CardTitle>
+         <Card className="w-full overflow-hidden rounded-sm border border-[#cfd6e0] bg-white shadow-none transition-all duration-200 hover:border-[#8fb0e6] hover:shadow-[0_4px_14px_-8px_rgba(37,99,235,0.45)]">
+            <CardHeader className="border-b border-[#d6dde7] bg-[#f4f6fa]">
+               <CardTitle className="text-[1.05rem] font-semibold tracking-[0.08em] text-[#3f4a5c] uppercase">Stop Only</CardTitle>
             </CardHeader>
             <CardContent className="p-2 sm:p-4">
                <Suspense fallback={<LoadingSkeleton />}>
@@ -31,9 +31,9 @@ export async function DashboardTable() {
                </Suspense>
             </CardContent>
          </Card>
-         <Card className="w-full overflow-hidden">
-            <CardHeader className="border-b">
-               <CardTitle className="text-xl md:text-2xl font-bold capitalize">Daily Sales Report</CardTitle>
+         <Card className="w-full overflow-hidden rounded-sm border border-[#cfd6e0] bg-white shadow-none transition-all duration-200 hover:border-[#8fb0e6] hover:shadow-[0_4px_14px_-8px_rgba(37,99,235,0.45)]">
+            <CardHeader className="border-b border-[#d6dde7] bg-[#f4f6fa]">
+               <CardTitle className="text-[1.05rem] font-semibold tracking-[0.08em] text-[#3f4a5c] uppercase">Daily Sales Report</CardTitle>
             </CardHeader>
             <CardContent className="p-2 sm:p-4">
                <Suspense fallback={<LoadingSkeleton />}>
