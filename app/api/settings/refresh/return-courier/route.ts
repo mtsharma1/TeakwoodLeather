@@ -1,8 +1,10 @@
 import { saveReturnCourierData } from "@/action/db_action"
 import { fetchCSV, pollJobStatus } from "@/action/csv"
 import { NextResponse } from "next/server"
-import { createReturnInvoiceCourierJob } from "@/lib/api"
+import { createReturnCourierJob } from "@/lib/api"
 import prisma from "@/lib/prisma"
+
+const shouldBreakForDebug = process.env.DEBUG_RETURN_COURIER === "true"
 
 function isAlreadyRunningError(jobResponse: unknown) {
   const candidate = jobResponse as { errors?: Array<{ code?: number; message?: string }>; message?: string } | null
@@ -28,6 +30,10 @@ async function getLatestReturnExportFilePathFallback() {
 
 async function processAndSaveReturnCourierData(jobId: string, path: string) {
   try {
+    if (shouldBreakForDebug) {
+      debugger
+    }
+
     await prisma.jobStatus.update({
       where: { id: jobId },
       data: {
@@ -74,6 +80,10 @@ async function processAndSaveReturnCourierData(jobId: string, path: string) {
 
 export async function GET() {
   try {
+    if (shouldBreakForDebug) {
+      debugger
+    }
+
     const jobStatus = await prisma.jobStatus.upsert({
       where: { jobType: "return-courier" },
       update: {
@@ -97,7 +107,7 @@ export async function GET() {
       },
     })
 
-    const jobResponse = await createReturnInvoiceCourierJob()
+    const jobResponse = await createReturnCourierJob()
     let filePath = ""
 
     if (!jobResponse.successful) {

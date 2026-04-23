@@ -450,8 +450,28 @@ const invoiceSupportData: InvoiceSupportRule[] = [
 
 /*********HELPER*********/
 export const filterInvoices = (transformedData: PriceCheckInvoiceData[], start: Date, end: Date) => {
+    const parseInvoiceCreatedDateTime = (value: string) => {
+        const normalized = value.trim()
+        const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/)
+
+        if (!match) {
+            return new Date(normalized)
+        }
+
+        const [, year, month, day, hour, minute, second] = match
+        return new Date(
+            Number(year),
+            Number(month) - 1,
+            Number(day),
+            Number(hour),
+            Number(minute),
+            Number(second),
+            0
+        )
+    }
+
     return transformedData.filter((item) => {
-        const invoiceDate = new Date(item["Invoice Created Date"]);
+        const invoiceDate = parseInvoiceCreatedDateTime(item["Invoice Created Date"]);
         return invoiceDate >= start && invoiceDate <= end;
     });
 };

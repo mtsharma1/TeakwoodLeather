@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma"
 import { roundToDecimals, safeNumber } from "@/lib/utils"
-import { MonthDataItem, PriceCheckInvoiceData, ProductData, ReturnCourierData, ReturnInvoiceData, ReturnReverseData } from "@/types/order"
+import { MonthDataItem, PriceCheckInvoiceData, ProductData, ReturnCourierData, ReturnReverseData } from "@/types/order"
 import { isValid, parse, parseISO } from "date-fns"
 
 // export async function saveMonthlyDataWithChunking(transformedData: MonthDataItem[], chunkSize = 1000) {
@@ -314,7 +314,7 @@ export async function saveReturnInvoiceData(dataArray: Record<string, string | n
    ])
 }
 
-export async function convertReturnInvoiceData(): Promise<ReturnInvoiceData[]> {
+export async function convertReturnInvoiceData(): Promise<Record<string, string | number>[]> {
    const returnInvoiceData = await prisma.returnInvoiceData.findMany({
       orderBy: [
          {
@@ -327,16 +327,20 @@ export async function convertReturnInvoiceData(): Promise<ReturnInvoiceData[]> {
 }
 
 export async function saveReturnCourierData(dataArray: Record<string, string | number>[]) {
-   const formattedData = mapReturnInvoiceRowsForStorage(dataArray)
+   const formattedData = mapReturnCourierRowsForStorage(dataArray)
    const prismaAny = prisma as unknown as Record<string, unknown>
    const delegate = prismaAny.returnCourierData as
-      | { deleteMany: () => Promise<unknown>; createMany: (args: { data: ReturnType<typeof mapReturnInvoiceRowsForStorage> }) => Promise<unknown> }
+      | { deleteMany: () => Promise<unknown>; createMany: (args: { data: ReturnType<typeof mapReturnCourierRowsForStorage> }) => Promise<unknown> }
       | undefined
 
    if (delegate?.deleteMany && delegate?.createMany) {
-      await delegate.deleteMany()
-      await delegate.createMany({ data: formattedData })
-      return
+      try {
+         await delegate.deleteMany()
+         await delegate.createMany({ data: formattedData })
+         return
+      } catch {
+         // Fall back to raw SQL path when Prisma client is out of sync with schema.
+      }
    }
 
    await saveReturnDataWithRawSql("ReturnCourierData", formattedData)
@@ -345,20 +349,27 @@ export async function saveReturnCourierData(dataArray: Record<string, string | n
 export async function convertReturnCourierData(): Promise<ReturnCourierData[]> {
    const prismaAny = prisma as unknown as Record<string, unknown>
    const delegate = prismaAny.returnCourierData as
-      | { findMany: (args: { orderBy: { returnedDate: "desc" }[] }) => Promise<Array<Parameters<typeof mapReturnInvoiceRowForOutput>[0]>> }
+      | { findMany: (args: { orderBy: { created: "desc" }[] }) => Promise<Array<Parameters<typeof mapReturnCourierRowForOutput>[0]>> }
       | undefined
 
-   const returnCourierData = delegate?.findMany
-      ? await delegate.findMany({
-         orderBy: [
-            {
-               returnedDate: "desc",
-            },
-         ],
-      })
-      : await fetchReturnDataWithRawSql("ReturnCourierData")
+   let returnCourierData: Array<Parameters<typeof mapReturnCourierRowForOutput>[0]> = []
+   if (delegate?.findMany) {
+      try {
+         returnCourierData = await delegate.findMany({
+            orderBy: [
+               {
+                  created: "desc",
+               },
+            ],
+         })
+      } catch {
+         returnCourierData = await fetchReturnDataWithRawSql("ReturnCourierData")
+      }
+   } else {
+      returnCourierData = await fetchReturnDataWithRawSql("ReturnCourierData")
+   }
 
-   return returnCourierData.map(mapReturnInvoiceRowForOutput)
+   return returnCourierData.map(mapReturnCourierRowForOutput)
 }
 
 export async function saveReturnReverseData(dataArray: Record<string, string | number>[]) {
@@ -372,11 +383,11 @@ export async function convertReturnReverseData(): Promise<ReturnReverseData[]> {
    return returnReverseData.map(mapReturnReverseRowForOutput)
 }
 
-type ReturnStorageRow = ReturnType<typeof mapReturnInvoiceRowsForStorage>[number]
+type ReturnCourierStorageRow = ReturnType<typeof mapReturnCourierRowsForStorage>[number]
 
 async function saveReturnDataWithRawSql(
    tableName: "ReturnCourierData",
-   rows: ReturnStorageRow[],
+   rows: ReturnCourierStorageRow[],
 ) {
    await prisma.$executeRawUnsafe(`DELETE FROM \`${tableName}\``)
 
@@ -387,84 +398,89 @@ async function saveReturnDataWithRawSql(
    for (const row of rows) {
       await prisma.$executeRawUnsafe(
          `INSERT INTO \`${tableName}\` (
-            \`Display Order Code\`,
-            \`Invoice Code\`,
-            \`Return Invoice Code\`,
+            \`Sale Order No\`,
             \`Shipping Package Code\`,
-            \`Shipping Package Status Code\`,
+            \`Shipping Package Status\`,
+            \`Shipping Provider\`,
+            \`Shipping Courier\`,
+            \`AWB No\`,
+            \`Return Delivery Date\`,
+            \`RTO Reason\`,
+            \`Created\`,
+            \`Channel Created\`,
+            \`Return Manifest Code\`,
+            \`Return Manifest Added\`,
+            \`Return Manifest Status\`,
+            \`Return Manifest Created By\`,
+            \`Return Manifest Created At\`,
+            \`Reshipment Action\`,
+            \`Channel\`,
+            \`Putaway No\`,
             \`Putaway Status\`,
-            \`Returned Date\`,
-            \`Customer Name\`,
-            \`SKU Code\`,
-            \`Item Type Name\`,
-            \`Qty\`,
-            \`Transfer Price\`,
-            \`CGST\`,
-            \`IGST\`,
-            \`SGST\`,
-            \`UTGST\`,
-            \`CESS\`,
-            \`CGST Rate\`,
-            \`IGST Rate\`,
-            \`SGST Rate\`,
-            \`UTGST Rate\`,
-            \`CESS Rate\`
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-         row.displayOrderCode,
-         row.invoiceCode,
-         row.returnInvoiceCode,
+            \`Putaway By\`,
+            \`Putaway Date\`,
+            \`Dispatch Facility\`,
+            \`Return Facility\`,
+            \`createdAt\`,
+            \`updatedAt\`
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+         row.saleOrderNo,
          row.shippingPackageCode,
-         row.shippingPackageStatusCode,
+         row.shippingPackageStatus,
+         row.shippingProvider,
+         row.shippingCourier,
+         row.awbNo,
+         row.returnDeliveryDate,
+         row.rtoReason,
+         row.created,
+         row.channelCreated,
+         row.returnManifestCode,
+         row.returnManifestAdded,
+         row.returnManifestStatus,
+         row.returnManifestCreatedBy,
+         row.returnManifestCreatedAt,
+         row.reshipmentAction,
+         row.channel,
+         row.putawayNo,
          row.putawayStatus,
-         row.returnedDate,
-         row.customerName,
-         row.skuCode,
-         row.itemTypeName,
-         row.qty,
-         row.transferPrice,
-         row.cgst,
-         row.igst,
-         row.sgst,
-         row.utgst,
-         row.cess,
-         row.cgstRate,
-         row.igstRate,
-         row.sgstRate,
-         row.utgstRate,
-         row.cessRate,
+         row.putawayBy,
+         row.putawayDate,
+         row.dispatchFacility,
+         row.returnFacility,
       )
    }
 }
 
 async function fetchReturnDataWithRawSql(
    tableName: "ReturnCourierData",
-): Promise<Array<Parameters<typeof mapReturnInvoiceRowForOutput>[0]>> {
-   const rows = await prisma.$queryRawUnsafe<Array<Parameters<typeof mapReturnInvoiceRowForOutput>[0]>>(
+): Promise<Array<Parameters<typeof mapReturnCourierRowForOutput>[0]>> {
+   const rows = await prisma.$queryRawUnsafe<Array<Parameters<typeof mapReturnCourierRowForOutput>[0]>>(
       `SELECT
-         \`Display Order Code\` AS displayOrderCode,
-         \`Invoice Code\` AS invoiceCode,
-         \`Return Invoice Code\` AS returnInvoiceCode,
+         \`Sale Order No\` AS saleOrderNo,
          \`Shipping Package Code\` AS shippingPackageCode,
-         \`Shipping Package Status Code\` AS shippingPackageStatusCode,
+         \`Shipping Package Status\` AS shippingPackageStatus,
+         \`Shipping Provider\` AS shippingProvider,
+         \`Shipping Courier\` AS shippingCourier,
+         \`AWB No\` AS awbNo,
+         \`Return Delivery Date\` AS returnDeliveryDate,
+         \`RTO Reason\` AS rtoReason,
+         \`Created\` AS created,
+         \`Channel Created\` AS channelCreated,
+         \`Return Manifest Code\` AS returnManifestCode,
+         \`Return Manifest Added\` AS returnManifestAdded,
+         \`Return Manifest Status\` AS returnManifestStatus,
+         \`Return Manifest Created By\` AS returnManifestCreatedBy,
+         \`Return Manifest Created At\` AS returnManifestCreatedAt,
+         \`Reshipment Action\` AS reshipmentAction,
+         \`Channel\` AS channel,
+         \`Putaway No\` AS putawayNo,
          \`Putaway Status\` AS putawayStatus,
-         \`Returned Date\` AS returnedDate,
-         \`Customer Name\` AS customerName,
-         \`SKU Code\` AS skuCode,
-         \`Item Type Name\` AS itemTypeName,
-         \`Qty\` AS qty,
-         \`Transfer Price\` AS transferPrice,
-         \`CGST\` AS cgst,
-         \`IGST\` AS igst,
-         \`SGST\` AS sgst,
-         \`UTGST\` AS utgst,
-         \`CESS\` AS cess,
-         \`CGST Rate\` AS cgstRate,
-         \`IGST Rate\` AS igstRate,
-         \`SGST Rate\` AS sgstRate,
-         \`UTGST Rate\` AS utgstRate,
-         \`CESS Rate\` AS cessRate
+         \`Putaway By\` AS putawayBy,
+         \`Putaway Date\` AS putawayDate,
+         \`Dispatch Facility\` AS dispatchFacility,
+         \`Return Facility\` AS returnFacility
       FROM \`${tableName}\`
-      ORDER BY \`Returned Date\` DESC`
+      ORDER BY \`Created\` DESC`
    )
 
    return rows ?? []
@@ -628,6 +644,34 @@ function mapReturnInvoiceRowsForStorage(dataArray: Record<string, string | numbe
    }))
 }
 
+function mapReturnCourierRowsForStorage(dataArray: Record<string, string | number>[]) {
+   return dataArray.map((item) => ({
+      saleOrderNo: String(getReturnInvoiceField(item, ["Sale Order No", "saleOrderNo"])),
+      shippingPackageCode: String(getReturnInvoiceField(item, ["Shipping Package Code", "shippingPackageCode"])),
+      shippingPackageStatus: String(getReturnInvoiceField(item, ["Shipping Package Status", "shippingPackageStatus"])),
+      shippingProvider: String(getReturnInvoiceField(item, ["Shipping Provider", "shippingProvider"])),
+      shippingCourier: String(getReturnInvoiceField(item, ["Shipping Courier", "shippingCourier"])),
+      awbNo: String(getReturnInvoiceField(item, ["AWB No", "awbNo"])),
+      returnDeliveryDate: String(getReturnInvoiceField(item, ["Return Delivery Date", "returnDeliveryDate"])),
+      rtoReason: String(getReturnInvoiceField(item, ["RTO Reason", "rtoReason"])),
+      created: String(getReturnInvoiceField(item, ["Created", "created"])),
+      channelCreated: String(getReturnInvoiceField(item, ["Channel Created", "channelCreated"])),
+      returnManifestCode: String(getReturnInvoiceField(item, ["Return Manifest Code", "returnManifestCode"])),
+      returnManifestAdded: String(getReturnInvoiceField(item, ["Return Manifest Added", "returnManifestAdded"])),
+      returnManifestStatus: String(getReturnInvoiceField(item, ["Return Manifest Status", "returnManifestStatus"])),
+      returnManifestCreatedBy: String(getReturnInvoiceField(item, ["Return Manifest Created By", "returnManifestCreatedBy"])),
+      returnManifestCreatedAt: String(getReturnInvoiceField(item, ["Return Manifest Created At", "returnManifestCreatedAt"])),
+      reshipmentAction: String(getReturnInvoiceField(item, ["Reshipment Action", "reshipmentAction"])),
+      channel: String(getReturnInvoiceField(item, ["Channel", "channel"])),
+      putawayNo: String(getReturnInvoiceField(item, ["Putaway No", "putawayNo"])),
+      putawayStatus: String(getReturnInvoiceField(item, ["Putaway Status", "putawayStatus"])),
+      putawayBy: String(getReturnInvoiceField(item, ["Putaway By", "putawayBy"])),
+      putawayDate: String(getReturnInvoiceField(item, ["Putaway Date", "putawayDate"])),
+      dispatchFacility: String(getReturnInvoiceField(item, ["Dispatch Facility", "dispatchFacility"])),
+      returnFacility: String(getReturnInvoiceField(item, ["Return Facility", "returnFacility"])),
+   }))
+}
+
 function mapReturnReverseRowsForStorage(dataArray: Record<string, string | number>[]) {
    return dataArray.map((item) => ({
       saleOrderItemCode: String(getReturnInvoiceField(item, ["Sale Order Item Code", "saleOrderItemCode"])),
@@ -714,6 +758,58 @@ function mapReturnInvoiceRowForOutput(x: {
       "SGST Rate": x.sgstRate,
       "UTGST Rate": x.utgstRate,
       "CESS Rate": x.cessRate,
+   }
+}
+
+function mapReturnCourierRowForOutput(x: {
+   saleOrderNo: string
+   shippingPackageCode: string
+   shippingPackageStatus: string
+   shippingProvider: string
+   shippingCourier: string
+   awbNo: string
+   returnDeliveryDate: string
+   rtoReason: string
+   created: string
+   channelCreated: string
+   returnManifestCode: string
+   returnManifestAdded: string
+   returnManifestStatus: string
+   returnManifestCreatedBy: string
+   returnManifestCreatedAt: string
+   reshipmentAction: string
+   channel: string
+   putawayNo: string
+   putawayStatus?: string | null
+   putawayBy: string
+   putawayDate: string
+   dispatchFacility: string
+   returnFacility: string
+}) {
+   return {
+      "Sale Order No": x.saleOrderNo,
+      "Shipping Package Code": x.shippingPackageCode,
+      "Shipping Package Status": x.shippingPackageStatus,
+      "Shipping Provider": x.shippingProvider,
+      "Shipping Courier": x.shippingCourier,
+      "AWB No": x.awbNo,
+      "Return Delivery Date": x.returnDeliveryDate,
+      "RTO Reason": x.rtoReason,
+      "Created": x.created,
+      "Channel Created": x.channelCreated,
+      "Return Manifest Code": x.returnManifestCode,
+      "Return Manifest Added": x.returnManifestAdded,
+      "Return Manifest Status": x.returnManifestStatus,
+      "Return Manifest Created By": x.returnManifestCreatedBy,
+      "Return Manifest Created At": x.returnManifestCreatedAt,
+      "Reshipment Action": x.reshipmentAction,
+      "Channel": x.channel,
+      "Putaway No": x.putawayNo,
+      "Putaway Status": x.putawayStatus || "",
+      "Putaway By": x.putawayBy,
+      "Putaway Date": x.putawayDate,
+      "Dispatch Facility": x.dispatchFacility,
+      "Return Facility": x.returnFacility,
    }
 }
 

@@ -52,7 +52,8 @@ export function transformData(
         const daysPositive = safeNumber(item["Days of positive inventory"])
         const vendorPrice = safeNumber(item["Vendor Price"])
 
-        const requiredQty = (saleQty * 2) - (availableInventory + openPurchase)
+        const requiredQtyMultiplier = item["Category Name"] === "LEATHER SHOES" ? 3 : 2 //checking if Category is leather shoes then multiplying sale qty by 3 else 2 for other categories to get required qty
+        const requiredQty = (saleQty * requiredQtyMultiplier) - (availableInventory + openPurchase)
 
 
         const orderQty = parseInt((supportData
@@ -148,14 +149,13 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
                 }
                 // if(item["Open Purchase"])
                 // {
-                    summary['Open Purchase'].count++;
-                    summary['Open Purchase'].totalValue+= safeNumber(item["Open Purchase"]) * safeNumber(item["Vendor Price"]);
+                    summary['Open Purchase'].count += safeNumber(item["Open Purchase"]);
+                    summary['Open Purchase'].totalValue += safeNumber(item["Open Purchase"]) * safeNumber(item["Vendor Price"]);
 
 
                     summary['Open Sales Value'].count+=safeNumber(item["Sale Qty"]);
                     summary['Open Sales Value'].totalValue+= safeNumber(item["Sale Qty"]) * safeNumber(item["Sale Amount"]);
 
-                
                     // }
 
                 // Under Price 2
@@ -184,7 +184,7 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
                 'Over Stock': { count: 0, totalValue: 0 },
                 'Under Stock': { count: 0, totalValue: 0 },
                 'Open Purchase': {count: 0, totalValue: 0},
-                'Open Sales Value': {count: 0, totalValue: 0}                
+                'Open Sales Value': {count: 0, totalValue: 0}
                 // 'Under Price 2': { count: 0, totalValue: 0 },
                 // 'New Grade': { count: 0, totalValue: 0 },
                 // 'Common Order Summary': { count: 0, totalValue: 0 },
@@ -210,6 +210,8 @@ export function analysis(analysisData: MonthDataItem[], key?: string) {
         underprice2: (item: MonthDataItem) =>
             item['Multiple Price'] < MULTIPLE_SELLING_PRICE &&
             safeNumber(item["Sale Qty"]) !== 0,
+        openpurchase: (item: MonthDataItem) => safeNumber(item["Open Purchase"]) > 0,
+        opensalesvalue: (item: MonthDataItem) => safeNumber(item["Sale Qty"]) > 0,
         newgrade: (item: MonthDataItem) => item['Static Grade'] === "NEW",       
     }
 
