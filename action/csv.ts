@@ -215,7 +215,38 @@ export async function fetchMonthlyData() {
             ],
             // take: 100,
         });
-        return monthlyData.map((x) => ({
+
+        // NewInvoiceFieldsInMonthlyReport:
+        // Map invoice aggregates by SKU for IST today window and enrich monthly rows without changing monthly row count.
+        const { start, end } = getTodayInvoiceWindowIST()
+        const invoiceAggBySku = await prisma.priceCheckData.groupBy({
+            by: ["skuCode"],
+            where: {
+                invoiceCreatedDate: {
+                    gte: start,
+                    lte: end,
+                },
+            },
+            _sum: {
+                quantity: true,
+                invoiceTotal: true,
+            },
+        })
+
+        const invoiceMap = new Map(
+            invoiceAggBySku.map((item) => [
+                item.skuCode,
+                {
+                    invoiceQuantity: safeNumber(item._sum.quantity ?? 0),
+                    invoiceTotal: safeNumber(item._sum.invoiceTotal ?? 0),
+                },
+            ])
+        )
+
+        return monthlyData.map((x) => {
+            const invoiceSummary = invoiceMap.get(x.skuCode)
+
+            return {
             "id": x.id,
             "Sku Code": x.skuCode,
             "Sale Qty": safeNumber(x.saleQty),
@@ -245,7 +276,9 @@ export async function fetchMonthlyData() {
             "Avg Selling Price": safeNumber(x.avgSellingPrice),
             "Multiple Price": safeNumber(x.multiplePrice),
             "Remarks": `${x?.remarks ?? ""}`,
-        }))
+            "Invoice Quantity": invoiceSummary?.invoiceQuantity ?? 0,
+            "Invoice Total": invoiceSummary?.invoiceTotal ?? 0,
+        }})
 
         // return {
         //     columns: Object.keys(monthlyAnalysisCache.getData()[0] || {}),
@@ -528,13 +561,85 @@ async function fetchReturnReverseRowsForAnalysis() {
     return await fetchCSV<Record<string, string | number>>(result.filePath)
 }
 
+type OpenSalesValueSummary = {
+    totalQuantity: number
+    totalInvoiceTotal: number
+}
+
+function getTodayInvoiceWindowIST() {
+    const indiaNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }))
+    const year = indiaNow.getFullYear()
+    const month = indiaNow.getMonth()
+    const date = indiaNow.getDate()
+
+    const pad = (value: number) => value.toString().padStart(2, "0")
+
+    const startDate = new Date(year, month, date - 1, 12, 0, 0)
+    const endDate = new Date(year, month, date, 11, 59, 59)
+
+    return {
+        start: `${startDate.getFullYear()}-${pad(startDate.getMonth() + 1)}-${pad(startDate.getDate())} 12:00:00`,
+        end: `${endDate.getFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())} 11:59:59`,
+    }
+}
+
 export async function analysisDasboard() {
     try {
         const data = (await fetchMonthlyData()) || []
-        return calc_Count_Amt(data)
+        const summary = await calc_Count_Amt(data)
+        const openSalesValueSummary = await getTodayOpenSalesValueSummary()
+        const pendingReturnCount = await getPendingReturnCount()
+        const cards = {
+            ...summary.cards,
+            "Pending Return": {
+                count: pendingReturnCount,
+                totalValue: 0,
+            },
+        }
+
+        return {
+            ...summary,
+            cards,
+            openSalesValueSummary,
+        }
     } catch (error) {
         console.error("Error in analysisData:", error)
         throw new Error("Failed to analyze data")
+    }
+}
+
+async function getTodayOpenSalesValueSummary(): Promise<OpenSalesValueSummary> {
+    const { start, end } = getTodayInvoiceWindowIST()
+    const invoiceSummary = await prisma.priceCheckData.aggregate({
+        _sum: {
+            quantity: true,
+            invoiceTotal: true,
+        },
+        where: {
+            invoiceCreatedDate: {
+                gte: start,
+                lte: end,
+            },
+        },
+    })
+
+    return {
+        totalQuantity: safeNumber(invoiceSummary._sum.quantity ?? 0),
+        totalInvoiceTotal: safeNumber(invoiceSummary._sum.invoiceTotal ?? 0),
+    }
+}
+
+async function getPendingReturnCount() {
+    try {
+        const [courierData, reverseData] = await Promise.all([
+            persistedReturnCourierAnalysisData(),
+            persistedReturnReverseAnalysisData(),
+        ])
+
+        return (courierData.rows?.length || 0) + (reverseData.rows?.length || 0)
+    } catch (error) {
+        console.error("Failed to calculate Pending Return count:", error)
+        return 0
     }
 }
 
@@ -639,22 +744,20 @@ const invoiceHeaders: string[] = [
 export const categoryPortalData = cache(async (type: string) => {
     const transformedData = await convertPriceCheckData()
 
-    // Build noon-to-noon windows.
-    // Today window: previous day 12:00:00 PM to current day 11:59:59 AM.
-    // Yesterday window: day-before-previous 12:00:00 PM to previous day 11:59:59 AM.
-    // Monday behavior remains: "yesterday" points to Saturday window.
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const todayDate = now.getDate();
-    const isTodayMonday = now.getDay() === 1;
-    const yesterdayOffsetDays = isTodayMonday ? 2 : 1;
+    // YesterTodayReportLogicChange:
+    // Use strict IST noon-to-noon windows from invoice data.
+    // Today: previous day 12:00:00 PM to current day 11:59:59 AM (IST)
+    // Yesterday: two days back 12:00:00 PM to previous day 11:59:59 AM (IST)
+    const indiaNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }))
+    const year = indiaNow.getFullYear()
+    const month = indiaNow.getMonth()
+    const date = indiaNow.getDate()
 
-    const todayStart = new Date(year, month, todayDate - 1, 12, 0, 0);   // previous day 12:00:00 PM
-    const todayEnd = new Date(year, month, todayDate, 11, 59, 59);        // current day 11:59:59 AM
+    const todayStart = new Date(year, month, date - 1, 12, 0, 0)
+    const todayEnd = new Date(year, month, date, 11, 59, 59)
 
-    const yesterdayStart = new Date(year, month, todayDate - (yesterdayOffsetDays + 1), 12, 0, 0); // previous window start at 12:00:00 PM
-    const yesterdayEnd = new Date(year, month, todayDate - yesterdayOffsetDays, 11, 59, 59);       // previous window end at 11:59:59 AM
+    const yesterdayStart = new Date(year, month, date - 2, 12, 0, 0)
+    const yesterdayEnd = new Date(year, month, date - 1, 11, 59, 59)
 
     const todayData = filterInvoices(transformedData, todayStart, todayEnd);
     const yesterdayData = filterInvoices(transformedData, yesterdayStart, yesterdayEnd);

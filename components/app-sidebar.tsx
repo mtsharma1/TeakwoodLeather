@@ -98,16 +98,6 @@ const data = {
               icon: SquareActivity,
             },
             {
-              title: "Daily Open Sales Value",
-              url: "/monthly-report/analysis/daily-open-sales-value",
-              icon: SquareActivity,
-            },
-            {
-              title: "Mithlesh",
-              url: "/monthly-report/analysis/mithlesh",
-              icon: SquareActivity,
-            },            
-            {
               title: "Sales Grade",
               url: "/monthly-report/analysis/sales-Summary",
               icon: LayoutGrid,

@@ -149,15 +149,12 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
                 }
                 // if(item["Open Purchase"])
                 // {
-                    summary['Open Purchase'].count++;
-                    summary['Open Purchase'].totalValue+= safeNumber(item["Open Purchase"]) * safeNumber(item["Vendor Price"]);
+                    summary['Open Purchase'].count += safeNumber(item["Open Purchase"]);
+                    summary['Open Purchase'].totalValue += safeNumber(item["Open Purchase"]) * safeNumber(item["Vendor Price"]);
 
 
                     summary['Open Sales Value'].count+=safeNumber(item["Sale Qty"]);
                     summary['Open Sales Value'].totalValue+= safeNumber(item["Sale Qty"]) * safeNumber(item["Sale Amount"]);
-
-                    summary['Daily Open Sales Value'].count+=safeNumber(item["Sale Qty"]);
-                    summary['Daily Open Sales Value'].totalValue+= safeNumber(item["Sale Qty"]) * safeNumber(item["Sale Amount"]);
 
                     // }
 
@@ -187,8 +184,7 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
                 'Over Stock': { count: 0, totalValue: 0 },
                 'Under Stock': { count: 0, totalValue: 0 },
                 'Open Purchase': {count: 0, totalValue: 0},
-                'Open Sales Value': {count: 0, totalValue: 0},
-                'Daily Open Sales Value': {count: 0, totalValue: 0}
+                'Open Sales Value': {count: 0, totalValue: 0}
                 // 'Under Price 2': { count: 0, totalValue: 0 },
                 // 'New Grade': { count: 0, totalValue: 0 },
                 // 'Common Order Summary': { count: 0, totalValue: 0 },
@@ -216,7 +212,6 @@ export function analysis(analysisData: MonthDataItem[], key?: string) {
             safeNumber(item["Sale Qty"]) !== 0,
         openpurchase: (item: MonthDataItem) => safeNumber(item["Open Purchase"]) > 0,
         opensalesvalue: (item: MonthDataItem) => safeNumber(item["Sale Qty"]) > 0,
-        dailyopensalesvalue: (item: MonthDataItem) => safeNumber(item["Sale Qty"]) > 0,
         newgrade: (item: MonthDataItem) => item['Static Grade'] === "NEW",       
     }
 
