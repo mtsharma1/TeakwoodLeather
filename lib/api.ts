@@ -47,6 +47,19 @@ async function getAccessToken() {
 
 async function createInvoiceJob(startDate: string, endDate: string) {
    const url = `${BASE_URL}/services/rest/v1/export/job/create`
+   const toUtcIsoString = (dateTime: string) => {
+      const normalized = dateTime.includes("T") ? dateTime : dateTime.replace(" ", "T")
+      const parsedDate = new Date(normalized)
+
+      if (Number.isNaN(parsedDate.getTime())) {
+         throw new Error(`Invalid date-time for invoice export: ${dateTime}`)
+      }
+
+      return parsedDate.toISOString()
+   }
+
+   const startDateUtc = toUtcIsoString(startDate)
+   const endDateUtc = toUtcIsoString(endDate)
    const body = {
       exportJobTypeName: "Invoice",
       exportColums: [
@@ -103,8 +116,8 @@ async function createInvoiceJob(startDate: string, endDate: string) {
          {
             id: "dateCreatedRange",
             dateRange: {
-               start: startDate,
-               end: endDate,
+               start: startDateUtc,
+               end: endDateUtc,
             },
          },
       ],

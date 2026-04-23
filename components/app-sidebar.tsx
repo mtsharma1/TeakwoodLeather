@@ -103,6 +103,11 @@ const data = {
               icon: SquareActivity,
             },
             {
+              title: "Mithlesh",
+              url: "/monthly-report/analysis/mithlesh",
+              icon: SquareActivity,
+            },            
+            {
               title: "Sales Grade",
               url: "/monthly-report/analysis/sales-Summary",
               icon: LayoutGrid,
