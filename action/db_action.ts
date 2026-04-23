@@ -307,15 +307,31 @@ function getReturnInvoiceField(
 
 export async function saveReturnInvoiceData(dataArray: Record<string, string | number>[]) {
    const formattedData = mapReturnInvoiceRowsForStorage(dataArray)
+   const prismaAny = prisma as unknown as Record<string, unknown>
+   const delegate = prismaAny.returnInvoiceData as
+      | { deleteMany: () => Promise<unknown>; createMany: (args: { data: ReturnType<typeof mapReturnInvoiceRowsForStorage> }) => Promise<unknown> }
+      | undefined
 
-   await prisma.$transaction([
-      prisma.returnInvoiceData.deleteMany(),
-      prisma.returnInvoiceData.createMany({ data: formattedData }),
-   ])
+   if (!delegate?.deleteMany || !delegate?.createMany) {
+      // ReturnInvoiceData model is removed from schema in this deployment.
+      return
+   }
+
+   await delegate.deleteMany()
+   await delegate.createMany({ data: formattedData })
 }
 
 export async function convertReturnInvoiceData(): Promise<Record<string, string | number>[]> {
-   const returnInvoiceData = await prisma.returnInvoiceData.findMany({
+   const prismaAny = prisma as unknown as Record<string, unknown>
+   const delegate = prismaAny.returnInvoiceData as
+      | { findMany: (args: { orderBy: { returnedDate: "desc" }[] }) => Promise<Array<Parameters<typeof mapReturnInvoiceRowForOutput>[0]>> }
+      | undefined
+
+   if (!delegate?.findMany) {
+      return []
+   }
+
+   const returnInvoiceData = await delegate.findMany({
       orderBy: [
          {
             returnedDate: "desc",
