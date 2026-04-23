@@ -76,7 +76,14 @@ export async function GET() {
       },
     })
 
-    await prisma.returnInvoiceData.deleteMany()
+    const prismaAny = prisma as unknown as Record<string, unknown>
+    const returnInvoiceDelegate = prismaAny.returnInvoiceData as
+      | { deleteMany: () => Promise<unknown> }
+      | undefined
+
+    if (returnInvoiceDelegate?.deleteMany) {
+      await returnInvoiceDelegate.deleteMany()
+    }
 
     await prisma.jobStatus.update({
       where: { id: jobStatus.id },
