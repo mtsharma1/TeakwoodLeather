@@ -154,7 +154,7 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
 
 
                     summary['Open Sales Value'].count+=safeNumber(item["Sale Qty"]);
-                    summary['Open Sales Value'].totalValue+= safeNumber(item["Sale Qty"]) * safeNumber(item["Sale Amount"]);
+                    summary['Open Sales Value'].totalValue+= safeNumber(item["Sale Amount"]);
 
                 
                     // }
