@@ -143,7 +143,12 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
                 }
 
                 // Under Stock
-                if (item.DOH < DOH_THRESHOLDS.UNDERSTOCK && ['A', 'B'].includes(item["Static Grade"]) && !excludeSubCategoryUnderStock.includes(item['Sub Category'])) {
+                if (
+                    item.DOH < DOH_THRESHOLDS.UNDERSTOCK &&
+                    ['A', 'B'].includes(item["Static Grade"]) &&
+                    !excludeSubCategoryUnderStock.includes(item['Sub Category']) &&
+                    safeNumber(item["Sale Qty"]) !== 0
+                ) {
                     summary['Under Stock'].count++;
                     summary['Under Stock'].totalValue += (vendorPrice * aIv);
                 }
