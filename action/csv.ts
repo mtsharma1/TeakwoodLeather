@@ -324,6 +324,10 @@ export async function analysisData(key: string) {
             }
         }
 
+        if (key === "pobalance") {
+            return await purchaseOrderBalanceAnalysisData()
+        }
+
         // if (monthlyAnalysisCache.isEmpty()) {
         //     await fetchMonthlyData(0, 50)
         // }
@@ -566,6 +570,49 @@ type OpenSalesValueSummary = {
     totalInvoiceTotal: number
 }
 
+async function purchaseOrderBalanceAnalysisData() {
+    const prismaAny = prisma as unknown as Record<string, unknown>
+    const delegate = prismaAny.purchaseOrderTranzactData as
+        | { findMany: (args: { orderBy: { balanceValue: "desc" }[] }) => Promise<Array<Record<string, unknown>>> }
+        | undefined
+
+    if (!delegate?.findMany) {
+        return { rows: [], cols: [] }
+    }
+
+    const rows = await delegate.findMany({
+        orderBy: [{ balanceValue: "desc" }],
+    })
+
+    const parsedRows = rows.map((row) => {
+        const rowData = (typeof row.rowData === "object" && row.rowData)
+            ? row.rowData as Record<string, unknown>
+            : null
+
+        // If legacy rowData exists, prefer it; otherwise expose all DB fields.
+        if (rowData && Object.keys(rowData).length > 0) {
+            return rowData
+        }
+
+        const { id, createdAt, updatedAt, rowData: _rowData, ...rest } = row
+        void id
+        void createdAt
+        void updatedAt
+        void _rowData
+        return rest
+    })
+
+    return {
+        rows: parsedRows,
+        cols: Object.keys(parsedRows[0] || {}),
+    }
+}
+
+type PurchaseOrderBalanceSummary = {
+    totalBalanceQuantity: number
+    totalBalanceValue: number
+}
+
 function getTodayInvoiceWindowIST() {
     const indiaNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }))
     const year = indiaNow.getFullYear()
@@ -589,11 +636,16 @@ export async function analysisDasboard() {
         const summary = await calc_Count_Amt(data)
         const openSalesValueSummary = await getTodayOpenSalesValueSummary()
         const pendingReturnCount = await getPendingReturnCount()
+        const purchaseOrderBalanceSummary = await getPurchaseOrderBalanceSummary()
         const cards = {
             ...summary.cards,
             "Pending Return": {
                 count: pendingReturnCount,
                 totalValue: 0,
+            },
+            "PO Balance": {
+                count: purchaseOrderBalanceSummary.totalBalanceQuantity,
+                totalValue: purchaseOrderBalanceSummary.totalBalanceValue,
             },
         }
 
@@ -605,6 +657,39 @@ export async function analysisDasboard() {
     } catch (error) {
         console.error("Error in analysisData:", error)
         throw new Error("Failed to analyze data")
+    }
+}
+
+async function getPurchaseOrderBalanceSummary(): Promise<PurchaseOrderBalanceSummary> {
+    const prismaAny = prisma as unknown as Record<string, unknown>
+    const delegate = prismaAny.purchaseOrderTranzactData as
+        | {
+            aggregate: (args: {
+                _sum: {
+                    balanceQuantity: true
+                    balanceValue: true
+                }
+            }) => Promise<{ _sum: { balanceQuantity: number | null; balanceValue: number | null } }>
+        }
+        | undefined
+
+    if (!delegate?.aggregate) {
+        return {
+            totalBalanceQuantity: 0,
+            totalBalanceValue: 0,
+        }
+    }
+
+    const summary = await delegate.aggregate({
+        _sum: {
+            balanceQuantity: true,
+            balanceValue: true,
+        },
+    })
+
+    return {
+        totalBalanceQuantity: safeNumber(summary._sum.balanceQuantity ?? 0),
+        totalBalanceValue: safeNumber(summary._sum.balanceValue ?? 0),
     }
 }
 

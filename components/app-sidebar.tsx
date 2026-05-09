@@ -98,6 +98,11 @@ const data = {
               icon: SquareActivity,
             },
             {
+              title: "PO Balance",
+              url: "/monthly-report/analysis/po-balance",
+              icon: SquareActivity,
+            },
+            {
               title: "Sales Grade",
               url: "/monthly-report/analysis/sales-Summary",
               icon: LayoutGrid,
