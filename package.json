@@ -10,6 +10,7 @@
     "lint": "next lint",
     "cron:build": "next build && tsc --project tsconfig.server.json",
     "cron:start": "cross-env NODE_ENV=production node dist/server.js",
+    "import:purchase-order": "node scripts/import-purchase-order-tranzact.mjs",
     "setup": "node -e \"require('fs').cpSync('public', '.next/standalone/public', { recursive: true }); require('fs').cpSync('.next/static', '.next/standalone/.next/static', { recursive: true });\"",
     "standalone:bs": "npm run build && npm run setup && node .next/standalone/server.js",
     "standalone:s": "node .next/standalone/server.js"

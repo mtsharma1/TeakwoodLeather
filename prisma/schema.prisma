@@ -337,3 +337,84 @@ model JobStatus {
   updatedAt   DateTime  @updatedAt
   completedAt DateTime?
 }
+
+model PurchaseOrderTranzactData {
+  id                                 Int      @id @default(autoincrement())
+  poNumber                           String?
+  supplierName                       String?
+  supplierGstin                      String?
+  supplierReferenceId                String?
+  documentDate                       String?
+  lastModifiedDate                   String?
+  documentStatus                     String?
+  goodsStatus                        String?
+  overdueStatus                      String?
+  invoicingStatus                    String?
+  amendmentCounter                   String?
+  foreignDomestic                    String?
+  itemId                             String?
+  itemDescription                    String?
+  itemCategory                       String?
+  hsnSac                             String?
+  goodsService                       String?
+  itemDeliveryDate                   String?
+  poQuantity                         String?
+  uom                                String?
+  totalIndentQuantity                String?
+  indentNumber                       String?
+  indentDate                         String?
+  ocNumber                           String?
+  ocDate                             String?
+  itemRate                           String?
+  discountPercentage                 String?
+  itemRateAfterDiscount              String?
+  itemTotalBeforeDiscount            String?
+  itemDiscountAmount                 String?
+  itemValueBeforeTax                 String?
+  cgstRate                           String?
+  cgst                               String?
+  sgstRate                           String?
+  sgst                               String?
+  igstRate                           String?
+  igst                               String?
+  cessRate                           String?
+  cess                               String?
+  itemTax                            String?
+  itemValueAfterTax                  String?
+  itemComment                        String?
+  deliveredQuantity                  String?
+  deliveredValue                     String?
+  balanceQuantity                    Float?
+  balanceValue                       Float?
+  qirAcceptedQuantity                String?
+  acceptedValue                      String?
+  balanceQuantityAsPerAccepted       String?
+  balanceValueAsPerAccepted          String?
+  invoiceQuantity                    String?
+  inwardInvoiceMismatch              String?
+  drafterName                        String?
+  senderName                         String?
+  paymentTerm                        String?
+  storeName                          String?
+  poDeliveryDate                     String?
+  kindAttention                      String?
+  poGrandTotal                       String?
+  networkTags                        String?
+  transactionTags                    String?
+  documentSerialNumber               String?
+  customerDeliveryAddressName        String?
+  customerDeliveryAddress            String?
+  customerDeliveryAddressGstin       String?
+  customerDeliveryAddressCity        String?
+  customerDeliveryAddressState       String?
+  customerDeliveryAddressCountry     String?
+  customerDeliveryAddressPin         String?
+  customerBillingAddressGstin        String?
+  poOriginalCreationTimestamp        String?
+  poLastModifiedTimestamp            String?
+  transactionId                      String?
+  rowData                            Json?
+
+  createdAt                          DateTime @default(now())
+  updatedAt                          DateTime @default(now())
+}
