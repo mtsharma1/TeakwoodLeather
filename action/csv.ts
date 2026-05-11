@@ -570,6 +570,94 @@ type OpenSalesValueSummary = {
     totalInvoiceTotal: number
 }
 
+function formatPoBalanceColumnLabel(key: string) {
+    const explicitLabels: Record<string, string> = {
+        poNumber: "PO Number",
+        supplierName: "Supplier Name",
+        supplierGstin: "Supplier GSTIN",
+        supplierReferenceId: "Supplier Reference ID",
+        documentDate: "Document Date",
+        lastModifiedDate: "Last Modified Date",
+        documentStatus: "Document Status",
+        goodsStatus: "Goods Status",
+        overdueStatus: "Overdue Status",
+        invoicingStatus: "Invoicing Status",
+        amendmentCounter: "Amendment Counter",
+        foreignDomestic: "Foreign/Domestic",
+        itemId: "Item ID",
+        itemDescription: "Item Description",
+        itemCategory: "Item Category",
+        hsnSac: "HSN/SAC",
+        goodsService: "Goods/Service",
+        itemDeliveryDate: "Item Delivery Date",
+        poQuantity: "PO Quantity",
+        uom: "UOM",
+        totalIndentQuantity: "Total Indent Quantity",
+        indentNumber: "Indent Number",
+        indentDate: "Indent Date",
+        ocNumber: "OC Number",
+        ocDate: "OC Date",
+        itemRate: "Item Rate (₹)",
+        discountPercentage: "Discount Percentage",
+        itemRateAfterDiscount: "Item Rate - After Discount (₹)",
+        itemTotalBeforeDiscount: "Item Total - Before Discount (₹)",
+        itemDiscountAmount: "Item Discount Amount (₹)",
+        itemValueBeforeTax: "Item Value - Before Tax(₹)",
+        cgstRate: "CGST Rate",
+        cgst: "CGST (₹)",
+        sgstRate: "SGST Rate",
+        sgst: "SGST (₹)",
+        igstRate: "IGST Rate",
+        igst: "IGST (₹)",
+        cessRate: "Cess Rate",
+        cess: "Cess (₹)",
+        itemTax: "Item Tax (₹)",
+        itemValueAfterTax: "Item Value - After Tax (₹)",
+        itemComment: "Item Comment",
+        deliveredQuantity: "Delivered Quantity",
+        deliveredValue: "Delivered Value (₹)",
+        balanceQuantity: "Balance Quantity",
+        balanceValue: "Balance Value (₹)",
+        qirAcceptedQuantity: "QIR Accepted Quantity",
+        acceptedValue: "Accepted Value (₹)",
+        balanceQuantityAsPerAccepted: "Balance Quantity (as per Accepted)",
+        balanceValueAsPerAccepted: "Balance Value (as per Accepted) (₹)",
+        invoiceQuantity: "Invoice Quantity",
+        inwardInvoiceMismatch: "Inward-Invoice Mismatch",
+        drafterName: "Drafter Name",
+        senderName: "Sender Name",
+        paymentTerm: "Payment Term",
+        storeName: "Store Name",
+        poDeliveryDate: "PO Delivery Date",
+        kindAttention: "Kind Attention",
+        poGrandTotal: "PO Grand Total (₹)",
+        networkTags: "Network Tags",
+        transactionTags: "Transaction Tags",
+        documentSerialNumber: "Document Serial Number",
+        customerDeliveryAddressName: "Customer Delivery Address Name",
+        customerDeliveryAddress: "Customer Delivery Address",
+        customerDeliveryAddressGstin: "Customer Delivery Address GSTIN",
+        customerDeliveryAddressCity: "Customer Delivery Address City",
+        customerDeliveryAddressState: "Customer Delivery Address State",
+        customerDeliveryAddressCountry: "Customer Delivery Address Country",
+        customerDeliveryAddressPin: "Customer Delivery Address PIN",
+        customerBillingAddressGstin: "Customer Billing Address GSTIN",
+        poOriginalCreationTimestamp: "PO Original Creation Timestamp",
+        poLastModifiedTimestamp: "PO Last Modified Timestamp",
+        transactionId: "Transaction ID",
+    }
+
+    if (explicitLabels[key]) {
+        return explicitLabels[key]
+    }
+
+    return key
+        .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/\b\w/g, (match) => match.toUpperCase())
+}
+
 async function purchaseOrderBalanceAnalysisData() {
     const prismaAny = prisma as unknown as Record<string, unknown>
     const delegate = prismaAny.purchaseOrderTranzactData as
@@ -599,7 +687,11 @@ async function purchaseOrderBalanceAnalysisData() {
         void createdAt
         void updatedAt
         void _rowData
-        return rest
+        const displayRow: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(rest)) {
+            displayRow[formatPoBalanceColumnLabel(key)] = value
+        }
+        return displayRow
     })
 
     return {
