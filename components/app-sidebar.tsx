@@ -98,7 +98,7 @@ const data = {
               icon: SquareActivity,
             },
             {
-              title: "PO Balance",
+              title: "Tranzact PO",
               url: "/monthly-report/analysis/po-balance",
               icon: SquareActivity,
             },

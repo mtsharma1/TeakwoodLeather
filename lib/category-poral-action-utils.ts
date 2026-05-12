@@ -3,9 +3,24 @@ import { roundToDecimals, safeNumber } from "./utils"
 import prisma from "./prisma";
 import { FILENAME } from "@prisma/client";
 
+function normalizeKey(value: string) {
+    return value.trim().toUpperCase()
+}
+
+function resolveMonthlyAvg(
+    reportRows: Array<{ name: string; monthAvg: string }>,
+    key: string
+) {
+    const normalizedKey = normalizeKey(key)
+    const matched = reportRows.find((report) => normalizeKey(report.name) === normalizedKey)
+    if (!matched) return null
+    return safeNumber(matched.monthAvg ?? 0)
+}
+
 export const calculateCategoryMetrics = async (
     yesterdayOrders: PriceCheckInvoiceData[],
-    todayOrders: PriceCheckInvoiceData[]
+    todayOrders: PriceCheckInvoiceData[],
+    fallbackMonthlyAvgMap?: Map<string, number>
 ): Promise<{ metrics: Metrics[], totals: Metrics }> => {
 
     const uniqueSkus = new Set([
@@ -73,7 +88,11 @@ export const calculateCategoryMetrics = async (
     const withPercentage = skuMetrics.map((metric) => ({
         ...metric,
         percentage: roundToDecimals((metric.total / totals.total) * 100),
-        monthly_avg_sale: categoryTallyReport.find((report) => report.name === metric.skuName)?.monthAvg || 0
+        monthly_avg_sale: (() => {
+            const fromTally = resolveMonthlyAvg(categoryTallyReport, metric.skuName)
+            if (fromTally !== null && fromTally !== undefined) return fromTally
+            return safeNumber(fallbackMonthlyAvgMap?.get(normalizeKey(metric.skuName)) ?? 0)
+        })()
     }))
 
     return Promise.resolve({ metrics: withPercentage, totals });
@@ -81,7 +100,8 @@ export const calculateCategoryMetrics = async (
 
 export const calculatePortalMetrics = async (
     yesterdayOrders: PriceCheckInvoiceData[],
-    todayOrders: PriceCheckInvoiceData[]
+    todayOrders: PriceCheckInvoiceData[],
+    fallbackMonthlyAvgMap?: Map<string, number>
 ): Promise<{ metrics: ProcessedData[], totals: ProcessedData }> => {
     // Get unique channels
     const channels = new Set([
@@ -136,7 +156,11 @@ export const calculatePortalMetrics = async (
     const withPercentage = channelMetrics.map((channel) => ({
         ...channel,
         percentage: roundToDecimals((channel.total / totals.total) * 100),
-        monthly_avg_sale: portalTallyReport.find((report) => report.name === channel.portal)?.monthAvg || 0
+        monthly_avg_sale: (() => {
+            const fromTally = resolveMonthlyAvg(portalTallyReport, channel.portal)
+            if (fromTally !== null && fromTally !== undefined) return fromTally
+            return safeNumber(fallbackMonthlyAvgMap?.get(normalizeKey(channel.portal)) ?? 0)
+        })()
     }))
 
 

@@ -324,7 +324,7 @@ export async function analysisData(key: string) {
             }
         }
 
-        if (key === "pobalance") {
+        if (key === "pobalance" || key === "tranzactpo") {
             return await purchaseOrderBalanceAnalysisData()
         }
 
@@ -735,7 +735,7 @@ export async function analysisDasboard() {
                 count: pendingReturnCount,
                 totalValue: 0,
             },
-            "PO Balance": {
+            "Tranzact PO": {
                 count: purchaseOrderBalanceSummary.totalBalanceQuantity,
                 totalValue: purchaseOrderBalanceSummary.totalBalanceValue,
             },
@@ -938,12 +938,35 @@ export const categoryPortalData = cache(async (type: string) => {
 
     const todayData = filterInvoices(transformedData, todayStart, todayEnd);
     const yesterdayData = filterInvoices(transformedData, yesterdayStart, yesterdayEnd);
+    const daysInMonth = getDaysInMonth(indiaNow)
+
+    const portalMonthlyAvgFallback = transformedData.reduce((acc, item) => {
+        const key = `${item["Channel Name"] || ""}`.trim().toUpperCase()
+        if (!key) return acc
+        const nextValue = (acc.get(key) || 0) + safeNumber(item["Quantity"])
+        acc.set(key, nextValue)
+        return acc
+    }, new Map<string, number>())
+    portalMonthlyAvgFallback.forEach((qty, key) => {
+        portalMonthlyAvgFallback.set(key, roundToDecimals(qty / daysInMonth))
+    })
+
+    const categoryMonthlyAvgFallback = transformedData.reduce((acc, item) => {
+        const key = `${item["SKU Name"] || ""}`.trim().toUpperCase()
+        if (!key) return acc
+        const nextValue = (acc.get(key) || 0) + safeNumber(item["Quantity"])
+        acc.set(key, nextValue)
+        return acc
+    }, new Map<string, number>())
+    categoryMonthlyAvgFallback.forEach((qty, key) => {
+        categoryMonthlyAvgFallback.set(key, roundToDecimals(qty / daysInMonth))
+    })
 
     if (type === "rawdata") return { rows: transformedData, cols: invoiceHeaders }
     if (type === "yesterday") return yesterdayData
     if (type === "today") return todayData
-    if (type === "portal") return calculatePortalMetrics(yesterdayData, todayData)
-    if (type === "category") return calculateCategoryMetrics(yesterdayData, todayData)
+    if (type === "portal") return calculatePortalMetrics(yesterdayData, todayData, portalMonthlyAvgFallback)
+    if (type === "category") return calculateCategoryMetrics(yesterdayData, todayData, categoryMonthlyAvgFallback)
 })
 
 export const calculateCategoryMonthlyReport = async (formData: FormData) => {
