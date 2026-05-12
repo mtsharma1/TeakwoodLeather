@@ -8,10 +8,13 @@ import AdvancedInventoryTable from "@/components/table/with-edit-advanced-invent
 
 export default async function OverStock({ params }: { params: { type: string } }) {
   const key = params.type.replaceAll("-", "")
+  const pageTitle = params.type === "po-balance" || params.type === "tranzact-po"
+    ? "Tranzact PO"
+    : params.type.replaceAll("-", " ")
   return (
     <Card className="w-full overflow-hidden">
       <CardHeader className="border-b">
-        <CardTitle className="text-xl md:text-2xl font-bold capitalize">{params.type.replaceAll("-", " ")}</CardTitle>
+        <CardTitle className="text-xl md:text-2xl font-bold capitalize">{pageTitle}</CardTitle>
       </CardHeader>
       <CardContent className="p-2 sm:p-4">
         <Suspense fallback={<LoadingSkeleton />}>
