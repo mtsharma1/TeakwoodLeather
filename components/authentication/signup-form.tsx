@@ -9,6 +9,8 @@ import { signInCred } from "@/action/auth"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import logoSvg from '../assets/logo.svg'
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 
 export function SignupForm({
@@ -76,7 +78,13 @@ export function SignupForm({
                            
                            <Input id="password" name="password" type="password" placeholder="**********" required />
                      </div>
-                     <SignInButton label="Signup" />
+                     <SignInButton label="Sign Up" />
+                     <Button
+                        asChild
+                        className="w-full text-white bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300 dark:focus:ring-purple-800 font-medium rounded-base text-sm px-4 py-2.5 text-center leading-5"
+                     >
+                        <Link href="/login">Back to Login</Link>
+                     </Button>
                   </div>
                </form>
                <div className="relative hidden bg-muted md:block">
