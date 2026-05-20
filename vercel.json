@@ -1,19 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/cron",
-      "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/cron/morning-cron",
-      "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/cron/return-courier",
-      "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/cron/return-reverse",
+      "path": "/api/cron/all",
       "schedule": "0 7 * * *"
     }
   ]
