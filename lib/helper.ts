@@ -19,7 +19,9 @@ export const excludeSubCategoryUnderStock = [
 ] 
 
 export const excludeSubCategoryOverStock = [
-    "Men Buckle"
+    "Men Buckle",
+    "LOGO",
+    "PULLER"
 ] 
 
 export const excludeSubCategoryOrderSummary = [
