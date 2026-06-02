@@ -137,10 +137,13 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
                 const aIv = roundToDecimals(safeNumber(item["Available Inventory"]));
 
                 // Over Stock
-                if (item.DOH > DOH_THRESHOLDS.OVERSTOCK) {
+                if (((item.DOH > DOH_THRESHOLDS.OVERSTOCK) || (safeNumber(item["Sale Qty"]) === 0 && aIv > 10)) 
+                    && !excludeSubCategoryOverStock.includes(item["Sub Category"]) 
+                    && ['A', 'B'].includes(item["Static Grade"])) 
+                    {
                     summary["Over Stock"].count++;
-                    summary["Over Stock"].totalValue += (vendorPrice * aIv);
-                }
+                    summary["Over Stock"].totalValue += (vendorPrice * aIv)
+                    }
 
                 // Under Stock
                 if (
@@ -207,7 +210,17 @@ export async function calc_Count_Amt(data: MonthDataItem[]) {
 
 export function analysis(analysisData: MonthDataItem[], key?: string) {
     const filters = {
-        overstock: (item: MonthDataItem) => item.DOH > DOH_THRESHOLDS.OVERSTOCK && !excludeSubCategoryOverStock.includes(item['Sub Category']),
+        overstock: (item: MonthDataItem) =>
+        (
+            item.DOH > DOH_THRESHOLDS.OVERSTOCK 
+            ||
+            (
+                safeNumber(item["Sale Qty"]) === 0 &&
+                safeNumber(parseInt(item["Available Inventory"])) > 10
+            )
+        ) 
+        && !excludeSubCategoryOverStock.includes(item["Sub Category"])  && ['A', 'B'].includes(item["Static Grade"]),        // overstock: (item: MonthDataItem) => item.DOH > DOH_THRESHOLDS.OVERSTOCK && !excludeSubCategoryOverStock.includes(item['Sub Category']),
+
         understock: (item: MonthDataItem) =>
             item.DOH < DOH_THRESHOLDS.UNDERSTOCK &&
             ['A', 'B'].includes(item["Static Grade"]) &&

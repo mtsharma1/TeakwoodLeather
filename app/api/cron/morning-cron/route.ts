@@ -10,39 +10,72 @@ import prisma from "@/lib/prisma"
 
 async function fetchAndSaveInvoiceData() {
   noStore();
-  try {
-    await prisma.priceCheckData.deleteMany()
-    const today = new Date()
-    const tomorrow = format(new Date().setDate(today.getDate() + 1), "yyyy-MM-dd")
-    const dayBeforeYesterday = format(new Date().setDate(today.getDate() - 1), "yyyy-MM-dd")
+  await prisma.priceCheckData.deleteMany()
+  const today = new Date()
+  const tomorrow = format(new Date().setDate(today.getDate() + 1), "yyyy-MM-dd")
+  const dayBeforeYesterday = format(new Date().setDate(today.getDate() - 1), "yyyy-MM-dd")
 
-    const jobResponse = await createInvoiceJob(dayBeforeYesterday, tomorrow)
+  const jobResponse = await createInvoiceJob(dayBeforeYesterday, tomorrow)
 
-    if (!jobResponse.successful) {
-      throw new Error(`Failed to create export job: ${JSON.stringify(jobResponse)}`)
-    }
-
-    const jobCode = jobResponse.jobCode
-
-    const result = await pollJobStatus(jobCode, 100, 2000 * 4);
-    const path = result.filePath
-    const rawData = await fetchCSV<InvoiceData>(path)
-    const transformedData = transformInvoiceData(rawData)
-    await savePriceCheckData(transformedData)
-    console.log("Invoice generate")
-  } catch (error) {
-    console.error("Error in fetchAndSaveInvoiceData:", error)
+  if (!jobResponse.successful) {
+    throw new Error(`Failed to create export job: ${JSON.stringify(jobResponse)}`)
   }
+
+  const jobCode = jobResponse.jobCode
+
+  const result = await pollJobStatus(jobCode, 100, 2000 * 4);
+  const path = result.filePath
+  const rawData = await fetchCSV<InvoiceData>(path)
+  const transformedData = transformInvoiceData(rawData)
+  await savePriceCheckData(transformedData)
+  console.log("Invoice generate")
 }
 
 export async function GET() {
   try {
     console.log('Cron job executed at', new Date().toISOString());
-    (async () => {
+    const jobStatus = await prisma.jobStatus.upsert({
+      where: { jobType: "invoice" },
+      update: {
+        status: "processing",
+        progress: 5,
+        message: "Cron triggered. Starting invoice report sync...",
+        error: null,
+        completedAt: null,
+        startedAt: new Date(),
+      },
+      create: {
+        jobType: "invoice",
+        status: "processing",
+        progress: 5,
+        message: "Cron triggered. Starting invoice report sync...",
+        startedAt: new Date(),
+      },
+    })
+    ;(async () => {
       try {
         await fetchAndSaveInvoiceData();
+        await prisma.jobStatus.update({
+          where: { id: jobStatus.id },
+          data: {
+            status: "completed",
+            progress: 100,
+            message: "Invoice report synced successfully via cron",
+            completedAt: new Date(),
+          },
+        })
       } catch (error) {
         console.error('Background process failed: [fetchAndSaveInvoiceData]', error);
+        await prisma.jobStatus.update({
+          where: { id: jobStatus.id },
+          data: {
+            status: "failed",
+            progress: 0,
+            message: "Invoice report cron sync failed",
+            error: error instanceof Error ? error.message : "Unknown error",
+            completedAt: new Date(),
+          },
+        })
       }
     })();
     return NextResponse.json({ success: true });
