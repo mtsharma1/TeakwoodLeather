@@ -1,0 +1,12 @@
+
+> csv-ui@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.24
+  - Local:        http://localhost:3000
+  - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 4.4s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 2.4s (235 modules)

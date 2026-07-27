@@ -243,3 +243,56 @@ export type ProductData = {
     'URL 8'?: string;
     'Vendor Name': string;
 };
+
+
+export type TranzactReportValue = string | number | null;
+
+export interface TranzactPurchaseOrderReport {
+    [key: string]: unknown;
+    supplier_reference_id?: TranzactReportValue;
+    document_date?: TranzactReportValue;
+    last_modified_date?: TranzactReportValue;
+    document_status?: TranzactReportValue;
+    goods_status?: TranzactReportValue;
+    invoice_status?: TranzactReportValue;
+    amendment_counter?: TranzactReportValue;
+    currency_text?: TranzactReportValue;
+    doc_delivery_date?: TranzactReportValue;
+    no_of_items?: TranzactReportValue;
+    drafter_name?: TranzactReportValue;
+    creator_name?: TranzactReportValue;
+    buyer_store_name?: TranzactReportValue;
+    transaction_id?: TranzactReportValue;
+    supplier_name?: TranzactReportValue;
+    document_no_text?: TranzactReportValue;
+    itemId?: TranzactReportValue;
+    itemDescription?: TranzactReportValue;
+    itemCategory?: TranzactReportValue;
+    poQuantity?: TranzactReportValue;
+    uom?: TranzactReportValue;
+    itemRate?: TranzactReportValue;
+    itemRateAfterDiscount?: TranzactReportValue;
+    itemTotal?: TranzactReportValue;
+    itemDiscountAmount?: TranzactReportValue;
+    itemValueBeforeTax?: TranzactReportValue;
+    cgstRate?: TranzactReportValue;
+    cgst?: TranzactReportValue;
+    sgstRate?: TranzactReportValue;
+    sgst?: TranzactReportValue;
+    igstRate?: TranzactReportValue;
+    igst?: TranzactReportValue;
+    cessRate?: TranzactReportValue;
+    cess?: TranzactReportValue;
+    itemTax?: TranzactReportValue;
+    itemValueAfterTax?: TranzactReportValue;
+    itemComment?: TranzactReportValue;
+    deliveredQuantity?: TranzactReportValue;
+    deliveredValue?: TranzactReportValue;
+    balanceQuantity?: TranzactReportValue;
+    balanceValue?: TranzactReportValue;
+    drafterName?: TranzactReportValue;
+    storeName?: TranzactReportValue;
+    documentSerialNumber?: TranzactReportValue;
+}
+
+
