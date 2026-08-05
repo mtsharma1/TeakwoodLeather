@@ -1,7 +1,10 @@
 import { unstable_noStore } from "next/cache"
 import { CHANNEL_REPORT_API_BODY, ITEM_MASTER_DROPBOX_API_BODY, MONTHLY_REPORT_API_BODY, RETURN_INVOICE_API_BODY } from "./api-utils"
+import type { TranzactPurchaseOrderReport } from "@/types/order"
 
 const BASE_URL = "https://teakwoodindia.unicommerce.com"
+const TRANZACT_BASE_URL = "https://be.letstranzact.com/main/login/password-login/"
+const TRANZACT_REPORT_URL = "https://reporting.letstranzact.com/generate_report"
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
    unstable_noStore()
@@ -264,17 +267,137 @@ async function createReturnReverseJob() {
 async function getJobStatus(jobCode: string) {
    const url = `${BASE_URL}/services/rest/v1/export/job/status?_=${Date.now()}`
    const body = { jobCode }
-   return fetchWithAuth(url, { method: "POST", body: JSON.stringify(body) })
+   const res = await fetch(url, { method: "POST", body: JSON.stringify(body) })
+
+   if (!res.ok) {
+      const errorBody = await res.text()
+      throw new Error(`Failed to get job status: ${res.status} ${res.statusText}\nBody: ${errorBody}`)
+   }
+
+   return res.json()
+}
+
+
+
+async function getTranzactAccessToken() {
+   unstable_noStore()
+   // console.log("Fetching Tranzact access token...")
+   const url = `${TRANZACT_BASE_URL}`
+   const body = {
+      "email": "teakwoodleather1@gmail.com",
+      "password": "Teakwood@123"
+   }
+   const res = await fetch(url, {
+      method: "POST",
+      headers: {
+         "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+   })
+
+   if (!res.ok) {
+      const errorBody = await res.text()
+      throw new Error(`Failed to get access token: ${res.status} ${res.statusText}\nBody: ${errorBody}`)
+   }
+
+   const data = await res.json()
+   if (!data?.data?.access_token) {
+      throw new Error(`Access token not found in response: ${JSON.stringify(data)}`)
+   }
+   return data.data.access_token
+}
+
+
+async function getPurchaseOrderRegisterReport(): Promise<TranzactPurchaseOrderReport[]> {
+
+   console.log("Fetching Tranzact Purchase Order Register Report...")
+   const url = `${TRANZACT_REPORT_URL}`
+    const body = {
+                  "selected_columns": [],
+                  "grouped_data": false,
+                  "selected_group_columns": [],
+                  "initial_request": true,
+                  "numeric_search_prefixes": {},
+                  "report": {"id": "4"},
+                  "search": {},
+                  "pagination": {
+                     "group_by": [],
+                     "group_desc": [],
+                     "items_per_page": 1000,
+                     "multi_sort": false,
+                     "must_sort": false,
+                     "page": 1,
+                     "sort_by": [],
+                     "sort_desc": []
+                  },
+                  "creation_date_interval|creation_start_date|creation_end_date": "Last 180 Days",
+                  "delivery_date_interval|delivery_start_date|delivery_end_date": "All",
+                  "tag_purchase": null,
+                  "currency_type": "Rupee",
+                  "item_type": "Goods",
+                  "goods_status": "All",
+                  "invoice_status": "All",
+                  "document_status": "All Sent",
+                  "output": "display"
+                  }
+   const accessToken = await getTranzactAccessToken()
+   const allResults: TranzactPurchaseOrderReport[] = []
+
+   while (true) {
+      let res: Response | null = null
+
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+         res = await fetch(url, {
+            method: "POST",
+            headers: {
+               "Content-Type": "application/json",
+               "Authorization": `Bearer ${accessToken}`
+            },
+            body: JSON.stringify(body)
+         })
+
+         if (res.ok) break
+
+         const errorBody = await res.text()
+         if (res.status < 500 || attempt === 3) {
+            throw new Error(`Failed to get response: ${res.status} ${res.statusText}\nBody: ${errorBody}`)
+         }
+
+         await new Promise((resolve) => setTimeout(resolve, attempt * 500))
+      }
+
+      if (!res?.ok) throw new Error("Failed to get Tranzact report response")
+
+      const data = await res.json()
+      const pageResults = data?.data?.results
+      if (!Array.isArray(pageResults)) {
+         throw new Error(`Results not found in response: ${JSON.stringify(data)}`)
+      }
+
+      allResults.push(...pageResults)
+
+      const totalItems = Number(data?.data?.total_items)
+      if (
+         pageResults.length < body.pagination.items_per_page ||
+         (Number.isFinite(totalItems) && allResults.length >= totalItems)
+      ) {
+         break
+      }
+
+      body.pagination.page += 1
+   }
+
+   return allResults
 }
 
 export {
-   createInvoiceJob,
-   createMontlyReportJob,
-   getJobStatus,
-   getAccessToken,
-   createChannelItemReportJob,
-   createItemMasterDropboxJob,
-   createReturnInvoiceJob,
-   createReturnCourierJob,
-   createReturnReverseJob,
+    createInvoiceJob,
+    createMontlyReportJob,
+    getJobStatus,
+    getAccessToken,
+    createChannelItemReportJob,
+    createItemMasterDropboxJob,
+    createReturnInvoiceJob,
+    createReturnCourierJob,
+    createReturnReverseJob, getTranzactAccessToken, getPurchaseOrderRegisterReport,
 }

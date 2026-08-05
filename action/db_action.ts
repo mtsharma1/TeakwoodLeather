@@ -1,8 +1,9 @@
 'use server'
 
 import prisma from "@/lib/prisma"
+import type { Prisma } from "@prisma/client"
 import { roundToDecimals, safeNumber } from "@/lib/utils"
-import { MonthDataItem, PriceCheckInvoiceData, ProductData, ReturnCourierData, ReturnReverseData } from "@/types/order"
+import { MonthDataItem, PriceCheckInvoiceData, ProductData, ReturnCourierData, ReturnReverseData, TranzactPurchaseOrderReport } from "@/types/order"
 import { isValid, parse, parseISO } from "date-fns"
 
 // export async function saveMonthlyDataWithChunking(transformedData: MonthDataItem[], chunkSize = 1000) {
@@ -901,4 +902,130 @@ function mapReturnReverseRowForOutput(x: {
       "Return Courier Name": x.returnCourierName,
       "Return Remarks": x.returnRemarks,
    }
+}
+
+
+function getTranzactField(item: TranzactPurchaseOrderReport, possibleKeys: string[]) {
+   const entries = Object.entries(item)
+   const normalizedKeys = possibleKeys.map((key) => key.replace(/[^a-z0-9]/gi, "").toLowerCase())
+
+   for (const [rawKey, rawValue] of entries) {
+      const normalizedRawKey = rawKey.replace(/[^a-z0-9]/gi, "").toLowerCase()
+
+      if (normalizedKeys.includes(normalizedRawKey) && rawValue !== undefined && rawValue !== null) {
+         return rawValue
+      }
+   }
+
+   return null
+}
+
+function getTranzactString(item: TranzactPurchaseOrderReport, possibleKeys: string[]) {
+   const value = getTranzactField(item, possibleKeys)
+   return value === null ? null : String(value)
+}
+
+function getTranzactNumber(item: TranzactPurchaseOrderReport, possibleKeys: string[]) {
+   const value = getTranzactField(item, possibleKeys)
+   if (value === null) return null
+
+   const parsedValue = safeNumber(String(value).replace(/,/g, ""))
+   return Number.isFinite(parsedValue) ? parsedValue : null
+}
+
+export async function TransactPurchaseOrderRowForOutput(dataArray: TranzactPurchaseOrderReport[]) {
+   return dataArray.map((item) => ({
+      poNumber: getTranzactString(item, ["document_no_text", "document_no", "po_number", "PO Number"]),
+      supplierName: getTranzactString(item, ["supplier_name", "Supplier Name"]),
+      // supplierGstin: getTranzactString(item, ["supplier_gstin", "Supplier GSTIN"]),
+      // supplierReferenceId: getTranzactString(item, ["supplier_reference_id", "Supplier Reference ID"]),
+      documentDate: getTranzactString(item, ["document_date", "Document Date"]),
+      // lastModifiedDate: getTranzactString(item, ["creation_date", "Last Modified Date"]),
+      // documentStatus: getTranzactString(item, ["document_status", "Document Status"]),
+      goodsStatus: getTranzactString(item, ["goods_status", "Goods Status"]),
+      // overdueStatus: getTranzactString(item, ["overdue_status", "Overdue Status"]),
+      // invoicingStatus: getTranzactString(item, ["invoice_status", "invoicing_status", "Invoicing Status"]),
+      // amendmentCounter: getTranzactString(item, ["amendment", "amendment", "Amendment Counter"]),
+      foreignDomestic: getTranzactString(item, ["currency_text", "foreign_domestic", "Foreign/Domestic"]),
+      itemId: getTranzactString(item, ["item_id", "Item ID"]),
+      itemDescription: getTranzactString(item, ["item_name", "Item Description"]),
+      itemCategory: getTranzactString(item, ["product_category", "Item Category"]),
+      // hsnSac: getTranzactString(item, ["hsn_sac", "HSN/SAC"]),
+      goodsService: getTranzactString(item, ["item_type", "Goods/Service"]),
+      // itemDeliveryDate: getTranzactString(item, ["doc_delivery_date", "item_delivery_date", "Item Delivery Date"]),
+      poQuantity: getTranzactString(item, ["quantity", "no_of_items", "PO Quantity"]),
+      uom: getTranzactString(item, ["uom", "UOM"]),
+      totalIndentQuantity: getTranzactString(item, ["total_indent_quantity", "Total Indent Quantity"]),
+      // indentNumber: getTranzactString(item, ["indent_number", "Indent Number"]),
+      // indentDate: getTranzactString(item, ["indent_date", "Indent Date"]),
+      // ocNumber: getTranzactString(item, ["oc_number", "OC Number"]),
+      // ocDate: getTranzactString(item, ["oc_date", "OC Date"]),
+      itemRate: getTranzactString(item, ["item_rate", "Item Price"]),
+      // discountPercentage: getTranzactString(item, ["discount_percentage", "Discount Percentage"]),
+      // itemRateAfterDiscount: getTranzactString(item, ["item_rate_after_discount", "Item Rate - After Discount"]),
+      // itemTotalBeforeDiscount: getTranzactString(item, ["itemTotal", "item_total", "item_total_before_discount", "Item Total - Before Discount"]),
+      // itemDiscountAmount: getTranzactString(item, ["item_discount_amount", "Item Discount Amount"]),
+      // itemValueBeforeTax: getTranzactString(item, ["item_value_before_tax", "Item Value - Before Tax"]),
+      // cgstRate: getTranzactString(item, ["cgst_rate", "CGST Rate"]),
+      // cgst: getTranzactString(item, ["cgst", "CGST"]),
+      // sgstRate: getTranzactString(item, ["sgst_rate", "SGST Rate"]),
+      // sgst: getTranzactString(item, ["sgst", "SGST"]),
+      // igstRate: getTranzactString(item, ["igst_rate", "IGST Rate"]),
+      // igst: getTranzactString(item, ["igst", "IGST"]),
+      // cessRate: getTranzactString(item, ["cess_rate", "Cess Rate"]),
+      // cess: getTranzactString(item, ["cess", "Cess"]),
+      // itemTax: getTranzactString(item, ["item_tax", "Item Tax"]),
+      // itemValueAfterTax: getTranzactString(item, ["item_value_after_tax", "Item Value - After Tax"]),
+      // itemComment: getTranzactString(item, ["comment", "item_comment", "Item Comment"]),
+      // deliveredQuantity: getTranzactString(item, ["delivered_quantity", "Delivered Quantity"]),
+      // deliveredValue: getTranzactString(item, ["delivered_value", "Delivered Value"]),
+      balanceQuantity: getTranzactNumber(item, ["balance_quantity", "Balance Quantity"]),
+      balanceValue: getTranzactNumber(item, ["balance_value", "Balance Value"]),
+      // qirAcceptedQuantity: getTranzactString(item, ["qir_accepted_quantity", "QIR Accepted Quantity"]),
+      // acceptedValue: getTranzactString(item, ["accepted_value", "Accepted Value"]),
+      // balanceQuantityAsPerAccepted: getTranzactString(item, ["balance_quantity_as_per_accepted", "Balance Quantity (as per Accepted)"]),
+      // balanceValueAsPerAccepted: getTranzactString(item, ["balance_value_as_per_accepted", "Balance Value (as per Accepted)"]),
+      invoiceQuantity: getTranzactString(item, ["invoice_quantity", "Invoice Quantity"]),
+      // inwardInvoiceMismatch: getTranzactString(item, ["inward_invoice_mismatch", "Inward-Invoice Mismatch"]),
+      drafterName: getTranzactString(item, ["drafter_name", "Drafter Name"]),
+      // senderName: getTranzactString(item, ["creator_name", "sender_name", "Sender Name"]),
+      // paymentTerm: getTranzactString(item, ["payment_terms_name", "payment_term", "Payment Term"]),
+      storeName: getTranzactString(item, ["buyer_store_name", "store_name", "Store Name"]),
+      // poDeliveryDate: getTranzactString(item, ["po_delivery_date", "PO Delivery Date"]),
+      // kindAttention: getTranzactString(item, ["kind_attention", "Kind Attention"]),
+      poGrandTotal: getTranzactString(item, ["po_grand_total", "grand_total", "PO Grand Total"]),
+      // networkTags: getTranzactString(item, ["network_tag", "Network Tags"]),
+      // transactionTags: getTranzactString(item, ["transaction_tag", "Transaction Tags"]),
+      documentSerialNumber: getTranzactString(item, ["document_serial_number", "Document Serial Number"]),
+      // customerDeliveryAddressName: getTranzactString(item, ["customer_delivery_location_name", "customer_delivery_address_name", "Customer Delivery Address Name"]),
+      // customerDeliveryAddress: getTranzactString(item, ["customer_delivery_address", "Customer Delivery Address"]),
+      // customerDeliveryAddressGstin: getTranzactString(item, ["customer_delivery_address_gstin", "Customer Delivery Address GSTIN"]),
+      // customerDeliveryAddressCity: getTranzactString(item, ["customer_delivery_address_city", "Customer Delivery Address City"]),
+      // customerDeliveryAddressState: getTranzactString(item, ["customer_delivery_address_state", "Customer Delivery Address State"]),
+      // customerDeliveryAddressCountry: getTranzactString(item, ["customer_delivery_address_country", "Customer Delivery Address Country"]),
+      // customerDeliveryAddressPin: getTranzactString(item, ["customer_delivery_address_pin", "Customer Delivery Address PIN"]),
+      // customerBillingAddressGstin: getTranzactString(item, ["customer_billing_address_gstin", "Customer Billing Address GSTIN"]),
+      // poOriginalCreationTimestamp: getTranzactString(item, ["po_original_creation_timestamp", "PO Original Creation Timestamp"]),
+      // poLastModifiedTimestamp: getTranzactString(item, ["po_last_modified_timestamp", "PO Last Modified Timestamp"]),
+      transactionId: getTranzactString(item, ["transaction_id", "document_id", "Transaction ID"]),
+      rowData: JSON.parse(JSON.stringify(item)) as Prisma.InputJsonValue,
+   }))
+}
+
+export async function saveTranzactPurchaseOrderData(dataArray: TranzactPurchaseOrderReport[]) {
+   const formattedData = await TransactPurchaseOrderRowForOutput(dataArray)
+
+   if (formattedData.length === 0) {
+      return { count: 0 }
+   }
+
+   console.log("Saving Tranzact Purchase Order Data:", formattedData.length, "rows")
+   const [, saved] = await prisma.$transaction([
+      prisma.purchaseOrderTranzactData.deleteMany(),
+      prisma.purchaseOrderTranzactData.createMany({
+         data: formattedData,
+      }),
+   ])
+
+   return saved
 }

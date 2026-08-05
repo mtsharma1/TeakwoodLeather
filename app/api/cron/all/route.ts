@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server"
 
+export const maxDuration = 300
+export const dynamic = "force-dynamic"
+
 type CronRunResult = {
   endpoint: string
   ok: boolean
@@ -15,6 +18,7 @@ export async function GET(request: Request) {
     "/api/cron/morning-cron",
     "/api/cron/return-courier",
     "/api/cron/return-reverse",
+    "/api/cron/tranzact-purchase-order",
   ]
 
   const results = await Promise.all(
