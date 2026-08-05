@@ -54,6 +54,7 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
       { id: "return-courier", name: "Return Courier", endpoint: "/api/settings/refresh/return-courier" },
       { id: "return-reverse", name: "Return Reverse", endpoint: "/api/settings/refresh/return-reverse" },
       { id: "channel-report", name: "Channel Report", endpoint: "/api/settings/refresh/channel-report" },
+      { id: "tranzact-purchase-order", name: "Tranzact Purchase Order", endpoint: "/api/settings/refresh/tranzact-purchase-order" },
       { id: "sku-imgs", name: "SKU Images", endpoint: "/api/settings/refresh/sku-imgs" },
     ],
     []
@@ -91,6 +92,7 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
       case "return-courier": return "return-courier";
       case "return-reverse": return "return-reverse";
       case "channel-report": return "channel-report";
+      case "tranzact-purchase-order": return "tranzact-purchase-order";
       case "sku-imgs": return "sku-imgs";
       default: return null;
     }
@@ -105,6 +107,7 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
       case "return-courier": return "return-courier";
       case "return-reverse": return "return-reverse";
       case "channel-report": return "channel-report";
+      case "tranzact-purchase-order": return "tranzact-purchase-order";
       case "sku-imgs": return "sku-imgs";
       default: return apiId;
     }
@@ -177,12 +180,7 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
       if (jobId && (statuses[api.id] === "loading")) {
         intervals[api.id] = setInterval(async () => {
           try {
-            const apiId = api.id === "monthly-report" ? "monthly" : 
-                           api.id === "invoice-report" ? "invoice" : 
-                           api.id === "return-invoice" ? "return-invoice" :
-                           api.id === "return-courier" ? "return-courier" :
-                           api.id === "return-reverse" ? "return-reverse" :
-                           api.id === "channel-report" ? "channel-report" : "sku-imgs"
+            const apiId = getJobTypeFromApiId(api.id)
             
             const response = await fetch(`/api/settings/job-status?jobType=${apiId}`)
             if (!response.ok) throw new Error("Failed to fetch job status")

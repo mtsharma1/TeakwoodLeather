@@ -1,19 +1,17 @@
 // app/api/test-tranzact/route.ts
 
 import { NextResponse } from "next/server"
-import { getPurchaseOrderRegisterReport } from "@/lib/api"
-import { saveTranzactPurchaseOrderData } from "@/action/db_action"
+import { syncTranzactPurchaseOrders } from "@/lib/tranzact-purchase-order-sync"
+
+export const maxDuration = 300
+export const dynamic = "force-dynamic"
 
 export async function GET() {
     try {
-        const results = await getPurchaseOrderRegisterReport()
-        const saved = await saveTranzactPurchaseOrderData(results)
-        // console.log("Tranzact Purchase Order Data saved:", saved.count, "rows")
+        const result = await syncTranzactPurchaseOrders()
         return NextResponse.json({
             success: true,
-            fetchedCount: results.length,
-            savedCount: saved.count,
-            data: results
+            ...result,
         })
 
     } catch (error) {

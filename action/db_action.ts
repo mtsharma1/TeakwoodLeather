@@ -1015,13 +1015,17 @@ export async function TransactPurchaseOrderRowForOutput(dataArray: TranzactPurch
 export async function saveTranzactPurchaseOrderData(dataArray: TranzactPurchaseOrderReport[]) {
    const formattedData = await TransactPurchaseOrderRowForOutput(dataArray)
 
-   await prisma.purchaseOrderTranzactData.deleteMany()
-
    if (formattedData.length === 0) {
       return { count: 0 }
    }
+
    console.log("Saving Tranzact Purchase Order Data:", formattedData.length, "rows")
-   return prisma.purchaseOrderTranzactData.createMany({
-      data: formattedData,
-   })
+   const [, saved] = await prisma.$transaction([
+      prisma.purchaseOrderTranzactData.deleteMany(),
+      prisma.purchaseOrderTranzactData.createMany({
+         data: formattedData,
+      }),
+   ])
+
+   return saved
 }

@@ -301,11 +301,9 @@ async function getTranzactAccessToken() {
    }
 
    const data = await res.json()
-   console.log("Tranzact access token response:", data)
-   if (!data) {
+   if (!data?.data?.access_token) {
       throw new Error(`Access token not found in response: ${JSON.stringify(data)}`)
    }
-   // console.log(data.data.access_token)
    return data.data.access_token
 }
 
@@ -343,32 +341,53 @@ async function getPurchaseOrderRegisterReport(): Promise<TranzactPurchaseOrderRe
                   "output": "display"
                   }
    const accessToken = await getTranzactAccessToken()
-   console.log("AccessToken:", accessToken)
-   const res = await fetch(url, {
-      method: "POST",
-      headers: {
-         "Content-Type": "application/json",
-         "Authorization": `Bearer ${accessToken}`
-      },
-      body: JSON.stringify(body)
-   })
+   const allResults: TranzactPurchaseOrderReport[] = []
 
-   // console.log("Tranzact report response status:", await res.text())
-   if (!res.ok) {
-      const errorBody = await res.text()
-      console.log("URL : ",url)
-      console.log("AccessToken response ok : ",accessToken)
+   while (true) {
+      let res: Response | null = null
 
-      throw new Error(`Failed to get response: ${res.status} ${res.statusText}\nBody: ${errorBody}`)
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+         res = await fetch(url, {
+            method: "POST",
+            headers: {
+               "Content-Type": "application/json",
+               "Authorization": `Bearer ${accessToken}`
+            },
+            body: JSON.stringify(body)
+         })
+
+         if (res.ok) break
+
+         const errorBody = await res.text()
+         if (res.status < 500 || attempt === 3) {
+            throw new Error(`Failed to get response: ${res.status} ${res.statusText}\nBody: ${errorBody}`)
+         }
+
+         await new Promise((resolve) => setTimeout(resolve, attempt * 500))
+      }
+
+      if (!res?.ok) throw new Error("Failed to get Tranzact report response")
+
+      const data = await res.json()
+      const pageResults = data?.data?.results
+      if (!Array.isArray(pageResults)) {
+         throw new Error(`Results not found in response: ${JSON.stringify(data)}`)
+      }
+
+      allResults.push(...pageResults)
+
+      const totalItems = Number(data?.data?.total_items)
+      if (
+         pageResults.length < body.pagination.items_per_page ||
+         (Number.isFinite(totalItems) && allResults.length >= totalItems)
+      ) {
+         break
+      }
+
+      body.pagination.page += 1
    }
 
-   const data = await res.json()
-   // console.log("Tranzact report data :", data)
-   if (!data?.data?.results){
-      throw new Error(`Results not found in response: ${JSON.stringify(data)}`)
-   }
-
-   return data.data.results
+   return allResults
 }
 
 export {
