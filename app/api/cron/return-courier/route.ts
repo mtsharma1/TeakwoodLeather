@@ -5,6 +5,9 @@ import { saveReturnCourierData } from "@/action/db_action"
 import { createReturnCourierJob } from "@/lib/api"
 import prisma from "@/lib/prisma"
 
+export const maxDuration = 300
+export const dynamic = "force-dynamic"
+
 async function fetchAndSaveReturnCourierData() {
   noStore()
   const jobResponse = await createReturnCourierJob()

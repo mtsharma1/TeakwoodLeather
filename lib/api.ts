@@ -6,6 +6,9 @@ const BASE_URL = "https://teakwoodindia.unicommerce.com"
 const TRANZACT_BASE_URL = "https://be.letstranzact.com/main/login/password-login/"
 const TRANZACT_REPORT_URL = "https://reporting.letstranzact.com/generate_report"
 
+let accessTokenCache: { token: string; expiresAt: number } | null = null
+let accessTokenRequest: Promise<string> | null = null
+
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
    unstable_noStore()
    const accessToken = await getAccessToken()
@@ -28,6 +31,15 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
 }
 
 async function getAccessToken() {
+   if (accessTokenCache && accessTokenCache.expiresAt > Date.now() + 60_000) {
+      return accessTokenCache.token
+   }
+
+   if (accessTokenRequest) {
+      return accessTokenRequest
+   }
+
+   accessTokenRequest = (async () => {
    const url = `${BASE_URL}/oauth/token?grant_type=password&client_id=my-trusted-client&username=teakwoodleather45%40gmail.com&password=Leather%404511`
    const res = await fetch(url, {
       headers: {
@@ -45,7 +57,25 @@ async function getAccessToken() {
       throw new Error(`Access token not found in response: ${JSON.stringify(data)}`)
    }
 
-   return data.access_token
+      let expiresAt = Date.now() + 4 * 60_000
+      try {
+         const payload = JSON.parse(Buffer.from(data.access_token.split(".")[1], "base64url").toString("utf8"))
+         if (typeof payload.exp === "number") {
+            expiresAt = payload.exp * 1000
+         }
+      } catch {
+         // Tokens without a JWT expiry use the conservative fallback above.
+      }
+
+      accessTokenCache = { token: data.access_token, expiresAt }
+      return data.access_token
+   })()
+
+   try {
+      return await accessTokenRequest
+   } finally {
+      accessTokenRequest = null
+   }
 }
 
 async function createInvoiceJob(startDate: string, endDate: string) {
@@ -267,14 +297,7 @@ async function createReturnReverseJob() {
 async function getJobStatus(jobCode: string) {
    const url = `${BASE_URL}/services/rest/v1/export/job/status?_=${Date.now()}`
    const body = { jobCode }
-   const res = await fetch(url, { method: "POST", body: JSON.stringify(body) })
-
-   if (!res.ok) {
-      const errorBody = await res.text()
-      throw new Error(`Failed to get job status: ${res.status} ${res.statusText}\nBody: ${errorBody}`)
-   }
-
-   return res.json()
+   return fetchWithAuth(url, { method: "POST", body: JSON.stringify(body) })
 }
 
 
@@ -341,9 +364,9 @@ async function getPurchaseOrderRegisterReport(): Promise<TranzactPurchaseOrderRe
                   "output": "display"
                   }
    const accessToken = await getTranzactAccessToken()
-   const allResults: TranzactPurchaseOrderReport[] = []
+   const pageSize = body.pagination.items_per_page
 
-   while (true) {
+   const fetchPage = async (page: number) => {
       let res: Response | null = null
 
       for (let attempt = 1; attempt <= 3; attempt += 1) {
@@ -353,7 +376,10 @@ async function getPurchaseOrderRegisterReport(): Promise<TranzactPurchaseOrderRe
                "Content-Type": "application/json",
                "Authorization": `Bearer ${accessToken}`
             },
-            body: JSON.stringify(body)
+            body: JSON.stringify({
+               ...body,
+               pagination: { ...body.pagination, page },
+            })
          })
 
          if (res.ok) break
@@ -374,20 +400,26 @@ async function getPurchaseOrderRegisterReport(): Promise<TranzactPurchaseOrderRe
          throw new Error(`Results not found in response: ${JSON.stringify(data)}`)
       }
 
-      allResults.push(...pageResults)
-
-      const totalItems = Number(data?.data?.total_items)
-      if (
-         pageResults.length < body.pagination.items_per_page ||
-         (Number.isFinite(totalItems) && allResults.length >= totalItems)
-      ) {
-         break
+      return {
+         rows: pageResults as TranzactPurchaseOrderReport[],
+         totalItems: Number(data?.data?.total_items),
       }
-
-      body.pagination.page += 1
    }
 
-   return allResults
+   const firstPage = await fetchPage(1)
+   const pageCount = Number.isFinite(firstPage.totalItems)
+      ? Math.max(1, Math.ceil(firstPage.totalItems / pageSize))
+      : 1
+
+   if (pageCount === 1) {
+      return firstPage.rows
+   }
+
+   const remainingPages = await Promise.all(
+      Array.from({ length: pageCount - 1 }, (_, index) => fetchPage(index + 2))
+   )
+
+   return [firstPage, ...remainingPages].flatMap((page) => page.rows)
 }
 
 export {

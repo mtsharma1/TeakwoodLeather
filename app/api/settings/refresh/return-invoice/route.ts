@@ -4,6 +4,9 @@ import { NextResponse } from "next/server"
 import { createReturnInvoiceJob } from "@/lib/api"
 import prisma from "@/lib/prisma"
 
+export const maxDuration = 300
+export const dynamic = "force-dynamic"
+
 async function processAndSaveReturnInvoiceData(jobId: string, path: string) {
   try {
     await prisma.jobStatus.update({
@@ -58,7 +61,10 @@ export async function GET() {
       },
       update: {
         status: "pending",
+        progress: 0,
         message: "Creating return invoice export job...",
+        error: null,
+        completedAt: null,
         startedAt: new Date(),
       },
       create: {

@@ -4,6 +4,9 @@ import { NextResponse } from "next/server"
 import { createReturnReverseJob } from "@/lib/api"
 import prisma from "@/lib/prisma"
 
+export const maxDuration = 300
+export const dynamic = "force-dynamic"
+
 function isAlreadyRunningError(jobResponse: unknown) {
   const candidate = jobResponse as { errors?: Array<{ code?: number; message?: string }>; message?: string } | null
   const message = `${candidate?.message ?? ""}`.toUpperCase()
@@ -78,8 +81,10 @@ export async function GET() {
       where: { jobType: "return-reverse" },
       update: {
         status: "pending",
+        progress: 0,
         message: "Creating return reverse export job...",
         error: null,
+        completedAt: null,
         startedAt: new Date(),
       },
       create: {
