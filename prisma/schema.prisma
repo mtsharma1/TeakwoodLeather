@@ -338,6 +338,65 @@ model JobStatus {
   completedAt DateTime?
 }
 
+model InventorySnapshot {
+  id                         String   @id @default(uuid())
+  facility                   String
+  itemTypeName               String
+  itemTypeSku                String
+  ean                        String?
+  upc                        String?
+  isbn                       String?
+  color                      String?
+  size                       String?
+  brand                      String?
+  categoryName               String?
+  mrp                        Float    @default(0)
+  openSale                   Float    @default(0)
+  inventory                  Float    @default(0)
+  quantityNotFound           Float    @default(0)
+  excessQuantity             Float    @default(0)
+  quarantinedInventory       Float    @default(0)
+  inventoryNotSynced         Float    @default(0)
+  inventoryBlocked           Float    @default(0)
+  badInventory               Float    @default(0)
+  putawayPending             Float    @default(0)
+  pendingInventoryAssessment Float    @default(0)
+  pendingStockTransfer       Float    @default(0)
+  openPurchase               Float    @default(0)
+  enabled                    Boolean  @default(false)
+  sourceUpdatedAt            String?
+  costPrice                  Float    @default(0)
+  closureType                String?
+  gender                     String?
+  grade                      String?
+  manufacturer               String?
+  materialType               String?
+  monthGrade                 String?
+  parentSku                  String?
+  patternType                String?
+  productTitle               String?
+  sellingPrice               Float    @default(0)
+  serialNumber               String?
+  itemStatus                 String?
+  subcategory                String?
+  url1                       String?  @db.Text
+  url2                       String?  @db.Text
+  url3                       String?  @db.Text
+  url4                       String?  @db.Text
+  url5                       String?  @db.Text
+  url6                       String?  @db.Text
+  url7                       String?  @db.Text
+  url8                       String?  @db.Text
+  vendorName                 String?
+  vendorPrice                Float    @default(0)
+  volume                     String?
+  rowData                    Json?
+  syncedAt                   DateTime @default(now())
+
+  @@index([itemTypeSku])
+  @@index([facility])
+}
+
 model PurchaseOrderTranzactData {
   id                                 Int      @id @default(autoincrement())
   poNumber                           String?

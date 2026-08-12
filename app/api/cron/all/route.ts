@@ -19,6 +19,7 @@ export async function GET(request: Request) {
     "/api/cron/return-courier",
     "/api/cron/return-reverse",
     "/api/cron/tranzact-purchase-order",
+    "/api/cron/inventory-snapshot",
   ]
 
   const results = await Promise.all(

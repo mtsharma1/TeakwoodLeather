@@ -48,6 +48,68 @@ export const CHANNEL_REPORT_API_BODY = {
    "frequency": "ONETIME"
 }
 
+export const INVENTORY_SNAPSHOT_EXPORT_COLUMNS = [
+   "facility",
+   "itemTypeName",
+   "itemtypeSku",
+   "ean",
+   "upc",
+   "isbn",
+   "color",
+   "size",
+   "brand",
+   "categoryName",
+   "MRP",
+   "openSale",
+   "inventory",
+   "quantityNotFound",
+   "excessQuantity",
+   "quarantinedInventory",
+   "inventoryNotSynced",
+   "inventoryBlocked",
+   "badInventory",
+   "putawayPending",
+   "pendingInventoryAssessment",
+   "pendingStockTransfer",
+   "openPurchase",
+   "enabled",
+   "updated",
+   "costPrice",
+   "itemType_closuer_Type",
+   "itemType_Gender",
+   "itemType_Grade",
+   "itemType_man",
+   "itemType_material_Type",
+   "itemType_month_Grade",
+   "itemType_ParentSku",
+   "itemType_pat_type",
+   "itemType_product_Title",
+   "itemType_selling_Price",
+   "itemType_sno_Number",
+   "itemType_Status",
+   "itemType_subcategory",
+   "itemType_url1",
+   "itemType_url2",
+   "itemType_url3",
+   "itemType_url4",
+   "itemType_url5",
+   "itemType_url6",
+   "itemType_url7",
+   "itemType_url8",
+   "itemType_vendor_Name",
+   "itemType_vendor_Price",
+   "itemType_vol",
+] as const
+
+export function getInventorySnapshotApiBody() {
+   return {
+      exportJobTypeName: "Inventory Snapshot",
+      exportColums: [...INVENTORY_SNAPSHOT_EXPORT_COLUMNS],
+      exportFilters: [],
+      frequency: "ONETIME",
+   }
+}
+
 export const ITEM_MASTER_DROPBOX_API_BODY = {
    "exportJobTypeName": "Item Master",
    "exportColums": [

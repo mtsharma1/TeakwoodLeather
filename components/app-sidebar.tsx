@@ -113,6 +113,11 @@ const data = {
               icon: LayoutGrid,
             },
             {
+              title: "Inventory Snapshot",
+              url: "/monthly-report/analysis/inventory-snapshot",
+              icon: MdOutlineInventory2,
+            },
+            {
               title: "Common Order",
               url: "/monthly-report/analysis/common-order-summary",
               icon: BringToFront,

@@ -1,10 +1,13 @@
 import { unstable_noStore } from "next/cache"
-import { CHANNEL_REPORT_API_BODY, ITEM_MASTER_DROPBOX_API_BODY, MONTHLY_REPORT_API_BODY, RETURN_INVOICE_API_BODY } from "./api-utils"
+import { CHANNEL_REPORT_API_BODY, getInventorySnapshotApiBody, ITEM_MASTER_DROPBOX_API_BODY, MONTHLY_REPORT_API_BODY, RETURN_INVOICE_API_BODY } from "./api-utils"
 import type { TranzactPurchaseOrderReport } from "@/types/order"
 
 const BASE_URL = "https://teakwoodindia.unicommerce.com"
 const TRANZACT_BASE_URL = "https://be.letstranzact.com/main/login/password-login/"
+const TRANZACT_REPORTS_URL = "https://reporting.letstranzact.com/get_reports"
 const TRANZACT_REPORT_URL = "https://reporting.letstranzact.com/generate_report"
+const TRANZACT_PURCHASE_ORDER_REPORT_TYPE = "purchase.po_rfq_indent"
+const TRANZACT_PURCHASE_ORDER_REPORT_NAME = "Purchase Order Register (Item-wise)"
 
 let accessTokenCache: { token: string; expiresAt: number } | null = null
 let accessTokenRequest: Promise<string> | null = null
@@ -300,6 +303,11 @@ async function getJobStatus(jobCode: string) {
    return fetchWithAuth(url, { method: "POST", body: JSON.stringify(body) })
 }
 
+async function createInventorySnapshotJob() {
+   const url = `${BASE_URL}/services/rest/v1/export/job/create`
+   return fetchWithAuth(url, { method: "POST", body: JSON.stringify(getInventorySnapshotApiBody()) })
+}
+
 
 
 async function getTranzactAccessToken() {
@@ -330,18 +338,54 @@ async function getTranzactAccessToken() {
    return data.data.access_token
 }
 
+type TranzactReportDefinition = {
+   id?: string
+   name?: string
+   type?: string
+}
+
+async function getTranzactPurchaseOrderReportId(accessToken: string) {
+   const res = await fetch(TRANZACT_REPORTS_URL, {
+      headers: {
+         "Authorization": `Bearer ${accessToken}`,
+      },
+   })
+
+   if (!res.ok) {
+      const errorBody = await res.text()
+      throw new Error(`Failed to get Tranzact report definitions: ${res.status} ${res.statusText}\nBody: ${errorBody}`)
+   }
+
+   const data = await res.json()
+   const reports: TranzactReportDefinition[] = Array.isArray(data?.data) ? data.data : []
+   const report = reports.find((item) => item.name === TRANZACT_PURCHASE_ORDER_REPORT_NAME)
+      ?? reports.find((item) => (
+         item.type === TRANZACT_PURCHASE_ORDER_REPORT_TYPE
+         && item.name?.toLowerCase().includes("purchase order register")
+         && item.name?.toLowerCase().includes("item-wise")
+      ))
+
+   if (!report?.id) {
+      throw new Error(`Tranzact item-wise Purchase Order Register report was not found in ${reports.length} available report definitions`)
+   }
+
+   return report.id
+}
+
 
 async function getPurchaseOrderRegisterReport(): Promise<TranzactPurchaseOrderReport[]> {
 
    console.log("Fetching Tranzact Purchase Order Register Report...")
    const url = `${TRANZACT_REPORT_URL}`
+   const accessToken = await getTranzactAccessToken()
+   const reportId = await getTranzactPurchaseOrderReportId(accessToken)
     const body = {
                   "selected_columns": [],
                   "grouped_data": false,
                   "selected_group_columns": [],
                   "initial_request": true,
                   "numeric_search_prefixes": {},
-                  "report": {"id": "4"},
+                  "report": {"id": reportId},
                   "search": {},
                   "pagination": {
                      "group_by": [],
@@ -363,7 +407,6 @@ async function getPurchaseOrderRegisterReport(): Promise<TranzactPurchaseOrderRe
                   "document_status": "All Sent",
                   "output": "display"
                   }
-   const accessToken = await getTranzactAccessToken()
    const pageSize = body.pagination.items_per_page
 
    const fetchPage = async (page: number) => {
@@ -431,5 +474,5 @@ export {
     createItemMasterDropboxJob,
     createReturnInvoiceJob,
     createReturnCourierJob,
-    createReturnReverseJob, getTranzactAccessToken, getPurchaseOrderRegisterReport,
+    createReturnReverseJob, createInventorySnapshotJob, getTranzactAccessToken, getPurchaseOrderRegisterReport,
 }
