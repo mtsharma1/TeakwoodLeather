@@ -54,6 +54,7 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
       { id: "return-courier", name: "Return Courier", endpoint: "/api/settings/refresh/return-courier" },
       { id: "return-reverse", name: "Return Reverse", endpoint: "/api/settings/refresh/return-reverse" },
       { id: "channel-report", name: "Channel Report", endpoint: "/api/settings/refresh/channel-report" },
+      { id: "inventory-snapshot", name: "Inventory Snapshot", endpoint: "/api/settings/refresh/inventory-snapshot" },
       { id: "tranzact-purchase-order", name: "Tranzact Purchase Order", endpoint: "/api/settings/refresh/tranzact-purchase-order" },
       { id: "sku-imgs", name: "SKU Images", endpoint: "/api/settings/refresh/sku-imgs" },
     ],
@@ -94,6 +95,7 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
       case "return-courier": return "return-courier";
       case "return-reverse": return "return-reverse";
       case "channel-report": return "channel-report";
+      case "inventory-snapshot": return "inventory-snapshot";
       case "tranzact-purchase-order": return "tranzact-purchase-order";
       case "sku-imgs": return "sku-imgs";
       default: return null;
@@ -109,6 +111,7 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
       case "return-courier": return "return-courier";
       case "return-reverse": return "return-reverse";
       case "channel-report": return "channel-report";
+      case "inventory-snapshot": return "inventory-snapshot";
       case "tranzact-purchase-order": return "tranzact-purchase-order";
       case "sku-imgs": return "sku-imgs";
       default: return apiId;

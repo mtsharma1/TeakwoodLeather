@@ -724,6 +724,7 @@ function getTodayInvoiceWindowIST() {
 
 export async function analysisDasboard() {
     try {
+        noStore()
         const data = (await fetchMonthlyData()) || []
         const summary = await calc_Count_Amt(data)
         const openSalesValueSummary = await getTodayOpenSalesValueSummary()

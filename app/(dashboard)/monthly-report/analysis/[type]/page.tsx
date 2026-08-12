@@ -4,6 +4,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import LoadingSkeleton from "@/components/loader/table-skelaton"
 import AdvancedInventoryTable from "@/components/table/with-edit-advanced-inventory-table"
 
+export const dynamic = "force-dynamic"
+
 // const getCachedAnalysisData = cache(async (type: string) => await analysisData(type))
 
 export default async function OverStock({ params }: { params: { type: string } }) {

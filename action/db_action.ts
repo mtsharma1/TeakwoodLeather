@@ -111,6 +111,19 @@ export async function saveMonthlyDataOptimally(transformedData: MonthDataItem[])
          prisma.monthDataItem.createMany({
             data,
          }),
+         prisma.$executeRaw`
+            UPDATE MonthDataItem AS rawData
+            LEFT JOIN (
+               SELECT
+                  UPPER(TRIM(itemTypeSku)) AS normalizedSku,
+                  SUM(inventory) AS inventory
+               FROM InventorySnapshot
+               WHERE TRIM(itemTypeSku) <> ''
+               GROUP BY UPPER(TRIM(itemTypeSku))
+            ) AS snapshot
+               ON UPPER(TRIM(rawData.\`Sku Code\`)) = snapshot.normalizedSku
+            SET rawData.\`Available Inventory\` = CAST(COALESCE(snapshot.inventory, 0) AS CHAR)
+         `,
       ])
 
       return result
