@@ -68,18 +68,20 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
   // Initialize URLs from recent jobs if available
   useEffect(() => {
     if (recentJobs && recentJobs.length > 0) {
-      const initialUrls: Record<string, string> = { ...urls };
-      
-      recentJobs.forEach(job => {
-        if (job.filePath) {
-          const apiId = getApiIdFromJobType(job.jobType);
-          if (apiId && !initialUrls[apiId]) {
-            initialUrls[apiId] = job.filePath;
+      setUrls((currentUrls) => {
+        const initialUrls: Record<string, string> = { ...currentUrls };
+
+        recentJobs.forEach(job => {
+          if (job.filePath) {
+            const apiId = getApiIdFromJobType(job.jobType);
+            if (apiId && !initialUrls[apiId]) {
+              initialUrls[apiId] = job.filePath;
+            }
           }
-        }
+        });
+
+        return initialUrls;
       });
-      
-      setUrls(initialUrls);
     }
   }, [recentJobs]);
 
@@ -301,6 +303,9 @@ export function SettingsUrl({ recentJobs }: { recentJobs: RecentJobsI[] }) {
     setLoadingStates((prev) => ({ ...prev, [api.id]: true }))
     setStatuses((prev) => ({ ...prev, [api.id]: "loading" }))
     setStatusMessages((prev) => ({ ...prev, [api.id]: "Starting job..." }))
+    // Start polling by report type immediately. The API request itself can take
+    // several minutes while the external export is prepared.
+    setActiveJobs((prev) => ({ ...prev, [api.id]: api.id }))
 
     // Show initial toast
     const toastId = toast.loading(`Refreshing ${api.name}...`, {

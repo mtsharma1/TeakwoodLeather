@@ -8,6 +8,9 @@ import { createInvoiceJob } from "@/lib/api"
 import { format } from 'date-fns'
 import prisma from "@/lib/prisma"
 
+export const maxDuration = 300
+export const dynamic = "force-dynamic"
+
 async function fetchAndSaveInvoiceData() {
   noStore();
   await prisma.priceCheckData.deleteMany()

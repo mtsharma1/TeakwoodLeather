@@ -1,33 +1,14 @@
-import type { MonthDataItem } from "@/types/order"
-import { saveMonthlyDataOptimally } from "@/action/db_action"
-import { fetchCSV, pollJobStatus } from "@/action/csv"
-import { transformData } from "@/lib/action-utils"
+import { unstable_noStore as noStore } from "next/cache"
 import { NextResponse } from "next/server"
-import { unstable_noStore as noStore } from 'next/cache';
-import { createMontlyReportJob } from "@/lib/api"
 import prisma from "@/lib/prisma"
+import { syncMonthlyReport } from "@/lib/monthly-report-sync"
 
-async function fetchAndSaveMonthlyData() {
-  noStore();
-  const jobResponse = await createMontlyReportJob()
-  console.log(jobResponse, "jobResponse")
-
-  if (!jobResponse.successful) {
-    throw new Error(`Failed to create export job: ${JSON.stringify(jobResponse)}`)
-  }
-  const jobCode = jobResponse.jobCode
-
-  const result = await pollJobStatus(jobCode, 100, 2000 * 4);
-  const path = result.filePath
-  const rawData = await fetchCSV<MonthDataItem>(path)
-  const transformedData = transformData(rawData)
-
-  await saveMonthlyDataOptimally(transformedData)
-  console.log('✅ Monthly data processing completed:', new Date().toISOString());
-}
+export const maxDuration = 300
+export const dynamic = "force-dynamic"
 
 export async function GET() {
-  console.log('🔔 Cron triggered:', new Date().toISOString());
+  noStore()
+  console.log("Monthly report cron triggered:", new Date().toISOString())
 
   const jobStatus = await prisma.jobStatus.upsert({
     where: { jobType: "monthly" },
@@ -36,6 +17,7 @@ export async function GET() {
       progress: 5,
       message: "Cron triggered. Starting monthly report sync...",
       error: null,
+      filePath: null,
       completedAt: null,
       startedAt: new Date(),
     },
@@ -48,36 +30,52 @@ export async function GET() {
     },
   })
 
-  ;(async () => {
-    try {
-      await fetchAndSaveMonthlyData();
+  try {
+    const result = await syncMonthlyReport(async (progress, message) => {
       await prisma.jobStatus.update({
         where: { id: jobStatus.id },
-        data: {
-          status: "completed",
-          progress: 100,
-          message: "Monthly report synced successfully via cron",
-          completedAt: new Date(),
-        },
+        data: { progress, message },
       })
-    } catch (error) {
-      console.error('Background process failed: [fetchAndSaveMonthlyData]', error);
-      await prisma.jobStatus.update({
-        where: { id: jobStatus.id },
-        data: {
-          status: "failed",
-          progress: 0,
-          message: "Monthly report cron sync failed",
-          error: error instanceof Error ? error.message : "Unknown error",
-          completedAt: new Date(),
-        },
-      })
-    }
-  })();
+    })
 
-  return NextResponse.json({
-    success: true,
-    message: 'Cron job scheduled successfully',
-    timestamp: new Date().toISOString()
-  });
+    await prisma.jobStatus.update({
+      where: { id: jobStatus.id },
+      data: {
+        status: "completed",
+        progress: 100,
+        message: `Monthly report synced successfully via cron (${result.savedCount} rows)`,
+        filePath: result.filePath,
+        error: null,
+        completedAt: new Date(),
+      },
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: "Monthly report synced successfully",
+      ...result,
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error("Monthly report cron failed:", error)
+    const message = error instanceof Error ? error.message : String(error)
+
+    await prisma.jobStatus.update({
+      where: { id: jobStatus.id },
+      data: {
+        status: "failed",
+        progress: 0,
+        message: "Monthly report cron sync failed",
+        error: message,
+        completedAt: new Date(),
+      },
+    })
+
+    return NextResponse.json({
+      success: false,
+      message: "Monthly report sync failed",
+      error: message,
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
+  }
 }

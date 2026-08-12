@@ -7,6 +7,9 @@ import { createInvoiceJob } from "@/lib/api"
 import { format } from 'date-fns'
 import prisma from "@/lib/prisma"
 
+export const maxDuration = 300
+export const dynamic = "force-dynamic"
+
 // Separate background processing function
 async function processAndSaveInvoiceData(jobId: string, path: string) {
   try {

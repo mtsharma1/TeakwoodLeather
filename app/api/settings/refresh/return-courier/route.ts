@@ -4,6 +4,9 @@ import { NextResponse } from "next/server"
 import { createReturnCourierJob } from "@/lib/api"
 import prisma from "@/lib/prisma"
 
+export const maxDuration = 300
+export const dynamic = "force-dynamic"
+
 const shouldBreakForDebug = process.env.DEBUG_RETURN_COURIER === "true"
 
 function isAlreadyRunningError(jobResponse: unknown) {
@@ -88,8 +91,10 @@ export async function GET() {
       where: { jobType: "return-courier" },
       update: {
         status: "pending",
+        progress: 0,
         message: "Creating return courier export job...",
         error: null,
+        completedAt: null,
         startedAt: new Date(),
       },
       create: {

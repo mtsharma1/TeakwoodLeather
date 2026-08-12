@@ -5,6 +5,9 @@ import { saveReturnReverseData } from "@/action/db_action"
 import { createReturnReverseJob } from "@/lib/api"
 import prisma from "@/lib/prisma"
 
+export const maxDuration = 300
+export const dynamic = "force-dynamic"
+
 async function fetchAndSaveReturnReverseData() {
   noStore()
   const jobResponse = await createReturnReverseJob()

@@ -5,6 +5,9 @@ import { createItemMasterDropboxJob } from "@/lib/api"
 import { saveProductsOptimally } from "@/action/db_action";
 import prisma from "@/lib/prisma";
 
+export const maxDuration = 300
+export const dynamic = "force-dynamic"
+
 // Separate background processing function
 async function processAndSaveProductData(jobId: string, path: string) {
   try {

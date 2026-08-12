@@ -102,11 +102,16 @@ export async function saveMonthlyDataOptimally(transformedData: MonthDataItem[])
          multiplePrice: roundToDecimals(safeNumber(x['Multiple Price']))?.toString() || "",
       }))
 
-      await prisma.monthDataItem.deleteMany()
+      if (data.length === 0) {
+         return { count: 0 }
+      }
 
-      const result = await prisma.monthDataItem.createMany({
-         data,
-      })
+      const [, result] = await prisma.$transaction([
+         prisma.monthDataItem.deleteMany(),
+         prisma.monthDataItem.createMany({
+            data,
+         }),
+      ])
 
       return result
    } catch (error) {
@@ -391,7 +396,20 @@ export async function convertReturnCourierData(): Promise<ReturnCourierData[]> {
 
 export async function saveReturnReverseData(dataArray: Record<string, string | number>[]) {
    const formattedData = mapReturnReverseRowsForStorage(dataArray)
-   await saveReturnReverseDataWithRawSql(formattedData)
+
+   // A remote MySQL connection makes one INSERT per row extremely slow.  Keep
+   // the replacement atomic, but send the rows in reasonably sized bulk
+   // inserts so this also stays below MySQL's statement/packet limits.
+   const batchSize = 1000
+   const batches = Array.from(
+      { length: Math.ceil(formattedData.length / batchSize) },
+      (_, index) => formattedData.slice(index * batchSize, (index + 1) * batchSize),
+   )
+
+   await prisma.$transaction([
+      prisma.returnReverseData.deleteMany(),
+      ...batches.map((data) => prisma.returnReverseData.createMany({ data })),
+   ])
 }
 
 export async function convertReturnReverseData(): Promise<ReturnReverseData[]> {
@@ -501,93 +519,6 @@ async function fetchReturnDataWithRawSql(
    )
 
    return rows ?? []
-}
-
-type ReturnReverseStorageRow = ReturnType<typeof mapReturnReverseRowsForStorage>[number]
-
-async function saveReturnReverseDataWithRawSql(rows: ReturnReverseStorageRow[]) {
-   await prisma.$executeRawUnsafe("DELETE FROM `ReturnReverseData`")
-
-   if (rows.length === 0) {
-      return
-   }
-
-   for (const row of rows) {
-      await prisma.$executeRawUnsafe(
-         `INSERT INTO \`ReturnReverseData\` (
-            \`Sale Order Item Code\`,
-            \`Sale Order Created\`,
-            \`Sale Order Code\`,
-            \`Item Type Name\`,
-            \`Item Type SKU\`,
-            \`Reverse Pickup Code\`,
-            \`Tracking Number\`,
-            \`Dispatched Date\`,
-            \`Reference Code\`,
-            \`Import Reference Id\`,
-            \`Reverse Pickup Created\`,
-            \`Reverse Pickup Updated\`,
-            \`Reverse Pickup Status\`,
-            \`Reverse Pickup Action\`,
-            \`Return Reason\`,
-            \`Customer Image Url\`,
-            \`Replacement Sale Order Code\`,
-            \`Channel\`,
-            \`Total Received Items\`,
-            \`QC Comments\`,
-            \`Reverse Pickup Created By\`,
-            \`Putaway Code\`,
-            \`Created By\`,
-            \`Putaway Status\`,
-            \`Putaway Last Updated\`,
-            \`Courier Provider Name\`,
-            \`Return Item Status\`,
-            \`Shipping Courier Status\`,
-            \`Shipping Tracking Status\`,
-            \`Item Seal Id\`,
-            \`Return Delivery Date\`,
-            \`Channel Return Created Date\`,
-            \`Return Courier Name\`,
-            \`Return Remarks\`,
-            \`createdAt\`,
-            \`updatedAt\`
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-         row.saleOrderItemCode,
-         row.saleOrderCreated,
-         row.saleOrderCode,
-         row.itemTypeName,
-         row.itemTypeSku,
-         row.reversePickupCode,
-         row.trackingNumber,
-         row.dispatchedDate,
-         row.referenceCode,
-         row.importReferenceId,
-         row.reversePickupCreated,
-         row.reversePickupUpdated,
-         row.reversePickupStatus,
-         row.reversePickupAction,
-         row.returnReason,
-         row.customerImageUrl,
-         row.replacementSaleOrderCode,
-         row.channel,
-         row.totalReceivedItems,
-         row.qcComments,
-         row.reversePickupCreatedBy,
-         row.putawayCode,
-         row.createdBy,
-         row.putawayStatus,
-         row.putawayLastUpdated,
-         row.courierProviderName,
-         row.returnItemStatus,
-         row.shippingCourierStatus,
-         row.shippingTrackingStatus,
-         row.itemSealId,
-         row.returnDeliveryDate,
-         row.channelReturnCreatedDate,
-         row.returnCourierName,
-         row.returnRemarks,
-      )
-   }
 }
 
 async function fetchReturnReverseDataWithRawSql(): Promise<Array<Parameters<typeof mapReturnReverseRowForOutput>[0]>> {
